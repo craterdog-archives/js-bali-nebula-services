@@ -1,0 +1,39 @@
+{
+  "name": "bali-virtual-machine",
+  "version": "1.0.0",
+  "description": "This library provides a JavaScript based implementation for the Bali Virtual Machine.",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "test-roundtrip"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/craterdog-bali/js-bali-virtual-machine.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "Bali",
+    "Parser",
+    "Formatter"
+  ],
+  "author": "Derk Norton",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/craterdog-bali/js-bali-virtual-machine/issues"
+  },
+  "homepage": "https://github.com/craterdog-bali/js-bali-virtual-machine#readme",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-antlr4": "^0.1.6",
+    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-contrib-nodeunit": "^1.0.0",
+    "grunt-contrib-uglify": "^3.1.0",
+    "grunt-contrib-watch": "^1.0.0"
+  },
+  "dependencies": {
+    "antlr4": "^4.7.0",
+    "moment": "^2.19.1"
+  }
+}
