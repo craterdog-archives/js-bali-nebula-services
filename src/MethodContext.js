@@ -20,20 +20,24 @@ var bytecode = require('bali-instruction-set/utilities/BytecodeUtilities');
  * This constructor creates a method context for a function or document message.
  * 
  * @constructor
+ * @param {object} type The type containing the method definition.
  * @param {object} target The optional target on which the method operates.
- * @param {array} instructions The bytecode array containing the instructions for the method. 
+ * @param {string} method The name of the method to be executed.
+ * @param {object} parameters The array or table of parameters that were passed to the method.
  * @returns {MethodContext} The new method context.
  */
-function MethodContext(target, instructions) {
-    if (instructions === undefined || instructions.constructor.name !== 'Array') {
-        throw new Error('A method context cannot be created without a valid instructions bytecode array.');
-    }
+function MethodContext(type, target, method, parameters) {
+    this.type = type;
     this.target = target;
-    this.instructionPointer = 1;
+    this.literals = {};  // TODO: initialize from type
+    this.variables = {};  // TODO: initialize from type
+    this.references = {};  // TODO: initialize from type
+    this.methods = {};  // TODO: initialize from type
+    this.instructions = this.methods[method].instructions;
+    this.instructionPointer = 1;  // Bali unit based indexing
     this.operation = null;
     this.modifier = null;
     this.operand = 0;
-    this.instructions = instructions;
     return this;
 }
 MethodContext.prototype.constructor = MethodContext;
@@ -41,11 +45,21 @@ exports.MethodContext = MethodContext;
 
 
 /**
+ * This method determines whether or not the processing of this instruction is done.
+ * 
+ * @returns {boolean} Whether or not the processing is done.
+ */
+MethodContext.prototype.isDone = function() {
+    return this.instructionPointer > this.instructions.length;
+};
+
+
+/**
  * This method loads the next instruction in this method and decodes its operation,
  * modifier, and operand.
  */
 MethodContext.prototype.loadNextInstruction = function() {
-    var instruction = this.instructions[this.instructionPointer++];
+    var instruction = this.instructions[this.instructionPointer++ - 1];  // JS zero based indexing
     this.operation = bytecode.decodeOperation(instruction);
     this.modifier = bytecode.decodeModifier(instruction);
     this.operand = bytecode.decodeOperand(instruction);

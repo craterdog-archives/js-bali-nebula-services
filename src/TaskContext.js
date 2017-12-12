@@ -24,8 +24,8 @@
  */
 function TaskContext() {
     this.status = RUNNING;
-    this.documentStack = [];
-    this.methodStack = [];
+    this.executionStack = [];
+    this.contextStack = [];
     return this;
 }
 TaskContext.prototype.constructor = TaskContext;
@@ -121,65 +121,60 @@ TaskContext.prototype.isDone = function() {
  * This method returns the Bali document that is currently on top of the document
  * stack, or <code>null</code> if the stack is empty.
  * 
- * @returns {object} The Bali document that is currently on top of the document stack.
+ * @returns {object} The Bali document that is currently on top of the execution stack.
  */
-TaskContext.prototype.document = function() {
-    return this.documentStack.peek();
+TaskContext.prototype.getDocument = function() {
+    return this.executionStack.peek();
 };
 
 
 /**
- * This method pushes a Bali document onto the top of the document stack.
+ * This method pushes a Bali document onto the top of the execution stack.
  * 
- * @param {object} document The Bali document to be pushed onto the document stack.
+ * @param {object} document The Bali document to be pushed onto the execution stack.
  */
 TaskContext.prototype.pushDocument = function(document) {
-    this.documentStack.push(document);
+    this.executionStack.push(document);
 };
 
 
 /**
- * This method removes from the top of the document stack the specified number of
- * Bali documents or one document if nothing is specified.
+ * This method removes from the top of the execution stack the Bali document that
+ * is currently on top of the execution stack.
  * 
- * @param {number} count The number of Bali documents to be popped of of the top
- * of the document stack.
+ * @returns {object} The Bali document that was on top of the execution stack.
  */
-TaskContext.prototype.popDocuments = function(count) {
-    count = count ? count : 1;
-    while (count--) this.documentStack.pop();
+TaskContext.prototype.popDocument = function() {
+    return this.executionStack.pop();
 };
 
 
 /**
- * This method returns the Bali method context that is currently on top of the method
- * stack, or <code>null</code> if the stack is empty.
+ * This method returns the Bali context that is currently on top of the stack,
+ * or <code>null</code> if the stack is empty.
  * 
- * @returns {object} The Bali method context that is currently on top of the method stack.
+ * @returns {object} The Bali context that is currently on top of the context stack.
  */
-TaskContext.prototype.method = function() {
-    return this.methodStack.peek();
+TaskContext.prototype.getMethod = function() {
+    return this.contextStack.peek();
 };
 
 
 /**
- * This method pushes a Bali method context onto the top of the method stack.
+ * This method pushes a Bali context onto the top of the context stack.
  * 
- * @param {object} method The Bali method context to be pushed onto the method stack.
+ * @param {object} context The Bali context to be pushed onto the context stack.
  */
-TaskContext.prototype.pushMethod = function(method) {
-    this.methodStack.push(method);
+TaskContext.prototype.pushMethod = function(context) {
+    this.contextStack.push(context);
 };
 
 
 /**
- * This method removes from the top of the method stack the specified number of
- * Bali method contexts or one method context if nothing is specified.
+ * This method removes the context that is currently on top of the context stack.
  * 
- * @param {number} count The number of Bali method contexts to be popped of of the top
- * of the method stack.
+ * @returns {object} The context that was on top of the context stack.
  */
-TaskContext.prototype.popMethods = function(count) {
-    count = count ? count : 1;
-    while (count--) this.methodStack.pop();
+TaskContext.prototype.popMethod = function() {
+    return this.contextStack.pop();
 };
