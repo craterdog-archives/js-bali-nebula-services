@@ -51,7 +51,7 @@ exports.processMessage = function(typeReference, targetReference, message, param
     var target = cloud.readDocument(targetReference);
     var virtualMachine = new VirtualMachine();
     var methodContext = new MethodContext(type, target, message, parameters);
-    virtualMachine.taskContext.pushContext(methodContext);
+    virtualMachine.pushContext(methodContext);
     virtualMachine.processInstructions();
 };
 
@@ -154,6 +154,120 @@ VirtualMachine.prototype.isDone = function() {
 
 
 /**
+ * This method retrieves the document that is on top of the execution stack.
+ * 
+ * @returns {object} The document from the top of the execution stack.
+ */
+VirtualMachine.prototype.getDocument = function() {
+    return this.taskContext.popDocument();
+};
+
+
+/**
+ * This method returns the literal value associated with a specific index.
+ * 
+ * @param {number} index The index of the literal in the symbol table.
+ * @returns {Literal} The literal value associated with the index.
+ */
+VirtualMachine.prototype.getLiteral = function(index) {
+    return this.currentContext().symbols.literals[index - 1];  // JS zero based indexing
+};
+
+
+/**
+ * This method returns the reference associated with a specific index.
+ * 
+ * @param {number} index The index of the reference in the symbol table.
+ * @returns {Reference} The reference associated with the index.
+ */
+VirtualMachine.prototype.getReference = function(index) {
+    return this.currentContext().symbols.references[index - 1];  // JS zero based indexing
+};
+
+
+/**
+ * This method returns the variable value associated with a specific index.
+ * 
+ * @param {number} index The index of the variable in the symbol table.
+ * @returns {object} The variable value associated with the index.
+ */
+VirtualMachine.prototype.getVariable = function(index) {
+    return this.currentContext().symbols.variables[index - 1];  // JS zero based indexing
+};
+
+
+/**
+ * This method sets the value of the variable associated with a specific index.
+ * 
+ * @param {number} index The index of the variable in the symbol table.
+ * @param {object} value The value of the variable to be set.
+ */
+VirtualMachine.prototype.setVariable = function(index, value) {
+    this.currentContext().symbols.variables[index - 1] = value;  // JS zero based indexing
+};
+
+
+/**
+ * This method returns the method name associated with a specific index.
+ * 
+ * @param {number} index The index of the method in the symbol table.
+ * @returns {string} The method name value associated with the index.
+ */
+VirtualMachine.prototype.getMethod = function(index) {
+    return this.currentContext().symbols.methods[index - 1];  // JS zero based indexing
+};
+
+
+/**
+ * This method places a document on top of the execution stack.
+ * 
+ * @param {object} document The document.
+ */
+VirtualMachine.prototype.pushDocument = function(document) {
+    this.taskContext.pushDocument(document);
+};
+
+
+/**
+ * This method places a new method context on top of the context stack.
+ * 
+ * @param {MethodContex} context The new method context.
+ */
+VirtualMachine.prototype.pushContext = function(context) {
+    this.taskContext.pushContext(context);
+};
+
+
+/**
+ * This method returns the method context that is on top of the context stack.
+ * 
+ * @returns {MethodContex} The current method context.
+ */
+VirtualMachine.prototype.currentContext = function() {
+    return this.taskContext.currentContext();
+};
+
+
+/**
+ * This method removes the method context is was on top of the context stack.
+ * 
+ * @returns {MethodContex} The method context that was on top of the context stack.
+ */
+VirtualMachine.prototype.popContext = function() {
+    return this.taskContext.popContext();
+};
+
+
+/**
+ * This method tells the virtual machine to pause its processing until a message
+ * arrives from another task.
+ */
+VirtualMachine.prototype.pauseForMessage = function() {
+    this.taskContext.wait();
+};
+
+
+/**
  * This method fetches the next instruction for the current method into the
  * virtual machine.
  */
@@ -167,10 +281,10 @@ VirtualMachine.prototype.fetchInstruction = function() {
  * machine.
  */
 VirtualMachine.prototype.executeInstruction = function() {
-    var method = this.taskContext.currentMethod();
-    var operation = method.operation;
-    var modifier = method.modifier;
-    var operand = method.operand;
+    var context = this.currentContext();
+    var operation = context.operation;
+    var modifier = context.modifier;
+    var operand = context.operand;
     switch (operation) {
         case 'JUMP':
             this.handleJumpInstruction(modifier, operand);
@@ -190,7 +304,7 @@ VirtualMachine.prototype.executeInstruction = function() {
         default:
             throw new Error('BALI VM: Invalid operation attempted: ' + operation);
     }
-    if (method.isDone()) this.taskContext.popContext();
+    if (context.isDone()) this.popContext();
 };
 
 
@@ -211,7 +325,7 @@ VirtualMachine.prototype.publishCompletionEvent = function() {
     var event = {
         '$type': '$completion',
         '$task': this.taskReference,
-        '$result': this.taskContext.popDocument()
+        '$result': this.getDocument()
         // TODO: need to handle exceptions as well...
     };
     cloud.writeMessage(event, new elements.Reference('bali:/bali/EventQueue>'));
@@ -343,132 +457,136 @@ VirtualMachine.prototype.handleExecuteInstruction = function(modifier, index) {
 
 
 VirtualMachine.prototype.jump = function(address) {
-    if (address > 0) this.taskContext.currentMethod().instructionPointer = address;
+    if (address > 0) this.currentContext().instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.jumpOnNone = function(address) {
-    var document = this.taskContext.popDocument();
-    if (intrinsics.isNone(document)) this.taskContext.currentMethod().instructionPointer = address;
+    var document = this.getDocument();
+    if (intrinsics.isNone(document)) this.currentContext().instructionPointer = address;
 
 };
 
 
 VirtualMachine.prototype.jumpOnFalse = function(address) {
-    var document = this.taskContext.popDocument();
-    if (intrinsics.isFalse(document)) this.taskContext.currentMethod().instructionPointer = address;
+    var document = this.getDocument();
+    if (intrinsics.isFalse(document)) this.currentContext().instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.jumpOnZero = function(address) {
-    var document = this.taskContext.popDocument();
-    if (intrinsics.isZero(document)) this.taskContext.currentMethod().instructionPointer = address;
+    var document = this.getDocument();
+    if (intrinsics.isZero(document)) this.currentContext().instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.loadLiteral = function(index) {
-    var literal = this.taskContext.currentMethod().symbols.literals[index - 1];
-    this.taskContext.pushDocument(literal);
+    var literal = this.getLiteral(index);
+    this.pushDocument(literal);
 };
 
 
 VirtualMachine.prototype.loadDocument = function(index) {
-    var reference = this.taskContext.currentMethod().symbols.references[index - 1];
+    var reference = this.getReference(index);
     var document = cloud.readDocument(reference);
-    this.taskContext.pushDocument(document);
+    this.pushDocument(document);
 };
 
 
 VirtualMachine.prototype.loadMessage = function(index) {
-    var reference = this.taskContext.currentMethod().symbols.references[index - 1];
+    var reference = this.getReference(index);
     var message = cloud.readMessage(reference);
     if (message) {
-        this.taskContext.pushDocument(message);
+        this.pushDocument(message);
     } else {
         // set the task status to 'waiting'
-        this.taskContext.wait();
+        this.pauseForMessage();
         // make sure that the same instruction will be tried again
-        this.taskContext.currentMethod().instructionPointer--;
+        this.currentContext().instructionPointer--;
     }
 };
 
 
 VirtualMachine.prototype.loadVariable = function(index) {
-    var variable = this.taskContext.currentMethod().symbols.variables[index - 1];
-    this.taskContext.pushDocument(variable);
+    var variable = this.getVariable(index);
+    this.pushDocument(variable);
 };
 
 
 VirtualMachine.prototype.storeDraft = function(index) {
-    var reference = this.taskContext.currentMethod().symbols.references[index - 1];
-    var document = this.taskContext.popDocument();
+    var reference = this.getReference(index);
+    var document = this.getDocument();
     cloud.writeDocument(reference, document);
 };
 
 
 VirtualMachine.prototype.storeDocument = function(index) {
-    var reference = this.taskContext.currentMethod().symbols.references[index - 1];
-    var document = this.taskContext.popDocument();
+    var reference = this.getReference(index);
+    var document = this.getDocument();
     cloud.commitDocument(reference, document);
 };
 
 
 VirtualMachine.prototype.storeMessage = function(index) {
-    var reference = this.taskContext.currentMethod().symbols.references[index - 1];
-    var message = this.taskContext.popDocument();
+    var reference = this.getReference(index);
+    var message = this.getDocument();
     cloud.writeMessage(message, reference);
 };
 
 
 VirtualMachine.prototype.storeVariable = function(index) {
-    var variable = this.taskContext.popDocument();
-    this.taskContext.currentMethod().symbols.variables[index - 1] = variable;
+    var variable = this.getDocument();
+    this.setVariable(index, variable);
 };
 
 
 VirtualMachine.prototype.invokeIntrinsic = function(index, numberOfParameters) {
     var parameters = [];
-    while (numberOfParameters-- > 0) parameters.push(this.taskContext.popDocument());
+    while (numberOfParameters-- > 0) parameters.push(this.getDocument());
     var result = intrinsics[index - 1].apply(this, parameters);
-    if (result) this.taskContext.pushDocument(result);
+    if (result) this.pushDocument(result);
 };
 
 
 VirtualMachine.prototype.executeMethod = function(index) {
-    var type = null;
+    var typeReference = this.getDocument();
+    var type = cloud.readDocument(typeReference);
     var target = null;
-    var method = this.taskContext.currentMethod().symbols.methods[index - 1];
+    var method = this.getMethod(index);
     var parameters = [];
     var newContext = new MethodContext(type, target, method, parameters);
-    this.taskContext.pushContext(newContext);
+    this.pushContext(newContext);
 };
 
 
 VirtualMachine.prototype.executeMethodWithParameters = function(index) {
-    var type = null;
+    var typeReference = this.getDocument();
+    var type = cloud.readDocument(typeReference);
     var target = null;
-    var method = this.taskContext.currentMethod().symbols.methods[index - 1];
-    var parameters = this.taskContext.popDocument();
+    var method = this.getMethod(index);
+    var parameters = this.getDocument();
     var newContext = new MethodContext(type, target, method, parameters);
-    this.taskContext.pushContext(newContext);
+    this.pushContext(newContext);
 };
 
 
 VirtualMachine.prototype.executeMethodWithTarget = function(index) {
-    var type = null;
-    var target = this.taskContext.popDocument();
-    var method = this.taskContext.currentMethod().symbols.methods[index - 1];
+    var typeReference = this.getDocument();
+    var type = cloud.readDocument(typeReference);
+    var target = this.getDocument();
+    var method = this.getMethod(index);
     var parameters = [];
     var newContext = new MethodContext(type, target, method, parameters);
-    this.taskContext.pushContext(newContext);
+    this.pushContext(newContext);
 };
 
 
 VirtualMachine.prototype.executeMethodWithTargetAndParameters = function(index) {
-    var type = null;
-    var target = this.taskContext.popDocument();
-    var method = this.taskContext.currentMethod().symbols.methods[index - 1];
-    var parameters = this.taskContext.popDocument();
+    var typeReference = this.getDocument();
+    var type = cloud.readDocument(typeReference);
+    var target = this.getDocument();
+    var method = this.getMethod(index);
+    var parameters = this.getDocument();
     var newContext = new MethodContext(type, target, method, parameters);
-    this.taskContext.pushContext(newContext);
+    this.pushContext(newContext);
 };

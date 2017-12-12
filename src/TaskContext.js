@@ -123,7 +123,7 @@ TaskContext.prototype.isDone = function() {
  * 
  * @returns {object} The Bali document that is currently on top of the execution stack.
  */
-TaskContext.prototype.getDocument = function() {
+TaskContext.prototype.topDocument = function() {
     return this.executionStack.peek();
 };
 
@@ -155,7 +155,7 @@ TaskContext.prototype.popDocument = function() {
  * 
  * @returns {object} The Bali context that is currently on top of the context stack.
  */
-TaskContext.prototype.getMethod = function() {
+TaskContext.prototype.currentContext = function() {
     return this.contextStack.peek();
 };
 
@@ -165,7 +165,7 @@ TaskContext.prototype.getMethod = function() {
  * 
  * @param {object} context The Bali context to be pushed onto the context stack.
  */
-TaskContext.prototype.pushMethod = function(context) {
+TaskContext.prototype.pushContext = function(context) {
     this.contextStack.push(context);
 };
 
@@ -175,6 +175,6 @@ TaskContext.prototype.pushMethod = function(context) {
  * 
  * @returns {object} The context that was on top of the context stack.
  */
-TaskContext.prototype.popMethod = function() {
+TaskContext.prototype.popContext = function() {
     return this.contextStack.pop();
 };
