@@ -1,0 +1,34 @@
+{
+    [
+        $foo: bar
+        $baz: 5
+    ]
+    variable
+    isPrime(13)
+    (a + b) * c
+    @reference
+    customer[$order, $item, 5]
+    list.addItem(item)
+    23!
+    2^8
+    -pi
+    /5
+    *(3, 4i)
+    x * y
+    a / b
+    c // d
+    x + y
+    w - z
+    |(3, 4i)|
+    a < b
+    c = d
+    f > g
+    h is j
+    k matches m
+    not p
+    a and b
+    c sans d
+    f xor g
+    h or j
+    foo ? 5
+}

@@ -1,0 +1,107 @@
+[
+    $result: [
+        $element: {
+            $expression := [1, 2, 3][2]
+            $expression := [1, 2, 3].reverse()
+            $expression := products[
+                $yoyo
+                "Duncan"
+            ].calculateUPC()
+            $expression := products.sort()
+        }
+        $function: {
+            $expression := random(count)[1]
+            $expression := random($count: 16).sort(increasing)
+            $expression := random(16).sort(
+                numeric
+                increasing
+            )
+            $expression := random(16).sort()[-x]
+        }
+        $grouping: {
+            $expression := ([1, 2] + [2, 3])[1]
+            $expression := ([1, 2] + [2, 3]).reverse()
+            $expression := ([1, 2] + [2, 3]).reverse(foo, bar)[2]
+        }
+    ]
+    $dereference: {
+        $expression := @result
+    }
+    $factorial: {
+        $expression := dereference!
+    }
+    $exponential: {
+        $expression := percent ^ power
+    }
+    $inversion: [
+        $negative: {
+            $expression := -exponential
+            $expression := - -pi
+        }
+        $inverse: {
+            $expression := /exponential
+        }
+        $conjugate: {
+            $expression := *exponential
+        }
+    ]
+    $geometric: [
+        $product: {
+            $expression := -inversion * scaler
+        }
+        $quotient: {
+            $expression := inversion / dividend
+        }
+        $remainder: {
+            $expression := inversion // dividend
+        }
+    ]
+    $arithmetic: [
+        $sum: {
+            $expression := geometric + addend
+        }
+        $difference: {
+            $expression := geometric - subtractend
+        }
+    ]
+    $magnitude: {
+        $expression := |arithmetic|
+    }
+    $comparison: [
+        $less: {
+            $expression := magnitude < scaler
+        }
+        $equal: {
+            $expression := magnitude = scaler
+        }
+        $greater: {
+            $expression := magnitude > scaler
+        }
+        $is: {
+            $expression := magnitude is value
+        }
+        $matches: {
+            $expression := magnitude matches pattern
+        }
+    ]
+    $complement: {
+        $expression := not comparison
+    }
+    $logical: [
+        $and: {
+            $expression := complement and [1, 2, 3]
+        }
+        $sans: {
+            $expression := complement sans [$a: "a", $b: "b", $c: "c"]
+        }
+        $or: {
+            $expression := complement or value
+        }
+        $xor: {
+            $expression := complement xor value
+        }
+    ]
+    $default: {
+        $expression := logical ? default
+    }
+]

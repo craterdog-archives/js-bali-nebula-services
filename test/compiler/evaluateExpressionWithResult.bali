@@ -1,0 +1,4 @@
+{
+    $foo := bar
+    document[$customer, $order, 3] := 5
+}

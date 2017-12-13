@@ -1,0 +1,15 @@
+
+1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+

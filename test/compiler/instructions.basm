@@ -1,0 +1,32 @@
+SKIP INSTRUCTION
+
+1.jump:
+JUMP TO 2.load
+JUMP TO 3.store ON NONE
+JUMP TO 4.invoke ON FALSE
+JUMP TO 5.execute ON ZERO
+
+2.load:
+LOAD LITERAL `"This is a literal text string
+containing an \` and spanning multiple lines."`
+LOAD DOCUMENT $reference
+LOAD MESSAGE $queue
+LOAD VARIABLE $variable
+
+3.store:
+STORE DRAFT $reference
+STORE DOCUMENT $reference
+STORE MESSAGE $queue
+STORE VARIABLE $variable
+
+4.invoke:
+INVOKE INTRINSIC $random
+INVOKE INTRINSIC $factorial WITH PARAMETER
+INVOKE INTRINSIC $sum WITH 2 PARAMETERS
+INVOKE INTRINSIC $sort WITH 3 PARAMETERS
+
+5.execute:
+EXECUTE METHOD $generateKey
+EXECUTE METHOD $fibonacci WITH PARAMETERS
+EXECUTE METHOD $hasNext WITH TARGET
+EXECUTE METHOD $addItem WITH TARGET AND PARAMETERS

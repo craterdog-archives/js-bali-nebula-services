@@ -1,0 +1,7 @@
+{
+    label: with $sequence do {
+        true
+        break from label
+        none
+    }
+}

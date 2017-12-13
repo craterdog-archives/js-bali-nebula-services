@@ -1,0 +1,1402 @@
+test/source/main.basm:
+
+1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/mainWithFinal.basm:
+
+1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/mainWithExceptions.basm:
+
+1.ThrowStatement:
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'whine'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE VARIABLE $_exception_
+JUMP TO 2.BlockEnd
+
+1.ExceptionClauses:
+LOAD VARIABLE $_exception_
+JUMP TO 1.StatementEnd ON NONE
+LOAD VARIABLE $_exception_
+
+1.1.ExceptionClause:
+STORE VARIABLE $error
+LOAD VARIABLE $error
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'bad'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.1.ClauseEnd ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.1.ClauseEnd:
+LOAD VARIABLE $_exception_
+JUMP TO 1.StatementEnd ON NONE
+LOAD VARIABLE $_exception_
+
+1.2.ExceptionClause:
+STORE VARIABLE $error
+LOAD VARIABLE $error
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'horrid'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.2.ClauseEnd ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.2.ClauseEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/mainWithExceptionsAndFinal.basm:
+
+1.ThrowStatement:
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'whine'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE VARIABLE $_exception_
+JUMP TO 2.BlockEnd
+
+1.ExceptionClauses:
+LOAD VARIABLE $_exception_
+JUMP TO 1.FinalClause ON NONE
+LOAD VARIABLE $_exception_
+
+1.1.ExceptionClause:
+STORE VARIABLE $error
+LOAD VARIABLE $error
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'bad'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.1.ClauseEnd ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.1.ClauseEnd:
+LOAD VARIABLE $_exception_
+JUMP TO 1.FinalClause ON NONE
+LOAD VARIABLE $_exception_
+
+1.2.ExceptionClause:
+STORE VARIABLE $error
+LOAD VARIABLE $error
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'horrid'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.2.ClauseEnd ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.2.ClauseEnd:
+SKIP INSTRUCTION
+
+1.FinalClause:
+SKIP INSTRUCTION
+
+1.3.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.3.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/evaluateExpression.basm:
+
+1.EvaluateStatement:
+LOAD LITERAL `2`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$foo`
+LOAD VARIABLE $bar
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+LOAD LITERAL `$baz`
+LOAD LITERAL `5`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE VARIABLE $_result_
+
+2.EvaluateStatement:
+LOAD VARIABLE $variable
+STORE VARIABLE $_result_
+
+3.EvaluateStatement:
+LOAD VARIABLE $type
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD LITERAL `13`
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+EXECUTE METHOD $isPrime WITH PARAMETERS
+STORE VARIABLE $_result_
+
+4.EvaluateStatement:
+LOAD VARIABLE $a
+LOAD VARIABLE $b
+INVOKE INTRINSIC $sum WITH 2 PARAMETERS
+LOAD VARIABLE $c
+INVOKE INTRINSIC $product WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+5.EvaluateStatement:
+LOAD VARIABLE $reference
+STORE VARIABLE $_reference_11
+LOAD DOCUMENT $_reference_11
+STORE VARIABLE $_result_
+
+6.EvaluateStatement:
+LOAD VARIABLE $customer
+STORE VARIABLE $_component_14
+LOAD VARIABLE $_component_14
+LOAD LITERAL `$order`
+STORE VARIABLE $_index_15
+LOAD VARIABLE $_component_14
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_type_16
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $_index_15
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+STORE VARIABLE $_parameters_17
+LOAD VARIABLE $_type_16
+LOAD VARIABLE $_component_14
+LOAD VARIABLE $_parameters_17
+EXECUTE METHOD $getValue WITH TARGET AND PARAMETERS
+STORE VARIABLE $_component_14
+LOAD VARIABLE $_component_14
+LOAD LITERAL `$item`
+STORE VARIABLE $_index_18
+LOAD VARIABLE $_component_14
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_type_19
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $_index_18
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+STORE VARIABLE $_parameters_20
+LOAD VARIABLE $_type_19
+LOAD VARIABLE $_component_14
+LOAD VARIABLE $_parameters_20
+EXECUTE METHOD $getValue WITH TARGET AND PARAMETERS
+STORE VARIABLE $_component_14
+LOAD VARIABLE $_component_14
+LOAD LITERAL `5`
+INVOKE INTRINSIC $getValue WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+7.EvaluateStatement:
+LOAD VARIABLE $list
+STORE VARIABLE $_target_24
+LOAD VARIABLE $_target_24
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_type_25
+LOAD VARIABLE $_type_25
+LOAD VARIABLE $_target_24
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $item
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+EXECUTE METHOD $addItem WITH TARGET AND PARAMETERS
+STORE VARIABLE $_result_
+
+8.EvaluateStatement:
+LOAD LITERAL `23`
+INVOKE INTRINSIC $factorial WITH PARAMETER
+STORE VARIABLE $_result_
+
+9.EvaluateStatement:
+LOAD LITERAL `2`
+LOAD LITERAL `8`
+INVOKE INTRINSIC $exponential WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+10.EvaluateStatement:
+LOAD LITERAL `pi`
+INVOKE INTRINSIC $negative WITH PARAMETER
+STORE VARIABLE $_result_
+
+11.EvaluateStatement:
+LOAD LITERAL `5`
+INVOKE INTRINSIC $inverse WITH PARAMETER
+STORE VARIABLE $_result_
+
+12.EvaluateStatement:
+LOAD LITERAL `(3, 4i)`
+INVOKE INTRINSIC $conjugate WITH PARAMETER
+STORE VARIABLE $_result_
+
+13.EvaluateStatement:
+LOAD VARIABLE $x
+LOAD VARIABLE $y
+INVOKE INTRINSIC $product WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+14.EvaluateStatement:
+LOAD VARIABLE $a
+LOAD VARIABLE $b
+INVOKE INTRINSIC $quotient WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+15.EvaluateStatement:
+LOAD VARIABLE $c
+LOAD VARIABLE $d
+INVOKE INTRINSIC $remainder WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+16.EvaluateStatement:
+LOAD VARIABLE $x
+LOAD VARIABLE $y
+INVOKE INTRINSIC $sum WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+17.EvaluateStatement:
+LOAD VARIABLE $w
+LOAD VARIABLE $z
+INVOKE INTRINSIC $difference WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+18.EvaluateStatement:
+LOAD LITERAL `(3, 4i)`
+INVOKE INTRINSIC $magnitude WITH PARAMETER
+STORE VARIABLE $_result_
+
+19.EvaluateStatement:
+LOAD VARIABLE $a
+LOAD VARIABLE $b
+INVOKE INTRINSIC $less WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+20.EvaluateStatement:
+LOAD VARIABLE $c
+LOAD VARIABLE $d
+INVOKE INTRINSIC $equal WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+21.EvaluateStatement:
+LOAD VARIABLE $f
+LOAD VARIABLE $g
+INVOKE INTRINSIC $more WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+22.EvaluateStatement:
+LOAD VARIABLE $h
+LOAD VARIABLE $j
+INVOKE INTRINSIC $is WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+23.EvaluateStatement:
+LOAD VARIABLE $k
+LOAD VARIABLE $m
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+24.EvaluateStatement:
+LOAD VARIABLE $p
+INVOKE INTRINSIC $complement WITH PARAMETER
+STORE VARIABLE $_result_
+
+25.EvaluateStatement:
+LOAD VARIABLE $a
+LOAD VARIABLE $b
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+26.EvaluateStatement:
+LOAD VARIABLE $c
+LOAD VARIABLE $d
+INVOKE INTRINSIC $sans WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+27.EvaluateStatement:
+LOAD VARIABLE $f
+LOAD VARIABLE $g
+INVOKE INTRINSIC $xor WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+28.EvaluateStatement:
+LOAD VARIABLE $h
+LOAD VARIABLE $j
+INVOKE INTRINSIC $or WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+29.EvaluateStatement:
+LOAD VARIABLE $foo
+LOAD LITERAL `5`
+INVOKE INTRINSIC $default WITH 2 PARAMETERS
+STORE VARIABLE $_result_
+
+30.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/evaluateExpressionWithResult.basm:
+
+1.EvaluateStatement:
+LOAD VARIABLE $bar
+STORE VARIABLE $foo
+
+2.EvaluateStatement:
+LOAD VARIABLE $document
+STORE VARIABLE $_component_5
+LOAD VARIABLE $_component_5
+LOAD LITERAL `$customer`
+STORE VARIABLE $_index_6
+LOAD VARIABLE $_component_5
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_type_7
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $_index_6
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+STORE VARIABLE $_parameters_8
+LOAD VARIABLE $_type_7
+LOAD VARIABLE $_component_5
+LOAD VARIABLE $_parameters_8
+EXECUTE METHOD $getValue WITH TARGET AND PARAMETERS
+STORE VARIABLE $_component_5
+LOAD VARIABLE $_component_5
+LOAD LITERAL `$order`
+STORE VARIABLE $_index_9
+LOAD VARIABLE $_component_5
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_type_10
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $_index_9
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+STORE VARIABLE $_parameters_11
+LOAD VARIABLE $_type_10
+LOAD VARIABLE $_component_5
+LOAD VARIABLE $_parameters_11
+EXECUTE METHOD $getValue WITH TARGET AND PARAMETERS
+STORE VARIABLE $_component_5
+LOAD VARIABLE $_component_5
+LOAD LITERAL `3`
+STORE VARIABLE $_index_4
+STORE VARIABLE $_component_3
+LOAD LITERAL `5`
+STORE VARIABLE $_value_13
+LOAD VARIABLE $_component_3
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_type_14
+LOAD LITERAL `2`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $_index_4
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+LOAD VARIABLE $_value_13
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+STORE VARIABLE $_parameters_15
+LOAD VARIABLE $_type_14
+LOAD VARIABLE $_component_3
+LOAD VARIABLE $_parameters_15
+EXECUTE METHOD $setValue WITH TARGET AND PARAMETERS
+
+3.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/ifThen.basm:
+
+1.IfStatement:
+SKIP INSTRUCTION
+
+1.1.IfCondition:
+LOAD LITERAL `true`
+JUMP TO 1.StatementEnd ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/ifThenElse.basm:
+
+1.IfStatement:
+SKIP INSTRUCTION
+
+1.1.IfCondition:
+LOAD LITERAL `true`
+JUMP TO 1.2.ElseClause ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.2.ElseClause:
+SKIP INSTRUCTION
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/ifThenElseIf.basm:
+
+1.IfStatement:
+SKIP INSTRUCTION
+
+1.1.IfCondition:
+LOAD LITERAL `true`
+JUMP TO 1.2IfCondition ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.2.IfCondition:
+LOAD LITERAL `false`
+JUMP TO 1.StatementEnd ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/ifThenElseIfElse.basm:
+
+1.IfStatement:
+SKIP INSTRUCTION
+
+1.1.IfCondition:
+LOAD LITERAL `true`
+JUMP TO 1.2IfCondition ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.2.IfCondition:
+LOAD LITERAL `false`
+JUMP TO 1.3.ElseClause ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.3.ElseClause:
+SKIP INSTRUCTION
+
+1.3.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.3.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/selectOption.basm:
+
+1.SelectStatement:
+LOAD LITERAL `$selection`
+STORE VARIABLE $_selection_1
+
+1.1.SelectOption:
+LOAD VARIABLE $_selection_1
+LOAD LITERAL `'alpha'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.2SelectOption ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.2.SelectOption:
+LOAD VARIABLE $_selection_1
+LOAD LITERAL `'beta'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.3SelectOption ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.3.SelectOption:
+LOAD VARIABLE $_selection_1
+LOAD LITERAL `'gamma'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+
+1.3.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.3.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/selectOptionElse.basm:
+
+1.SelectStatement:
+LOAD LITERAL `$selection`
+STORE VARIABLE $_selection_1
+
+1.1.SelectOption:
+LOAD VARIABLE $_selection_1
+LOAD LITERAL `'alpha'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.2SelectOption ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.2.SelectOption:
+LOAD VARIABLE $_selection_1
+LOAD LITERAL `'beta'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.3SelectOption ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.3.SelectOption:
+LOAD VARIABLE $_selection_1
+LOAD LITERAL `'gamma'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.4.ElseClause ON FALSE
+
+1.3.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.3.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.4.ElseClause:
+SKIP INSTRUCTION
+
+1.4.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.4.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/whileLoop.basm:
+
+1.WhileStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_1_1_WhileCondition
+
+1.1.WhileCondition:
+LOAD VARIABLE $_continue_1_1_WhileCondition
+LOAD LITERAL `$condition`
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BreakStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_continue_1_1_WhileCondition
+JUMP TO 1.1.4.BlockEnd
+
+1.1.3.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.4.BlockEnd:
+JUMP TO 1.1.WhileCondition
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/whileLoopWithLabel.basm:
+
+1.WhileStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_1_1_Label
+
+1.1.Label:
+LOAD VARIABLE $_continue_1_1_Label
+LOAD LITERAL `$condition`
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.ContinueStatement:
+JUMP TO 1.1.4.BlockEnd
+
+1.1.3.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.4.BlockEnd:
+JUMP TO 1.1.Label
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/withLoop.basm:
+
+1.WithStatement:
+LOAD LITERAL `$sequence`
+STORE VARIABLE $_sequence_1
+LOAD VARIABLE $_sequence_1
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequence_1
+EXECUTE METHOD $createIterator WITH TARGET
+STORE VARIABLE $_iterator_3
+LOAD VARIABLE $_iterator_3
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_iteratorType_4
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_1_1_WithItem
+
+1.1.WithItem:
+LOAD VARIABLE $_continue_1_1_WithItem
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $hasNext WITH TARGET
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $getNext WITH TARGET
+STORE VARIABLE $_item_5
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.ContinueStatement:
+JUMP TO 1.1.4.BlockEnd
+
+1.1.3.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.4.BlockEnd:
+JUMP TO 1.1.WithItem
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/withLoopWithLabel.basm:
+
+1.WithStatement:
+LOAD LITERAL `$sequence`
+STORE VARIABLE $_sequence_1
+LOAD VARIABLE $_sequence_1
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequence_1
+EXECUTE METHOD $createIterator WITH TARGET
+STORE VARIABLE $_iterator_3
+LOAD VARIABLE $_iterator_3
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_iteratorType_4
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_1_1_Label
+
+1.1.Label:
+LOAD VARIABLE $_continue_1_1_Label
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $hasNext WITH TARGET
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $getNext WITH TARGET
+STORE VARIABLE $_item_5
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BreakStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_continue_1_1_Label
+JUMP TO 1.1.4.BlockEnd
+
+1.1.3.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.4.BlockEnd:
+JUMP TO 1.1.Label
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/withEachLoop.basm:
+
+1.WithStatement:
+LOAD LITERAL `$sequence`
+STORE VARIABLE $_sequence_1
+LOAD VARIABLE $_sequence_1
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequence_1
+EXECUTE METHOD $createIterator WITH TARGET
+STORE VARIABLE $_iterator_3
+LOAD VARIABLE $_iterator_3
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_iteratorType_4
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_1_1_WithItem
+
+1.1.WithItem:
+LOAD VARIABLE $_continue_1_1_WithItem
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $hasNext WITH TARGET
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $getNext WITH TARGET
+STORE VARIABLE $symbol
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.ContinueStatement:
+JUMP TO 1.1.4.BlockEnd
+
+1.1.3.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.4.BlockEnd:
+JUMP TO 1.1.WithItem
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/withEachLoopWithLabel.basm:
+
+1.WithStatement:
+LOAD LITERAL `$sequence`
+STORE VARIABLE $_sequence_1
+LOAD VARIABLE $_sequence_1
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequence_1
+EXECUTE METHOD $createIterator WITH TARGET
+STORE VARIABLE $_iterator_3
+LOAD VARIABLE $_iterator_3
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_iteratorType_4
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_1_1_Label
+
+1.1.Label:
+LOAD VARIABLE $_continue_1_1_Label
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $hasNext WITH TARGET
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $getNext WITH TARGET
+STORE VARIABLE $symbol
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BreakStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_continue_1_1_Label
+JUMP TO 1.1.4.BlockEnd
+
+1.1.3.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.4.BlockEnd:
+JUMP TO 1.1.Label
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/queueMessage.basm:
+
+1.QueueStatement:
+LOAD LITERAL `<bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>`
+STORE VARIABLE $_queue_1
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$foo`
+LOAD VARIABLE $bar
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE MESSAGE $_queue_1
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/waitForMessage.basm:
+
+1.WaitStatement:
+LOAD LITERAL `<bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>`
+STORE VARIABLE $_queue_1
+LOAD MESSAGE $_queue_1
+STORE VARIABLE $message
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/publishEvent.basm:
+
+1.PublishStatement:
+LOAD LITERAL `3`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `$changeEvent`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+LOAD LITERAL `$key`
+LOAD LITERAL `$foo`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+LOAD LITERAL `$value`
+LOAD LITERAL `5`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE MESSAGE $_eventQueue_
+
+2.BlockEnd:
+SKIP INSTRUCTION
+
+
+
+test/source/comprehensive.basm:
+
+1.IfStatement:
+SKIP INSTRUCTION
+
+1.1.IfCondition:
+LOAD VARIABLE $a
+LOAD VARIABLE $b
+INVOKE INTRINSIC $less WITH 2 PARAMETERS
+JUMP TO 1.2IfCondition ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD VARIABLE $b
+STORE VARIABLE $a
+
+1.1.2.EvaluateStatement:
+LOAD VARIABLE $c
+STORE VARIABLE $b
+
+1.1.3.ThrowStatement:
+LOAD VARIABLE $exception
+STORE VARIABLE $_exception_
+JUMP TO 1.1.4.BlockEnd
+
+1.1.4.BlockEnd:
+JUMP TO 1.FinalClause
+
+1.2.IfCondition:
+LOAD VARIABLE $a
+LOAD LITERAL `0`
+INVOKE INTRINSIC $more WITH 2 PARAMETERS
+JUMP TO 1.3.ElseClause ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_result_
+
+1.2.2.EvaluateStatement:
+LOAD VARIABLE $type
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $b
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+EXECUTE METHOD $fibonacci WITH PARAMETERS
+STORE VARIABLE $c
+
+1.2.3.ReturnStatement:
+LOAD VARIABLE $c
+STORE VARIABLE $_result_
+JUMP TO 1.2.4.BlockEnd
+
+1.2.4.BlockEnd:
+JUMP TO 1.FinalClause
+
+1.3.ElseClause:
+SKIP INSTRUCTION
+
+1.3.1.EvaluateStatement:
+LOAD VARIABLE $b
+STORE VARIABLE $_target_11
+LOAD VARIABLE $_target_11
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_type_12
+LOAD VARIABLE $_type_12
+LOAD VARIABLE $_target_11
+LOAD LITERAL `1`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD LITERAL `$tag`
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+EXECUTE METHOD $find WITH TARGET AND PARAMETERS
+STORE VARIABLE $d
+
+1.3.2.EvaluateStatement:
+LOAD LITERAL `(3, 4i)`
+STORE VARIABLE $_result_
+
+1.3.3.ReturnStatement:
+JUMP TO 1.3.4.BlockEnd
+
+1.3.4.BlockEnd:
+SKIP INSTRUCTION
+
+1.ExceptionClauses:
+LOAD VARIABLE $_exception_
+JUMP TO 1.FinalClause ON NONE
+LOAD VARIABLE $_exception_
+
+1.4.ExceptionClause:
+STORE VARIABLE $exception
+LOAD VARIABLE $exception
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `$warning`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.4.ClauseEnd ON FALSE
+
+1.4.1.EvaluateStatement:
+LOAD VARIABLE $count
+LOAD LITERAL `1`
+INVOKE INTRINSIC $sum WITH 2 PARAMETERS
+STORE VARIABLE $count
+
+1.4.2.EvaluateStatement:
+LOAD LITERAL `2`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$message`
+LOAD LITERAL `"Something not too serious happened."`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+LOAD LITERAL `$exception`
+LOAD VARIABLE $exception
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE VARIABLE $_result_
+
+1.4.3.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.4.ClauseEnd:
+LOAD VARIABLE $_exception_
+JUMP TO 1.FinalClause ON NONE
+LOAD VARIABLE $_exception_
+
+1.5.ExceptionClause:
+STORE VARIABLE $exception
+LOAD VARIABLE $exception
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `$moderate`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.5.ClauseEnd ON FALSE
+
+1.5.1.EvaluateStatement:
+LOAD LITERAL `2`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$message`
+LOAD LITERAL `"Something serious happened."`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+LOAD LITERAL `$exception`
+LOAD VARIABLE $exception
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE VARIABLE $exception
+
+1.5.2.ThrowStatement:
+LOAD VARIABLE $exception
+STORE VARIABLE $_exception_
+JUMP TO 1.5.3.BlockEnd
+
+1.5.3.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.5.ClauseEnd:
+SKIP INSTRUCTION
+
+1.FinalClause:
+SKIP INSTRUCTION
+
+1.6.1.QueueStatement:
+LOAD LITERAL `<bali:/#RSTMWSC0HFY00QJP37QD3JA533NLKPP5v3.1>`
+STORE VARIABLE $_queue_21
+LOAD LITERAL `4`
+INVOKE INTRINSIC $array WITH PARAMETER
+LOAD VARIABLE $foo
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+LOAD VARIABLE $bar
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+LOAD VARIABLE $baz
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+LOAD LITERAL `5`
+INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
+STORE MESSAGE $_queue_21
+
+1.6.2.PublishStatement:
+LOAD LITERAL `2`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `$confirmation`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+LOAD LITERAL `$timestamp`
+LOAD VARIABLE $type
+LOAD LITERAL `0`
+INVOKE INTRINSIC $array WITH PARAMETER
+EXECUTE METHOD $now WITH PARAMETERS
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE MESSAGE $_eventQueue_
+
+1.6.3.BlockEnd:
+SKIP INSTRUCTION
+
+2.WhileStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_2_1_Outer
+
+2.1.Outer:
+LOAD VARIABLE $_continue_2_1_Outer
+LOAD LITERAL `true`
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 2.FinalClause ON FALSE
+
+2.1.1.EvaluateStatement:
+LOAD VARIABLE $bar
+STORE VARIABLE $foo
+
+2.1.2.IfStatement:
+SKIP INSTRUCTION
+
+2.1.2.1.IfCondition:
+LOAD VARIABLE $foo
+JUMP TO 2.1.2.2.ElseClause ON FALSE
+
+2.1.2.1.1.BreakStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_continue_2_1_Outer
+JUMP TO 2.1.2.1.2.BlockEnd
+
+2.1.2.1.2.BlockEnd:
+JUMP TO 2.1.2.FinalClause
+
+2.1.2.2.ElseClause:
+SKIP INSTRUCTION
+
+2.1.2.2.1.WithStatement:
+LOAD VARIABLE $sequence
+STORE VARIABLE $_sequence_24
+LOAD VARIABLE $_sequence_24
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_sequenceType_25
+LOAD VARIABLE $_sequenceType_25
+LOAD VARIABLE $_sequence_24
+EXECUTE METHOD $createIterator WITH TARGET
+STORE VARIABLE $_iterator_26
+LOAD VARIABLE $_iterator_26
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_iteratorType_27
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_2_1_2_2_1_1_WithItem
+
+2.1.2.2.1.1.WithItem:
+LOAD VARIABLE $_continue_2_1_2_2_1_1_WithItem
+LOAD VARIABLE $_iteratorType_27
+LOAD VARIABLE $_iterator_26
+EXECUTE METHOD $hasNext WITH TARGET
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 2.1.2.2.1.FinalClause ON FALSE
+LOAD VARIABLE $_iteratorType_27
+LOAD VARIABLE $_iterator_26
+EXECUTE METHOD $getNext WITH TARGET
+STORE VARIABLE $item
+
+2.1.2.2.1.1.1.SelectStatement:
+LOAD VARIABLE $selection
+STORE VARIABLE $_selection_28
+
+2.1.2.2.1.1.1.1.SelectOption:
+LOAD VARIABLE $_selection_28
+LOAD LITERAL `$first`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 2.1.2.2.1.1.1.2SelectOption ON FALSE
+
+2.1.2.2.1.1.1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+2.1.2.2.1.1.1.1.2.BlockEnd:
+JUMP TO 2.1.2.2.1.1.1.FinalClause
+
+2.1.2.2.1.1.1.2.SelectOption:
+LOAD VARIABLE $_selection_28
+LOAD LITERAL `$second`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 2.1.2.2.1.1.1.3.ElseClause ON FALSE
+
+2.1.2.2.1.1.1.2.1.EvaluateStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_result_
+
+2.1.2.2.1.1.1.2.2.BlockEnd:
+JUMP TO 2.1.2.2.1.1.1.FinalClause
+
+2.1.2.2.1.1.1.3.ElseClause:
+SKIP INSTRUCTION
+
+2.1.2.2.1.1.1.3.1.ContinueStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_continue_2_1_2_2_1_1_WithItem
+JUMP TO 2.1.2.2.1.1.1.3.2.BlockEnd
+
+2.1.2.2.1.1.1.3.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.1.2.2.1.1.1.FinalClause:
+SKIP INSTRUCTION
+
+2.1.2.2.1.1.1.4.1.EvaluateStatement:
+LOAD LITERAL `$selectDone`
+STORE VARIABLE $_result_
+
+2.1.2.2.1.1.1.4.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.1.2.2.1.1.2.BlockEnd:
+JUMP TO 2.1.2.2.1.1.WithItem
+
+2.1.2.2.1.FinalClause:
+SKIP INSTRUCTION
+
+2.1.2.2.1.2.1.EvaluateStatement:
+LOAD LITERAL `$innerDone`
+STORE VARIABLE $_result_
+
+2.1.2.2.1.2.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.1.2.2.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.1.2.FinalClause:
+SKIP INSTRUCTION
+
+2.1.2.3.1.EvaluateStatement:
+LOAD LITERAL `$ifDone`
+STORE VARIABLE $_result_
+
+2.1.2.3.2.BlockEnd:
+SKIP INSTRUCTION
+
+2.1.3.BlockEnd:
+JUMP TO 2.1.Outer
+
+2.FinalClause:
+SKIP INSTRUCTION
+
+2.2.1.EvaluateStatement:
+LOAD LITERAL `$outerDone`
+STORE VARIABLE $_result_
+
+2.2.2.BlockEnd:
+SKIP INSTRUCTION
+
+3.BlockEnd:
+SKIP INSTRUCTION
+

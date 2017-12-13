@@ -1,0 +1,49 @@
+
+1.WithStatement:
+LOAD LITERAL `$sequence`
+STORE VARIABLE $_sequence_1
+LOAD VARIABLE $_sequence_1
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequenceType_2
+LOAD VARIABLE $_sequence_1
+EXECUTE METHOD $createIterator WITH TARGET
+STORE VARIABLE $_iterator_3
+LOAD VARIABLE $_iterator_3
+INVOKE INTRINSIC $getType WITH PARAMETER
+STORE VARIABLE $_iteratorType_4
+LOAD LITERAL `true`
+STORE VARIABLE $_continue_1_1_WithItem
+
+1.1.WithItem:
+LOAD VARIABLE $_continue_1_1_WithItem
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $hasNext WITH TARGET
+INVOKE INTRINSIC $and WITH 2 PARAMETERS
+JUMP TO 1.StatementEnd ON FALSE
+LOAD VARIABLE $_iteratorType_4
+LOAD VARIABLE $_iterator_3
+EXECUTE METHOD $getNext WITH TARGET
+STORE VARIABLE $symbol
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.ContinueStatement:
+JUMP TO 1.1.4.BlockEnd
+
+1.1.3.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.4.BlockEnd:
+JUMP TO 1.1.WithItem
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+

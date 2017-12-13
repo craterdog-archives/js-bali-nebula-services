@@ -13,7 +13,7 @@
  * This class defines the context for a method that is being executed by the
  * the Bali Virtual Machine™.
  */
-var bytecode = require('bali-instruction-set/utilities/BytecodeUtilities');
+var bytecode = require('../utilities/BytecodeUtilities');
 
 
 /**

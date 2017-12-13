@@ -1,0 +1,21 @@
+
+1.IfStatement:
+SKIP INSTRUCTION
+
+1.1.IfCondition:
+LOAD LITERAL `true`
+JUMP TO 1.StatementEnd ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+

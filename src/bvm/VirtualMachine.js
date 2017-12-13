@@ -12,8 +12,7 @@
 /*
  * This class defines the Bali Virtual Machine™.
  */
-var elements = require('bali-language/elements');
-var bytecode = require('bali-instruction-set/utilities/BytecodeUtilities');
+var elements = require('bali-language/src/elements');
 var TaskContext = require('./TaskContext');
 var MethodContext = require('./MethodContext');
 
@@ -35,36 +34,6 @@ var intrinsics = {
     isNone: function(document) {},
     isZero: function(document) {},
     table: function(capacity) {}
-};
-
-
-/**
- * This function processes a message using the Bali Virtual Machine™.
- * 
- * @param {Reference} typeReference A reference to the type containing the message definition.
- * @param {Reference} targetReference A reference to the target that supports the message.
- * @param {Symbol} message The symbol for the message to be processed.
- * @param {Composite} parameters The array or table of parameters that were passed with the message.
- */
-exports.processMessage = function(typeReference, targetReference, message, parameters) {
-    var type = cloud.readDocument(typeReference);
-    var target = cloud.readDocument(targetReference);
-    var virtualMachine = new VirtualMachine();
-    var methodContext = new MethodContext(type, target, message, parameters);
-    virtualMachine.pushContext(methodContext);
-    virtualMachine.processInstructions();
-};
-
-
-/**
- * This function continues processing a previous submitted message using the
- * Bali Virtual Machine™. The task context is retrieved from the Bali Document Repository™.
- * 
- * @param {Reference} taskReference A reference to an existing task context.
- */
-exports.continueProcessing = function(taskReference) {
-    var virtualMachine = new VirtualMachine(taskReference);
-    virtualMachine.processInstructions();
 };
 
 

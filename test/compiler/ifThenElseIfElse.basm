@@ -1,0 +1,42 @@
+
+1.IfStatement:
+SKIP INSTRUCTION
+
+1.1.IfCondition:
+LOAD LITERAL `true`
+JUMP TO 1.2IfCondition ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `true`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.2.IfCondition:
+LOAD LITERAL `false`
+JUMP TO 1.3.ElseClause ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `false`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.3.ElseClause:
+SKIP INSTRUCTION
+
+1.3.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.3.2.BlockEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+

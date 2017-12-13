@@ -1,0 +1,67 @@
+
+1.ThrowStatement:
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'whine'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+STORE VARIABLE $_exception_
+JUMP TO 2.BlockEnd
+
+1.ExceptionClauses:
+LOAD VARIABLE $_exception_
+JUMP TO 1.StatementEnd ON NONE
+LOAD VARIABLE $_exception_
+
+1.1.ExceptionClause:
+STORE VARIABLE $error
+LOAD VARIABLE $error
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'bad'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.1.ClauseEnd ON FALSE
+
+1.1.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.1.2.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.1.ClauseEnd:
+LOAD VARIABLE $_exception_
+JUMP TO 1.StatementEnd ON NONE
+LOAD VARIABLE $_exception_
+
+1.2.ExceptionClause:
+STORE VARIABLE $error
+LOAD VARIABLE $error
+LOAD LITERAL `1`
+INVOKE INTRINSIC $table WITH PARAMETER
+LOAD LITERAL `$type`
+LOAD LITERAL `'horrid'`
+INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.2.ClauseEnd ON FALSE
+
+1.2.1.EvaluateStatement:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.2.2.BlockEnd:
+LOAD LITERAL `none`
+STORE VARIABLE $_exception_
+
+1.2.ClauseEnd:
+SKIP INSTRUCTION
+
+1.StatementEnd:
+SKIP INSTRUCTION
+
+2.BlockEnd:
+SKIP INSTRUCTION
+

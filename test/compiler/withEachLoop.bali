@@ -1,0 +1,7 @@
+{
+    with each $symbol in $sequence do {
+        true
+        continue
+        none
+    }
+}
