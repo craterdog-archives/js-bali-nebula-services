@@ -12,8 +12,8 @@ module.exports = function(grunt) {
     jshint: {
       files: [
         'Gruntfile.js',
-        'src/**/*.js',
-        'test/**/*.js'
+        '**/*.js',
+        '!node_modules/**/*.js'  // must be last in the list
       ],
       options: {
         node: true
@@ -49,7 +49,10 @@ module.exports = function(grunt) {
       },
       dist: {
         // concatenate the source files and place the result in destination
-        src: ['src/**/*.js'],
+        src: [
+          '**/*.js',
+          '!node_modules/**/*.js'  // must be last in the list
+        ],
         dest: 'dist/<%= pkg.name %>.js'
       }
     },

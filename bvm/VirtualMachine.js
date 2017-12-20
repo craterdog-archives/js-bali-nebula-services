@@ -12,7 +12,7 @@
 /*
  * This class defines the Bali Virtual Machine™.
  */
-var elements = require('bali-language/src/elements');
+var elements = require('bali-language/elements');
 var TaskContext = require('./TaskContext');
 var MethodContext = require('./MethodContext');
 

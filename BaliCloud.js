@@ -14,8 +14,8 @@
  * Bali Cloud Operating System™. For more information about the Bali Cloud
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
-var language = require('bali-language/src/BaliLanguage');
-var instructionSet = require('bali-instruction-set/src/BaliInstructionSet');
+var language = require('bali-language/BaliLanguage');
+var instructionSet = require('bali-instruction-set/BaliInstructionSet');
 var utilities = require('./utilities/BytecodeUtilities');
 var LanguageCompiler = require('./compiler/LanguageCompiler').LanguageCompiler;
 var InstructionSetAnalyzer = require('./compiler/InstructionSetAnalyzer').InstructionSetAnalyzer;

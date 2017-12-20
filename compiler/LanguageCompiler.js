@@ -14,8 +14,8 @@
  * produced by the BaliLanguageParser and generates the assembly code
  * that can be used to generate the bytecode for the Bali Virtual Machine™.
  */
-var BaliLanguageVisitor = require('bali-language/src/grammar/BaliLanguageVisitor').BaliLanguageVisitor;
-var LanguageFormatter = require('bali-language/src/transformers/LanguageFormatter').LanguageFormatter;
+var BaliLanguageVisitor = require('bali-language/grammar/BaliLanguageVisitor').BaliLanguageVisitor;
+var LanguageFormatter = require('bali-language/transformers/LanguageFormatter').LanguageFormatter;
 
 
 /**

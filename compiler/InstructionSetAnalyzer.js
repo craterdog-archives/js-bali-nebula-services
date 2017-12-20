@@ -8,7 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 'use strict';
-var BaliInstructionSetVisitor = require('bali-instruction-set/src/grammar/BaliInstructionSetVisitor').BaliInstructionSetVisitor;
+var BaliInstructionSetVisitor = require('bali-instruction-set/grammar/BaliInstructionSetVisitor').BaliInstructionSetVisitor;
 
 /*
  * This class defines a analyzing visitor that "walks" a parse tree

@@ -9,7 +9,7 @@
  ************************************************************************/
 'use strict';
 
-var utilities = require('../../src/utilities/BytecodeUtilities');
+var utilities = require('../../utilities/BytecodeUtilities');
 var testCase = require('nodeunit').testCase;
 
 // masks

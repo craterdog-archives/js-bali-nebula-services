@@ -10,7 +10,7 @@
 'use strict';
 
 var fs = require('fs');
-var tools = require('../../src/BaliCloud');
+var tools = require('../../BaliCloud');
 var testCase = require('nodeunit').testCase;
 
 module.exports = testCase({
