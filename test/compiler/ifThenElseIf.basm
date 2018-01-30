@@ -1,28 +1,28 @@
 
-1.IfStatement:
+1.IfClause:
 SKIP INSTRUCTION
 
-1.1.IfCondition:
+1.1.ConditionBlock:
 LOAD LITERAL `true`
-JUMP TO 1.2IfCondition ON FALSE
+JUMP TO 1.2ConditionBlock ON FALSE
 
-1.1.1.EvaluateStatement:
+1.1.1.EvaluateClause:
 LOAD LITERAL `true`
 STORE VARIABLE $_result_
 
 1.1.2.BlockEnd:
 JUMP TO 1.StatementEnd
 
-1.2.IfCondition:
-LOAD LITERAL `false`
-JUMP TO 1.StatementEnd ON FALSE
+1.2.ConditionBlock:
+SKIP INSTRUCTION
 
-1.2.1.EvaluateStatement:
-LOAD LITERAL `false`
+1.2.1.EvaluateClause:
+LOAD LITERAL `true`
 STORE VARIABLE $_result_
 
 1.2.2.BlockEnd:
-SKIP INSTRUCTION
+JUMP TO 1.StatementEnd ON FALSE
+LOAD LITERAL `false`
 
 1.StatementEnd:
 SKIP INSTRUCTION

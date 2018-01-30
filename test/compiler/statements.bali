@@ -10,7 +10,7 @@
     $statement: {
         label: while condition do {
             break from label
-        } catch $exception matching [$type: "BadException"] with {
+        } handle $exception matching [$type: "BadException"] with {
             continue to label
         }
         queue message() on <bali:/#Z9L4CT371Q9J6ZMDRSFZJ3RXSH39LVK9v3.1> finish with {
@@ -22,7 +22,7 @@
             $component := 1.2
         } else {
             $component := - -pi i
-        } catch $exception matching template with {
+        } handle $exception matching template with {
             publish exception
             throw exception
         } finish with {

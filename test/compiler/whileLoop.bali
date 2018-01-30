@@ -1,5 +1,5 @@
 {
-    while $condition do {
+    while condition do {
         true
         break
         none

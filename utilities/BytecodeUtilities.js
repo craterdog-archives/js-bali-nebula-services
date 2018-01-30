@@ -78,7 +78,7 @@ exports.decodeModifier = function(instruction) {
         case OPCODE8:
             return number;
         case EXECUTE:
-            return METHODS[number];
+            return PROCEDURES[number];
         default:
             throw new Error('BYTECODE: Attempted to return the modifier for an invalid opcode: ' + opcode);
     }
@@ -256,7 +256,7 @@ exports.instructionAsString = function(operation, modifier, operand) {
             }
             break;
         case 'EXECUTE':
-            instruction = 'EXECUTE METHOD ' + operand;
+            instruction = 'EXECUTE PROCEDURE ' + operand;
             if (modifier) instruction += ' ' + modifier;
             break;
     }
@@ -337,10 +337,10 @@ var ON_NONE = 0x0800;
 var ON_FALSE = 0x1000;
 var ON_ZERO = 0x1800;
 
-// methods
+// procedures
 var WITH_PARAMETERS = 0x0800;
-var WITH_TARGET = 0x1000;
-var WITH_TARGET_AND_PARAMETERS = 0x1800;
+var ON_TARGET = 0x1000;
+var ON_TARGET_WITH_PARAMETERS = 0x1800;
 
 // modcodes
 var MODCODES = {
@@ -358,8 +358,8 @@ var MODCODES = {
     'ON FALSE': ON_FALSE,
     'ON ZERO': ON_ZERO,
     'WITH PARAMETERS': WITH_PARAMETERS,
-    'WITH TARGET': WITH_TARGET,
-    'WITH TARGET AND PARAMETERS': WITH_TARGET_AND_PARAMETERS
+    'ON TARGET': ON_TARGET,
+    'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS
 };
 
 // types
@@ -385,10 +385,10 @@ var CONDITIONS = [
     'ON ZERO'
 ];
 
-// methods
-var METHODS = [
+// procedures
+var PROCEDURES = [
     '',
     'WITH PARAMETERS',
-    'WITH TARGET',
-    'WITH TARGET AND PARAMETERS'
+    'ON TARGET',
+    'ON TARGET WITH PARAMETERS'
 ];

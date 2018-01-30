@@ -183,7 +183,7 @@ VirtualMachine.prototype.setVariable = function(index, value) {
  * @returns {string} The method name value associated with the index.
  */
 VirtualMachine.prototype.getMethod = function(index) {
-    return this.currentContext().symbols.methods[index - 1];  // JS zero based indexing
+    return this.currentContext().symbols.procedures[index - 1];  // JS zero based indexing
 };
 
 
@@ -408,16 +408,16 @@ VirtualMachine.prototype.handleInvokeInstruction = function(numberOfParameters, 
 VirtualMachine.prototype.handleExecuteInstruction = function(modifier, index) {
     switch (modifier) {
         case '':
-            this.executeMethod(index);
+            this.executeProcedure(index);
             break;
         case 'WITH PARAMETERS':
-            this.executeMethodWithParameters(index);
+            this.executeProcedureWithParameters(index);
             break;
-        case 'WITH TARGET':
-            this.executeMethodWithTarget(index);
+        case 'ON TARGET':
+            this.executeProcedureOnTarget(index);
             break;
-        case 'WITH TARGET AND PARAMETERS':
-            this.executeMethodWithTargetAndParameters(index);
+        case 'ON TARGET WITH PARAMETERS':
+            this.executeProcedureOnTargetWithParameters(index);
             break;
         default:
             throw new Error('BALI VM: Invalid modifier for the EXECUTE instruction: ' + modifier);
@@ -517,7 +517,7 @@ VirtualMachine.prototype.invokeIntrinsic = function(index, numberOfParameters) {
 };
 
 
-VirtualMachine.prototype.executeMethod = function(index) {
+VirtualMachine.prototype.executeProcedure = function(index) {
     var typeReference = this.getDocument();
     var type = cloud.readDocument(typeReference);
     var target = null;
@@ -528,7 +528,7 @@ VirtualMachine.prototype.executeMethod = function(index) {
 };
 
 
-VirtualMachine.prototype.executeMethodWithParameters = function(index) {
+VirtualMachine.prototype.executeProcedureWithParameters = function(index) {
     var typeReference = this.getDocument();
     var type = cloud.readDocument(typeReference);
     var target = null;
@@ -539,7 +539,7 @@ VirtualMachine.prototype.executeMethodWithParameters = function(index) {
 };
 
 
-VirtualMachine.prototype.executeMethodWithTarget = function(index) {
+VirtualMachine.prototype.executeProcedureOnTarget = function(index) {
     var typeReference = this.getDocument();
     var type = cloud.readDocument(typeReference);
     var target = this.getDocument();
@@ -550,7 +550,7 @@ VirtualMachine.prototype.executeMethodWithTarget = function(index) {
 };
 
 
-VirtualMachine.prototype.executeMethodWithTargetAndParameters = function(index) {
+VirtualMachine.prototype.executeProcedureOnTargetWithParameters = function(index) {
     var typeReference = this.getDocument();
     var type = cloud.readDocument(typeReference);
     var target = this.getDocument();

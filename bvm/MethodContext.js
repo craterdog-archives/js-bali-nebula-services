@@ -32,8 +32,8 @@ function MethodContext(type, target, method, parameters) {
     this.literals = {};  // TODO: initialize from type
     this.variables = {};  // TODO: initialize from type
     this.references = {};  // TODO: initialize from type
-    this.methods = {};  // TODO: initialize from type
-    this.instructions = this.methods[method].instructions;
+    this.procedures = {};  // TODO: initialize from type
+    this.instructions = this.procedures[method].instructions;
     this.instructionPointer = 1;  // Bali unit based indexing
     this.operation = null;
     this.modifier = null;

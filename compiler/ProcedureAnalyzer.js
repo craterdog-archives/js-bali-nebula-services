@@ -8,7 +8,6 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 'use strict';
-var BaliInstructionSetVisitor = require('bali-instruction-set/grammar/BaliInstructionSetVisitor').BaliInstructionSetVisitor;
 
 /*
  * This class defines a analyzing visitor that "walks" a parse tree
@@ -20,71 +19,64 @@ var BaliInstructionSetVisitor = require('bali-instruction-set/grammar/BaliInstru
  * This constructor creates a new instruction analyzer.
  * 
  * @constructor
- * @param {object} context The method context for the instructions being
+ * @param {object} symbolTables The set of symbol tables for the instructions being
  * analyzed. 
- * @returns {InstructionSetAnalyzer} The new analyzer.
+ * @returns {ProcedureAnalyzer} The new analyzer.
  */
-function InstructionSetAnalyzer(context) {
-    this.context = context;
+function ProcedureAnalyzer(symbolTables) {
+    this.symbolTables = symbolTables;
     return this;
 }
-InstructionSetAnalyzer.prototype.constructor = InstructionSetAnalyzer;
-exports.InstructionSetAnalyzer = InstructionSetAnalyzer;
+ProcedureAnalyzer.prototype.constructor = ProcedureAnalyzer;
+exports.ProcedureAnalyzer = ProcedureAnalyzer;
 
 
 /**
  * This method analyzes a parse tree structure containing instructions
- * and extracts context information that will be needed by the assembler
+ * and extracts label information that will be needed by the assembler
  * to generate the bytecode.
  * 
  * @param {object} instructions The parse tree structure to be analyzed.
  */
-InstructionSetAnalyzer.prototype.analyzeInstructions = function(instructions) {
-    var visitor = new AnalyzerVisitor(this.context);
+ProcedureAnalyzer.prototype.analyzeProcedure = function(instructions) {
+    var visitor = new AnalyzerVisitor(this.symbolTables);
     instructions.accept(visitor);
 };
 
 
 // PRIVATE CLASSES
 
-function AnalyzerVisitor(context) {
-    BaliInstructionSetVisitor.call(this);
-    this.context = context;
+function AnalyzerVisitor(symbolTables) {
+    this.symbolTables = symbolTables;
     this.address = 1;  // bali VM unit based addressing
     return this;
 }
-AnalyzerVisitor.prototype = Object.create(BaliInstructionSetVisitor.prototype);
 AnalyzerVisitor.prototype.constructor = AnalyzerVisitor;
 
 
-// instructions: (prefix? instruction NEWLINE)*
-AnalyzerVisitor.prototype.visitInstructions = function(ctx) {
-    this.visitChildren(ctx);
+// procedure: NEWLINE* step* NEWLINE* EOF;
+AnalyzerVisitor.prototype.visitProcedure = function(procedure) {
+    var steps = procedure.steps;
+    for (var i = 0; i < steps.length; i++) {
+        var step = steps[i];
+        step.accept(this);
+    }
 };
 
 
-// prefix: NEWLINE LABEL ':' NEWLINE
-AnalyzerVisitor.prototype.visitPrefix = function(ctx) {
-    var label = ctx.LABEL().getText();
-    this.context.addresses[label] = this.address;
-};
-
-
-// instruction:
-//     skipInstruction |
-//     jumpInstruction |
-//     loadInstruction |
-//     storeInstruction |
-//     invokeInstruction |
-//     executeInstruction
-AnalyzerVisitor.prototype.visitInstruction = function(ctx) {
-    ctx.children[0].accept(this);
-    this.address++;
+// step: label? instruction NEWLINE;
+AnalyzerVisitor.prototype.visitStep = function(step) {
+    var label = step.label;
+    if (label) {
+        this.symbolTables.addresses[label] = this.address;
+    }
+    step.instruction.accept(this);
 };
 
 
 // skipInstruction: 'SKIP' 'INSTRUCTION'
-AnalyzerVisitor.prototype.visitSkipInstruction = function(ctx) {
+AnalyzerVisitor.prototype.visitSkipInstruction = function(instruction) {
+    this.address++;
 };
 
 
@@ -93,7 +85,8 @@ AnalyzerVisitor.prototype.visitSkipInstruction = function(ctx) {
 //     'JUMP' 'TO' LABEL 'ON' 'NONE' |
 //     'JUMP' 'TO' LABEL 'ON' 'FALSE' |
 //     'JUMP' 'TO' LABEL 'ON' 'ZERO'
-AnalyzerVisitor.prototype.visitJumpInstruction = function(ctx) {
+AnalyzerVisitor.prototype.visitJumpInstruction = function(instruction) {
+    this.address++;
 };
 
 
@@ -102,9 +95,9 @@ AnalyzerVisitor.prototype.visitJumpInstruction = function(ctx) {
 //     'LOAD' 'DOCUMENT' SYMBOL |
 //     'LOAD' 'MESSAGE' SYMBOL |
 //     'LOAD' 'VARIABLE' SYMBOL
-AnalyzerVisitor.prototype.visitLoadInstruction = function(ctx) {
-    var modifier = ctx.children[1].getText();
-    var value = ctx.children[2].getText();  // get symbol or literal
+AnalyzerVisitor.prototype.visitLoadInstruction = function(instruction) {
+    var modifier = instruction.modifier;
+    var value = instruction.value;
     var type;
     switch(modifier) {
         case 'LITERAL':
@@ -120,9 +113,10 @@ AnalyzerVisitor.prototype.visitLoadInstruction = function(ctx) {
         default:
             throw new Error('ANALYZER: Illegal modifier for the LOAD instruction: ' + modifier);
     }
-    if (!this.context[type].includes(value)) {
-        this.context[type].push(value);
+    if (!this.symbolTables[type].includes(value)) {
+        this.symbolTables[type].push(value);
     }
+    this.address++;
 };
 
 
@@ -131,9 +125,9 @@ AnalyzerVisitor.prototype.visitLoadInstruction = function(ctx) {
 //     'STORE' 'DOCUMENT' SYMBOL |
 //     'STORE' 'MESSAGE' SYMBOL |
 //     'STORE' 'VARIABLE' SYMBOL
-AnalyzerVisitor.prototype.visitStoreInstruction = function(ctx) {
-    var modifier = ctx.children[1].getText();
-    var symbol = ctx.SYMBOL().getText();
+AnalyzerVisitor.prototype.visitStoreInstruction = function(instruction) {
+    var modifier = instruction.modifier;
+    var symbol = instruction.symbol;
     var type;
     switch(modifier) {
         case 'DRAFT':
@@ -147,9 +141,10 @@ AnalyzerVisitor.prototype.visitStoreInstruction = function(ctx) {
         default:
             throw new Error('ANALYZER: Illegal modifier for the STORE instruction: ' + modifier);
     }
-    if (!this.context[type].includes(symbol)) {
-        this.context[type].push(symbol);
+    if (!this.symbolTables[type].includes(symbol)) {
+        this.symbolTables[type].push(symbol);
     }
+    this.address++;
 };
 
 
@@ -157,22 +152,24 @@ AnalyzerVisitor.prototype.visitStoreInstruction = function(ctx) {
 //     'INVOKE' 'INTRINSIC' SYMBOL |
 //     'INVOKE' 'INTRINSIC' SYMBOL 'WITH' 'PARAMETER' |
 //     'INVOKE' 'INTRINSIC' SYMBOL 'WITH' NUMBER 'PARAMETERS'
-AnalyzerVisitor.prototype.visitInvokeInstruction = function(ctx) {
-    var symbol = ctx.SYMBOL().getText();
-    if (!this.context.intrinsics.includes(symbol)) {
-        this.context.intrinsics.push(symbol);
+AnalyzerVisitor.prototype.visitInvokeInstruction = function(instruction) {
+    var symbol = instruction.symbol;
+    if (!this.symbolTables.intrinsics.includes(symbol)) {
+        this.symbolTables.intrinsics.push(symbol);
     }
+    this.address++;
 };
 
 
 // executeInstruction:
-//     'EXECUTE' 'METHOD' SYMBOL |
-//     'EXECUTE' 'METHOD' SYMBOL 'WITH' 'PARAMETERS' |
-//     'EXECUTE' 'METHOD' SYMBOL 'WITH' 'TARGET' |
-//     'EXECUTE' 'METHOD' SYMBOL 'WITH' 'TARGET' 'AND' 'PARAMETERS'
-AnalyzerVisitor.prototype.visitExecuteInstruction = function(ctx) {
-    var symbol = ctx.SYMBOL().getText();
-    if (!this.context.methods.includes(symbol)) {
-        this.context.methods.push(symbol);
+//     'EXECUTE' 'PROCEDURE' SYMBOL |
+//     'EXECUTE' 'PROCEDURE' SYMBOL 'WITH' 'PARAMETERS' |
+//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' |
+//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
+AnalyzerVisitor.prototype.visitExecuteInstruction = function(instruction) {
+    var symbol = instruction.symbol;
+    if (!this.symbolTables.procedures.includes(symbol)) {
+        this.symbolTables.procedures.push(symbol);
     }
+    this.address++;
 };

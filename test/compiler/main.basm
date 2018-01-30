@@ -1,5 +1,5 @@
 
-1.EvaluateStatement:
+1.EvaluateClause:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 

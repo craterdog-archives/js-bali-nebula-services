@@ -1,5 +1,5 @@
 {
-    label: while $condition do {
+    label: while condition do {
         true
         continue to label
         none

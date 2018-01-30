@@ -11,13 +11,13 @@
         $d := b.find($tag)
         (3, 4i)
         return
-    } catch $exception matching [$type: $warning] with {
+    } handle $exception matching [$type: $warning] with {
         $count := count + 1
         [
             $message: "Something not too serious happened."
             $exception: exception
         ]
-    } catch $exception matching [$type: $moderate] with {
+    } handle $exception matching [$type: $moderate] with {
         $exception := [
             $message: "Something serious happened."
             $exception: exception

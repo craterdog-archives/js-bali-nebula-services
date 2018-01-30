@@ -18,8 +18,8 @@ var language = require('bali-language/BaliLanguage');
 var instructionSet = require('bali-instruction-set/BaliInstructionSet');
 var utilities = require('./utilities/BytecodeUtilities');
 var LanguageCompiler = require('./compiler/LanguageCompiler').LanguageCompiler;
-var InstructionSetAnalyzer = require('./compiler/InstructionSetAnalyzer').InstructionSetAnalyzer;
-var InstructionSetAssembler = require('./compiler/InstructionSetAssembler').InstructionSetAssembler;
+var ProcedureAnalyzer = require('./compiler/ProcedureAnalyzer').ProcedureAnalyzer;
+var ProcedureAssembler = require('./compiler/ProcedureAssembler').ProcedureAssembler;
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var MethodContext = require('./bvm/MethodContext').MethodContext;
 
@@ -84,60 +84,60 @@ exports.compileBlock = function(baliBlock) {
 
 
 /**
- * This function takes a source code string containing BaliVM instructions
- * and parses them into a parse tree structure containing the same
- * instructions.
+ * This function takes a source code string containing a BaliVM procedure
+ * and parses it into a parse tree structure containing the same
+ * procedure.
  * 
  * @param {string} source The source code.
  * @returns {object} The resulting parse tree.
  */
-exports.parseInstructions = function(source) {
-    var instructions = instructionSet.parseInstructions(source);
-    return instructions;
+exports.parseProcedure = function(source) {
+    var procedure = instructionSet.parseProcedure(source);
+    return procedure;
 };
 
 
 /**
- * This function takes a parse tree structure containing instructions
- * and formats it back into a source code string containing BaliVM
- * instructions.
+ * This function takes a parse tree structure containing a procedure
+ * and formats it back into a source code string containing the BaliVM
+ * procedure.
  * 
- * @param {object} instructions The parse tree structure to be formatted.
+ * @param {object} procedure The parse tree structure to be formatted.
  * @returns {string} The resulting source code string.
  */
-exports.formatInstructions = function(instructions) {
-    var source = instructionSet.formatInstructions(instructions);
+exports.formatProcedure = function(procedure) {
+    var source = instructionSet.formatProcedure(procedure);
     return source;
 };
 
 
 /**
- * This function analyzes a parse tree structure containing instructions
+ * This function analyzes a parse tree structure containing a procedure
  * and extracts context information that will be needed by the assembler
  * to generate the bytecode.
  * 
  * @param {object} context The existing context information gathered by
  * the compiler.
- * @param {object} instructions The parse tree structure to be analyzed.
+ * @param {object} procedure The parse tree structure to be analyzed.
  */
-exports.analyzeInstructions = function(context, instructions) {
-    var analyzer = new InstructionSetAnalyzer(context);
-    analyzer.analyzeInstructions(instructions);
+exports.analyzeProcedure = function(context, procedure) {
+    var analyzer = new ProcedureAnalyzer(context);
+    analyzer.analyzeProcedure(procedure);
 };
 
 
 /**
- * This function walks a parse tree structure containing instructions
+ * This function walks a parse tree structure containing a procedure
  * and generates the corresponding bytecode for the BaliVM.
  * 
  * @param {object} context The context information gathered by the
  * compiler and analyzer.
- * @param {object} instructions The parse tree structure to be assembled.
+ * @param {object} procedure The parse tree structure to be assembled.
  * @returns {array} The assembled bytecode array.
  */
-exports.assembleInstructions = function(context, instructions) {
-    var assembler = new InstructionSetAssembler(context);
-    var bytecode = assembler.assembleInstructions(instructions);
+exports.assembleProcedure = function(context, procedure) {
+    var assembler = new ProcedureAssembler(context);
+    var bytecode = assembler.assembleProcedure(procedure);
     return bytecode;
 };
 
@@ -152,9 +152,9 @@ exports.assembleInstructions = function(context, instructions) {
  * @returns {string} The regenerated source code.
  */
 exports.disassembleBytecode = function(context, bytecode) {
-    var assembler = new InstructionSetAssembler(context);
-    var instructions = assembler.disassembleBytecode(bytecode);
-    return instructions;
+    var assembler = new ProcedureAssembler(context);
+    var procedure = assembler.disassembleBytecode(bytecode);
+    return procedure;
 };
 
 
@@ -185,7 +185,7 @@ exports.processMessage = function(typeReference, targetReference, message, param
     var virtualMachine = new VirtualMachine();
     var methodContext = new MethodContext(type, target, message, parameters);
     virtualMachine.pushContext(methodContext);
-    virtualMachine.processInstructions();
+    virtualMachine.processProcedure();
 };
 
 
@@ -197,6 +197,6 @@ exports.processMessage = function(typeReference, targetReference, message, param
  */
 exports.continueProcessing = function(taskReference) {
     var virtualMachine = new VirtualMachine(taskReference);
-    virtualMachine.processInstructions();
+    virtualMachine.processProcedure();
 };
 

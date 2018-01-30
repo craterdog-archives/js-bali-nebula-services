@@ -1,12 +1,12 @@
 
-1.IfStatement:
+1.IfClause:
 SKIP INSTRUCTION
 
-1.1.IfCondition:
+1.1.ConditionBlock:
 LOAD LITERAL `true`
 JUMP TO 1.StatementEnd ON FALSE
 
-1.1.1.EvaluateStatement:
+1.1.1.EvaluateClause:
 LOAD LITERAL `true`
 STORE VARIABLE $_result_
 

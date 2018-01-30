@@ -57,16 +57,16 @@ module.exports = testCase({
         var context = {
             addresses: {},
             intrinsics: [],
-            methods: [],
+            procedures: [],
             references: [],
             variables: [],
             literals: []
         };
         test.expect(2);
-        var source = fs.readFileSync('test/compiler/instructions.basm', 'utf8');
-        var instructions = tools.parseInstructions(source);
-        test.notEqual(instructions, null, 'The parser returned a null list.');
-        tools.analyzeInstructions(context, instructions);
+        var source = fs.readFileSync('test/compiler/procedure.basm', 'utf8');
+        var procedure = tools.parseProcedure(source);
+        test.notEqual(procedure, null, 'The parser returned a null list.');
+        tools.analyzeProcedure(context, procedure);
         var formatted = JSON.stringify(context, null, 4);
         test.strictEqual(formatted, EXPECTED_CONTEXT, 'The analyzer returned a different context.');
         //console.log('\nEXPECTED_CONTEXT:\n' + formatted);
@@ -77,19 +77,19 @@ module.exports = testCase({
         var context = {
             addresses: {},
             intrinsics: [],
-            methods: [],
+            procedures: [],
             references: [],
             variables: [],
             literals: []
         };
         test.expect(3);
-        var source = fs.readFileSync('test/compiler/instructions.basm', 'utf8');
-        var instructions = tools.parseInstructions(source);
-        test.notEqual(instructions, null, 'The parser returned a null list.');
-        tools.analyzeInstructions(context, instructions);
-        var bytecode = tools.assembleInstructions(context, instructions);
+        var source = fs.readFileSync('test/compiler/procedure.basm', 'utf8');
+        var procedure = tools.parseProcedure(source);
+        test.notEqual(procedure, null, 'The parser returned a null list.');
+        tools.analyzeProcedure(context, procedure);
+        var bytecode = tools.assembleProcedure(context, procedure);
         var formatted = tools.formatBytecode(bytecode);
-        test.strictEqual(formatted, EXPECTED_INSTRUCTIONS, 'The formatter returned different instructions.');
+        test.strictEqual(formatted, EXPECTED_INSTRUCTIONS, 'The formatter returned different procedure.');
         //console.log('\nEXPECTED_INSTRUCTIONS:\n' + formatted);
         var disassembled = tools.disassembleBytecode(context, bytecode);
         test.strictEqual(disassembled, source, 'The disassembler returned different source.');
@@ -114,7 +114,7 @@ var EXPECTED_CONTEXT =
 '        "$sum",\n' +
 '        "$sort"\n' +
 '    ],\n' +
-'    "methods": [\n' +
+'    "procedures": [\n' +
 '        "$generateKey",\n' +
 '        "$fibonacci",\n' +
 '        "$hasNext",\n' +
@@ -152,7 +152,7 @@ var EXPECTED_INSTRUCTIONS =
 '[00F]:    6802    31     2    INVOKE INTRINSIC 2 WITH PARAMETER\n' +
 '[010]:    7003    32     3    INVOKE INTRINSIC 3 WITH 2 PARAMETERS\n' +
 '[011]:    7804    33     4    INVOKE INTRINSIC 4 WITH 3 PARAMETERS\n' +
-'[012]:    8001    40     1    EXECUTE METHOD 1\n' +
-'[013]:    8802    41     2    EXECUTE METHOD 2 WITH PARAMETERS\n' +
-'[014]:    9003    42     3    EXECUTE METHOD 3 WITH TARGET\n' +
-'[015]:    9804    43     4    EXECUTE METHOD 4 WITH TARGET AND PARAMETERS\n';
+'[012]:    8001    40     1    EXECUTE PROCEDURE 1\n' +
+'[013]:    8802    41     2    EXECUTE PROCEDURE 2 WITH PARAMETERS\n' +
+'[014]:    9003    42     3    EXECUTE PROCEDURE 3 ON TARGET\n' +
+'[015]:    9804    43     4    EXECUTE PROCEDURE 4 ON TARGET WITH PARAMETERS\n';

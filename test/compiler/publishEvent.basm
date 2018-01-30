@@ -1,5 +1,5 @@
 
-1.PublishStatement:
+1.PublishClause:
 LOAD LITERAL `3`
 INVOKE INTRINSIC $table WITH PARAMETER
 LOAD LITERAL `$type`

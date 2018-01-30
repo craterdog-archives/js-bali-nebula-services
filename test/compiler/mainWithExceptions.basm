@@ -1,5 +1,5 @@
 
-1.ThrowStatement:
+1.ThrowClause:
 LOAD LITERAL `1`
 INVOKE INTRINSIC $table WITH PARAMETER
 LOAD LITERAL `$type`
@@ -8,12 +8,12 @@ INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 STORE VARIABLE $_exception_
 JUMP TO 2.BlockEnd
 
-1.ExceptionClauses:
+1.HandleClauses:
 LOAD VARIABLE $_exception_
 JUMP TO 1.StatementEnd ON NONE
 LOAD VARIABLE $_exception_
 
-1.1.ExceptionClause:
+1.1.HandleClause:
 STORE VARIABLE $error
 LOAD VARIABLE $error
 LOAD LITERAL `1`
@@ -24,7 +24,7 @@ INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
 JUMP TO 1.1.ClauseEnd ON FALSE
 
-1.1.1.EvaluateStatement:
+1.1.1.EvaluateClause:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
@@ -37,7 +37,7 @@ LOAD VARIABLE $_exception_
 JUMP TO 1.StatementEnd ON NONE
 LOAD VARIABLE $_exception_
 
-1.2.ExceptionClause:
+1.2.HandleClause:
 STORE VARIABLE $error
 LOAD VARIABLE $error
 LOAD LITERAL `1`
@@ -48,7 +48,7 @@ INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
 JUMP TO 1.2.ClauseEnd ON FALSE
 
-1.2.1.EvaluateStatement:
+1.2.1.EvaluateClause:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 

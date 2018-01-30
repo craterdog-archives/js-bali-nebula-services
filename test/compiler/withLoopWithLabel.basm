@@ -1,47 +1,36 @@
 
-1.WithStatement:
+1.WithClause:
 LOAD LITERAL `$sequence`
-STORE VARIABLE $_sequence_1
-LOAD VARIABLE $_sequence_1
-INVOKE INTRINSIC $getType WITH PARAMETER
-STORE VARIABLE $_sequenceType_2
-LOAD VARIABLE $_sequenceType_2
-LOAD VARIABLE $_sequence_1
-EXECUTE METHOD $createIterator WITH TARGET
-STORE VARIABLE $_iterator_3
-LOAD VARIABLE $_iterator_3
-INVOKE INTRINSIC $getType WITH PARAMETER
-STORE VARIABLE $_iteratorType_4
+INVOKE INTRINSIC $createIterator WITH PARAMETER
+STORE VARIABLE $_iterator_2
 LOAD LITERAL `true`
-STORE VARIABLE $_continue_1_1_Label
+STORE VARIABLE $_continue_Label
 
 1.1.Label:
-LOAD VARIABLE $_continue_1_1_Label
-LOAD VARIABLE $_iteratorType_4
-LOAD VARIABLE $_iterator_3
-EXECUTE METHOD $hasNext WITH TARGET
+LOAD VARIABLE $_continue_Label
+LOAD VARIABLE $_iterator_2
+INVOKE INTRINSIC $hasNext WITH PARAMETER
 INVOKE INTRINSIC $and WITH 2 PARAMETERS
 JUMP TO 1.StatementEnd ON FALSE
-LOAD VARIABLE $_iteratorType_4
-LOAD VARIABLE $_iterator_3
-EXECUTE METHOD $getNext WITH TARGET
-STORE VARIABLE $_item_5
+LOAD VARIABLE $_iterator_2
+INVOKE INTRINSIC $getNext WITH PARAMETER
+STORE VARIABLE $_item_1
 
-1.1.1.EvaluateStatement:
+1.1.1.EvaluateClause:
 LOAD LITERAL `true`
 STORE VARIABLE $_result_
 
-1.1.2.BreakStatement:
+1.1.2.BreakClause:
 LOAD LITERAL `false`
-STORE VARIABLE $_continue_1_1_Label
+STORE VARIABLE $_continue_Label
 JUMP TO 1.1.4.BlockEnd
 
-1.1.3.EvaluateStatement:
+1.1.3.EvaluateClause:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.1.4.BlockEnd:
-JUMP TO 1.1.Label
+JUMP TO Label
 
 1.StatementEnd:
 SKIP INSTRUCTION

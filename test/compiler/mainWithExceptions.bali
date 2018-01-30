@@ -1,7 +1,7 @@
 {
-    throw [$type: 'whine'] catch $error matching [$type: 'bad'] with {
+    throw [$type: 'whine'] handle $error matching [$type: 'bad'] with {
         none
-    } catch $error matching [$type: 'horrid'] with {
+    } handle $error matching [$type: 'horrid'] with {
         none
     }
 }
