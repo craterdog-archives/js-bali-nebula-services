@@ -14,7 +14,7 @@
  * produced by the BaliLanguageParser and generates the assembly code
  * that can be used to generate the bytecode for the Bali Virtual Machine™.
  */
-var types = require('bali-language/nodes/NodeTypes');
+var types = require('bali-language/syntax/NodeTypes');
 var language = require('bali-language/BaliLanguage');
 
 
