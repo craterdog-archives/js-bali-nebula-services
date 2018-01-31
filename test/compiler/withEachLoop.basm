@@ -4,10 +4,10 @@ LOAD LITERAL `$sequence`
 INVOKE INTRINSIC $createIterator WITH PARAMETER
 STORE VARIABLE $_iterator_1
 LOAD LITERAL `true`
-STORE VARIABLE $_continue_WithItem
+STORE VARIABLE $_continue_1_1_WithItem
 
-1.1.WithItem:
-LOAD VARIABLE $_continue_WithItem
+1.1.1.1.WithItem:
+LOAD VARIABLE $_continue_1_1_WithItem
 LOAD VARIABLE $_iterator_1
 INVOKE INTRINSIC $hasNext WITH PARAMETER
 INVOKE INTRINSIC $and WITH 2 PARAMETERS
@@ -28,7 +28,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.1.4.BlockEnd:
-JUMP TO WithItem
+JUMP TO 1.1.WithItem
 
 1.StatementEnd:
 SKIP INSTRUCTION

@@ -7,7 +7,7 @@ STORE VARIABLE $_selector_1
 LOAD VARIABLE $_selector_1
 LOAD LITERAL `'alpha'`
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.2OptionBlock ON FALSE
+JUMP TO 1.2.OptionBlock ON FALSE
 
 1.1.1.EvaluateClause:
 LOAD LITERAL `none`
@@ -18,25 +18,38 @@ JUMP TO 1.StatementEnd
 
 1.2.OptionBlock:
 LOAD VARIABLE $_selector_1
+LOAD LITERAL `'beta'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.3.OptionBlock ON FALSE
 
 1.2.1.EvaluateClause:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.2.2.BlockEnd:
-INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.4OptionBlock ON FALSE
-LOAD LITERAL `'beta'`
 JUMP TO 1.StatementEnd
 
-1.4.ElseBlock:
-SKIP INSTRUCTION
+1.3.OptionBlock:
+LOAD VARIABLE $_selector_1
+LOAD LITERAL `'gamma'`
+INVOKE INTRINSIC $matches WITH 2 PARAMETERS
+JUMP TO 1.4.ElseBlock ON FALSE
 
 1.3.1.EvaluateClause:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.3.2.BlockEnd:
+JUMP TO 1.StatementEnd
+
+1.4.ElseBlock:
+SKIP INSTRUCTION
+
+1.4.1.EvaluateClause:
+LOAD LITERAL `none`
+STORE VARIABLE $_result_
+
+1.4.2.BlockEnd:
 SKIP INSTRUCTION
 
 1.StatementEnd:

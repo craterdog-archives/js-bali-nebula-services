@@ -4,7 +4,7 @@ SKIP INSTRUCTION
 
 1.1.ConditionBlock:
 LOAD LITERAL `true`
-JUMP TO 1.2ConditionBlock ON FALSE
+JUMP TO 1.2.ConditionBlock ON FALSE
 
 1.1.1.EvaluateClause:
 LOAD LITERAL `true`
@@ -14,15 +14,14 @@ STORE VARIABLE $_result_
 JUMP TO 1.StatementEnd
 
 1.2.ConditionBlock:
-SKIP INSTRUCTION
+LOAD LITERAL `false`
+JUMP TO 1.3.ElseBlock ON FALSE
 
 1.2.1.EvaluateClause:
-LOAD LITERAL `true`
+LOAD LITERAL `false`
 STORE VARIABLE $_result_
 
 1.2.2.BlockEnd:
-JUMP TO 1.3.ElseBlock ON FALSE
-LOAD LITERAL `false`
 JUMP TO 1.StatementEnd
 
 1.3.ElseBlock:

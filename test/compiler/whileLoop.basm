@@ -1,10 +1,10 @@
 
 1.WhileClause:
 LOAD LITERAL `true`
-STORE VARIABLE $_continue_WhileCondition
+STORE VARIABLE $_continue_1_1_WhileCondition
 
-1.1.WhileCondition:
-LOAD VARIABLE $_continue_WhileCondition
+1.1.1.1.WhileCondition:
+LOAD VARIABLE $_continue_1_1_WhileCondition
 LOAD VARIABLE $condition
 INVOKE INTRINSIC $and WITH 2 PARAMETERS
 JUMP TO 1.StatementEnd ON FALSE
@@ -15,7 +15,7 @@ STORE VARIABLE $_result_
 
 1.1.2.BreakClause:
 LOAD LITERAL `false`
-STORE VARIABLE $_continue_WhileCondition
+STORE VARIABLE $_continue_1_1_WhileCondition
 JUMP TO 1.1.4.BlockEnd
 
 1.1.3.EvaluateClause:
@@ -23,7 +23,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.1.4.BlockEnd:
-JUMP TO WhileCondition
+JUMP TO 1.1.WhileCondition
 
 1.StatementEnd:
 SKIP INSTRUCTION

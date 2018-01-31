@@ -1,10 +1,10 @@
 
 1.WhileClause:
 LOAD LITERAL `true`
-STORE VARIABLE $_continue_Label
+STORE VARIABLE $_continue_1_1_Label
 
-1.1.Label:
-LOAD VARIABLE $_continue_Label
+1.1.1.1.Label:
+LOAD VARIABLE $_continue_1_1_Label
 LOAD VARIABLE $condition
 INVOKE INTRINSIC $and WITH 2 PARAMETERS
 JUMP TO 1.StatementEnd ON FALSE
@@ -21,7 +21,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.1.4.BlockEnd:
-JUMP TO Label
+JUMP TO 1.1.Label
 
 1.StatementEnd:
 SKIP INSTRUCTION
