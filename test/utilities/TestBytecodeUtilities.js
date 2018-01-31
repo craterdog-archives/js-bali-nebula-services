@@ -56,8 +56,8 @@ module.exports = testCase({
 });
 
 var EXPECTED_INSTRUCTIONS =
-' Addr     Bytes   Bytecode                    Instruction\n' +
-'---------------------------------------------------------------------------\n' +
+' Addr     Bytes   Bytecode                  Instruction\n' +
+'----------------------------------------------------------------------\n' +
 '[001]:    0000    00 [000]    SKIP INSTRUCTION\n' +
 '[002]:    0001    00 [001]    JUMP TO [001]\n' +
 '[003]:    0802    01 [002]    JUMP TO [002] ON NONE\n' +

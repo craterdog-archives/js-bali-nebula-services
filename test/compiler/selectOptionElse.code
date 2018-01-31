@@ -1,0 +1,31 @@
+ Addr     Bytes   Bytecode                  Instruction
+----------------------------------------------------------------------
+[001]:    2001    10     1    LOAD LITERAL 1
+[002]:    5801    23     1    STORE VARIABLE 1
+[003]:    3801    13     1    LOAD VARIABLE 1
+[004]:    2002    10     2    LOAD LITERAL 2
+[005]:    7001    32     1    INVOKE INTRINSIC 1 WITH 2 PARAMETERS
+[006]:    100A    02 [00A]    JUMP TO [00A] ON FALSE
+[007]:    2003    10     3    LOAD LITERAL 3
+[008]:    5802    23     2    STORE VARIABLE 2
+[009]:    001C    00 [01C]    JUMP TO [01C]
+[00A]:    3801    13     1    LOAD VARIABLE 1
+[00B]:    2004    10     4    LOAD LITERAL 4
+[00C]:    7001    32     1    INVOKE INTRINSIC 1 WITH 2 PARAMETERS
+[00D]:    1011    02 [011]    JUMP TO [011] ON FALSE
+[00E]:    2003    10     3    LOAD LITERAL 3
+[00F]:    5802    23     2    STORE VARIABLE 2
+[010]:    001C    00 [01C]    JUMP TO [01C]
+[011]:    3801    13     1    LOAD VARIABLE 1
+[012]:    2005    10     5    LOAD LITERAL 5
+[013]:    7001    32     1    INVOKE INTRINSIC 1 WITH 2 PARAMETERS
+[014]:    1018    02 [018]    JUMP TO [018] ON FALSE
+[015]:    2003    10     3    LOAD LITERAL 3
+[016]:    5802    23     2    STORE VARIABLE 2
+[017]:    001C    00 [01C]    JUMP TO [01C]
+[018]:    0000    00 [000]    SKIP INSTRUCTION
+[019]:    2003    10     3    LOAD LITERAL 3
+[01A]:    5802    23     2    STORE VARIABLE 2
+[01B]:    0000    00 [000]    SKIP INSTRUCTION
+[01C]:    0000    00 [000]    SKIP INSTRUCTION
+[01D]:    0000    00 [000]    SKIP INSTRUCTION

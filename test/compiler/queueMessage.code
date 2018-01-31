@@ -1,0 +1,11 @@
+ Addr     Bytes   Bytecode                  Instruction
+----------------------------------------------------------------------
+[001]:    2001    10     1    LOAD LITERAL 1
+[002]:    5801    23     1    STORE VARIABLE 1
+[003]:    2002    10     2    LOAD LITERAL 2
+[004]:    6801    31     1    INVOKE INTRINSIC 1 WITH PARAMETER
+[005]:    2003    10     3    LOAD LITERAL 3
+[006]:    3802    13     2    LOAD VARIABLE 2
+[007]:    7802    33     2    INVOKE INTRINSIC 2 WITH 3 PARAMETERS
+[008]:    5001    22     1    STORE MESSAGE 1
+[009]:    0000    00 [000]    SKIP INSTRUCTION

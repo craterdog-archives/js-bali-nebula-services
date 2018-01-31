@@ -207,8 +207,8 @@ exports.wordAsString = function(address, instruction) {
  * @returns {string} The human readable form of the bytecode.
  */
 exports.bytecodeAsString = function(bytecode) {
-    var string = ' Addr     Bytes   Bytecode                    Instruction\n';
-    string += '---------------------------------------------------------------------------\n';
+    var string = ' Addr     Bytes   Bytecode                  Instruction\n';
+    string += '----------------------------------------------------------------------\n';
     var address = 1;  // bali VM unit based addressing
     while (address <= bytecode.length) {
         var instruction = bytecode[address - 1];  // javascript zero based indexing

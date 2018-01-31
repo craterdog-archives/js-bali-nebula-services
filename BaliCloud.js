@@ -78,8 +78,8 @@ exports.formatBlockWithPadding = function(baliBlock, padding) {
  */
 exports.compileBlock = function(baliBlock) {
     var compiler = new LanguageCompiler();
-    var asmcode = compiler.compileBlock(baliBlock);
-    return asmcode;
+    var procedure = compiler.compileBlock(baliBlock);
+    return procedure;
 };
 
 
@@ -112,21 +112,6 @@ exports.formatProcedure = function(procedure) {
 
 
 /**
- * This function analyzes a parse tree structure containing a procedure
- * and extracts context information that will be needed by the assembler
- * to generate the bytecode.
- * 
- * @param {object} context The existing context information gathered by
- * the compiler.
- * @param {object} procedure The parse tree structure to be analyzed.
- */
-exports.analyzeProcedure = function(context, procedure) {
-    var analyzer = new ProcedureAnalyzer(context);
-    analyzer.analyzeProcedure(procedure);
-};
-
-
-/**
  * This function walks a parse tree structure containing a procedure
  * and generates the corresponding bytecode for the BaliVM.
  * 
@@ -136,6 +121,8 @@ exports.analyzeProcedure = function(context, procedure) {
  * @returns {array} The assembled bytecode array.
  */
 exports.assembleProcedure = function(context, procedure) {
+    var analyzer = new ProcedureAnalyzer(context);
+    analyzer.analyzeProcedure(procedure);
     var assembler = new ProcedureAssembler(context);
     var bytecode = assembler.assembleProcedure(procedure);
     return bytecode;

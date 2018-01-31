@@ -13,63 +13,58 @@ var fs = require('fs');
 var tools = require('../../BaliCloud');
 var testCase = require('nodeunit').testCase;
 
+var source = [
+    'test/compiler/main',
+    'test/compiler/mainWithFinal',
+    'test/compiler/mainWithExceptions',
+    'test/compiler/mainWithExceptionsAndFinal',
+    'test/compiler/evaluateExpression',
+    'test/compiler/evaluateExpressionWithResult',
+    'test/compiler/ifThen',
+    'test/compiler/ifThenElse',
+    'test/compiler/ifThenElseIf',
+    'test/compiler/ifThenElseIfElse',
+    'test/compiler/selectOption',
+    'test/compiler/selectOptionElse',
+    'test/compiler/whileLoop',
+    'test/compiler/whileLoopWithLabel',
+    'test/compiler/withLoop',
+    'test/compiler/withLoopWithLabel',
+    'test/compiler/withEachLoop',
+    'test/compiler/withEachLoopWithLabel',
+    'test/compiler/queueMessage',
+    'test/compiler/waitForMessage',
+    'test/compiler/publishEvent',
+    'test/compiler/comprehensive'
+];
+
 module.exports = testCase({
     'Test Compiler': function(test) {
-        var source = [
-            'test/compiler/main',
-            'test/compiler/mainWithFinal',
-            'test/compiler/mainWithExceptions',
-            'test/compiler/mainWithExceptionsAndFinal',
-            'test/compiler/evaluateExpression',
-            'test/compiler/evaluateExpressionWithResult',
-            'test/compiler/ifThen',
-            'test/compiler/ifThenElse',
-            'test/compiler/ifThenElseIf',
-            'test/compiler/ifThenElseIfElse',
-            'test/compiler/selectOption',
-            'test/compiler/selectOptionElse',
-            'test/compiler/whileLoop',
-            'test/compiler/whileLoopWithLabel',
-            'test/compiler/withLoop',
-            'test/compiler/withLoopWithLabel',
-            'test/compiler/withEachLoop',
-            'test/compiler/withEachLoopWithLabel',
-            'test/compiler/queueMessage',
-            'test/compiler/waitForMessage',
-            'test/compiler/publishEvent',
-            'test/compiler/comprehensive'
-        ];
-        test.expect(source.length);
+        test.expect(2 * source.length);
         for (var i = 0; i < source.length; i++) {
+            var context = {
+                addresses: {},
+                intrinsics: [],
+                procedures: [],
+                references: [],
+                variables: [],
+                literals: []
+            };
             var baliFile = source[i] + '.bali';
             var basmFile = source[i] + '.basm';
+            var codeFile = source[i] + '.code';
             var block = fs.readFileSync(baliFile, 'utf8');
             var tree = tools.parseBlock(block);
-            test.notEqual(tree, null, 'The parser returned a null tree.');
-            var asmcode = tools.compileBlock(tree);
-            fs.writeFileSync(basmFile, asmcode, 'utf8');
-            console.log('\n' + basmFile + ':\n' + asmcode);
+            test.notEqual(tree, null, 'The language parser returned a null tree.');
+            var procedure = tools.compileBlock(tree);
+            fs.writeFileSync(basmFile, procedure, 'utf8');
+            //console.log('\n' + basmFile + ':\n' + procedure);
+            tree = tools.parseProcedure(procedure);
+            test.notEqual(tree, null, 'The procedure parser returned a null tree.');
+            var bytecode = tools.assembleProcedure(context, tree);
+            var formatted = tools.formatBytecode(bytecode);
+            fs.writeFileSync(codeFile, formatted, 'utf8');
         }
-        test.done();
-    },
-
-    'Test Analyzer': function(test) {
-        var context = {
-            addresses: {},
-            intrinsics: [],
-            procedures: [],
-            references: [],
-            variables: [],
-            literals: []
-        };
-        test.expect(2);
-        var source = fs.readFileSync('test/compiler/procedure.basm', 'utf8');
-        var procedure = tools.parseProcedure(source);
-        test.notEqual(procedure, null, 'The parser returned a null list.');
-        tools.analyzeProcedure(context, procedure);
-        var formatted = JSON.stringify(context, null, 4);
-        test.strictEqual(formatted, EXPECTED_CONTEXT, 'The analyzer returned a different context.');
-        //console.log('\nEXPECTED_CONTEXT:\n' + formatted);
         test.done();
     },
 
@@ -86,7 +81,6 @@ module.exports = testCase({
         var source = fs.readFileSync('test/compiler/procedure.basm', 'utf8');
         var procedure = tools.parseProcedure(source);
         test.notEqual(procedure, null, 'The parser returned a null list.');
-        tools.analyzeProcedure(context, procedure);
         var bytecode = tools.assembleProcedure(context, procedure);
         var formatted = tools.formatBytecode(bytecode);
         test.strictEqual(formatted, EXPECTED_INSTRUCTIONS, 'The formatter returned different procedure.');
@@ -99,42 +93,10 @@ module.exports = testCase({
 
 });
 
-var EXPECTED_CONTEXT =
-'{\n' +
-'    "addresses": {\n' +
-'        "1.jump": 2,\n' +
-'        "2.load": 6,\n' +
-'        "3.store": 10,\n' +
-'        "4.invoke": 14,\n' +
-'        "5.execute": 18\n' +
-'    },\n' +
-'    "intrinsics": [\n' +
-'        "$random",\n' +
-'        "$factorial",\n' +
-'        "$sum",\n' +
-'        "$sort"\n' +
-'    ],\n' +
-'    "procedures": [\n' +
-'        "$generateKey",\n' +
-'        "$fibonacci",\n' +
-'        "$hasNext",\n' +
-'        "$addItem"\n' +
-'    ],\n' +
-'    "references": [\n' +
-'        "$reference",\n' +
-'        "$queue"\n' +
-'    ],\n' +
-'    "variables": [\n' +
-'        "$variable"\n' +
-'    ],\n' +
-'    "literals": [\n' +
-'        "`\\"This is a literal text string\\ncontaining an \\\\` and spanning multiple lines.\\"`"\n' +
-'    ]\n' +
-'}';
 
 var EXPECTED_INSTRUCTIONS =
-' Addr     Bytes   Bytecode                    Instruction\n' +
-'---------------------------------------------------------------------------\n' +
+' Addr     Bytes   Bytecode                  Instruction\n' +
+'----------------------------------------------------------------------\n' +
 '[001]:    0000    00 [000]    SKIP INSTRUCTION\n' +
 '[002]:    0006    00 [006]    JUMP TO [006]\n' +
 '[003]:    080A    01 [00A]    JUMP TO [00A] ON NONE\n' +
