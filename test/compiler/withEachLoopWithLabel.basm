@@ -4,10 +4,10 @@ LOAD LITERAL `$sequence`
 INVOKE INTRINSIC $createIterator WITH PARAMETER
 STORE VARIABLE $_iterator_1
 LOAD LITERAL `true`
-STORE VARIABLE $_continue_1_1_Label
+STORE VARIABLE $_continue_1_Label_
 
-1.1.1.1.Label:
-LOAD VARIABLE $_continue_1_1_Label
+1.Label:
+LOAD VARIABLE $_continue_1_Label_
 LOAD VARIABLE $_iterator_1
 INVOKE INTRINSIC $hasNext WITH PARAMETER
 INVOKE INTRINSIC $and WITH 2 PARAMETERS
@@ -16,40 +16,34 @@ LOAD VARIABLE $_iterator_1
 INVOKE INTRINSIC $getNext WITH PARAMETER
 STORE VARIABLE $symbol
 
-1.1.1.EvaluateStatement:
+1.1.EvaluateStatement:
 LOAD LITERAL `true`
 STORE VARIABLE $x
 
-1.1.2.IfStatement:
+1.2.IfStatement:
 SKIP INSTRUCTION
 
-1.1.2.1.ConditionClause:
+1.2.ConditionClause_1:
 LOAD VARIABLE $x
-JUMP TO 1.1.2.FinishClause ON FALSE
+JUMP TO 1.2.FinishClause ON FALSE
 
-1.1.2.1.1.EvaluateStatement:
+1.2.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $y
 
-1.1.2.1.2.ContinueStatement:
-JUMP TO 1.1.2.1.3.BlockEnd
+1.2.2.ContinueStatement:
+JUMP TO 1.2.2.FinishClause
 
-1.1.2.1.3.BlockEnd:
+1.2.FinishClause:
 SKIP INSTRUCTION
 
-1.1.2.FinishClause:
-SKIP INSTRUCTION
-
-1.1.3.EvaluateStatement:
+1.3.EvaluateStatement:
 LOAD LITERAL `any`
 STORE VARIABLE $z
 
-1.1.4.BlockEnd:
-JUMP TO 1.1.Label
+1.RepeatLoop:
+JUMP TO 1.Label
 
 1.FinishClause:
-SKIP INSTRUCTION
-
-2.BlockEnd:
 SKIP INSTRUCTION
 

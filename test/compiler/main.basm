@@ -3,6 +3,3 @@
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
-2.BlockEnd:
-SKIP INSTRUCTION
-

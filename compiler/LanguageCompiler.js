@@ -62,7 +62,7 @@ CompilerVisitor.prototype.createTemporaryVariable = function(name) {
 
 
 CompilerVisitor.prototype.createContinueVariable = function(loopLabel) {
-    return '$_continue_' + loopLabel.replace(/\./g, '_');
+    return '$_continue_' + loopLabel.replace(/\./g, '_') +'_';
 };
 
 
@@ -209,11 +209,12 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
 
     // look for the first enclosing loop
     for (var j = 0; j < numberOfBlocks; j++) {
-        block = blocks[numberOfBlocks - i - 1];  // work backwards
+        block = blocks[numberOfBlocks - j - 2];  // work backwards starting with parent block
         var finishLabel = block.finishLabel;
         if (finishLabel) {
             // the VM jumps to the end of the first enclosing loop
             this.builder.insertJumpInstruction(finishLabel);
+            break;
         }
     }
 };
@@ -340,8 +341,8 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
                 // the VM jumps to the end of the parent block
                 // NOTE: we can't just jump straight to the matching loop or we will miss
                 // executing final handlers along the way
-                var blockEndLabel = this.builder.blocks.peek().blockEndLabel;
-                this.builder.insertJumpInstruction(blockEndLabel);
+                var finishLabel = this.builder.blocks.peek().finishLabel;
+                this.builder.insertJumpInstruction(finishLabel);
                 return;
             }
             // not yet found the matching enclosing loop so break out of this one
@@ -540,13 +541,17 @@ CompilerVisitor.prototype.visitFunctionExpression = function(tree) {
 // handleClause: 'handle' symbol 'matching' expression 'with' block
 CompilerVisitor.prototype.visitHandleClause = function(tree) {
     // setup the labels
-    var clausePrefix = this.builder.getClausePrefix();
-    var handleLabel = clausePrefix + 'HandleClause';
-    var clauseEndLabel = clausePrefix + 'ClauseEnd';
+    var statementPrefix = this.builder.getStatementPrefix();
+    var handlerNumber = this.builder.blocks.peek().handlerNumber;
+    var handleLabel = statementPrefix + 'HandleClause_' + handlerNumber;
+    var handledLabel = statementPrefix + 'Handled_' + handlerNumber;
+    var endLabel = statementPrefix + 'HandleEnd_' + handlerNumber;
+    var finishLabel = this.builder.blocks.peek().finishLabel;
     this.builder.insertLabel(handleLabel);
 
     // the VM stores the exception that is on top of the execution stack in the variable
     var exception = tree.children[0].value;
+    this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
     this.builder.insertStoreInstruction('VARIABLE', exception);
 
     // the VM compares the template expression with the actual exception
@@ -555,17 +560,21 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
     this.builder.insertInvokeInstruction('$matches', 2);
 
     // the VM jumps past this exception handler if the template and exception did not match
-    this.builder.insertJumpInstruction(clauseEndLabel, 'ON FALSE');
+    this.builder.insertJumpInstruction(endLabel, 'ON FALSE');
 
     // the VM executes the handler block
     tree.children[2].accept(this);  // block
 
     // the VM clears the exception variable
+    this.builder.insertLabel(handledLabel);
     this.builder.insertLoadInstruction('LITERAL', 'none');
     this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
 
+    // the VM jumps past the rest of the handlers to the finish clause
+    this.builder.insertJumpInstruction(finishLabel);
+
     // the VM jumps here if the exception did not match the template
-    this.builder.insertLabel(clauseEndLabel);
+    this.builder.insertLabel(endLabel);
 };
 
 
@@ -580,13 +589,14 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
         children = children.slice(0, children.length - 1);  // exclude the else block
     }
     var length = children.length;
-    var elseLabel = statementPrefix + (length / 2 + 1) + '.ElseClause';
+    var elseLabel = statementPrefix + 'ElseClause';
     var finishLabel = this.builder.blocks.peek().finishLabel;
 
     // compile each condition
+    var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
-        var clausePrefix = this.builder.getClausePrefix();
-        this.builder.insertLabel(clausePrefix + 'ConditionClause');
+        var conditionLabel = statementPrefix + 'ConditionClause_' + clauseNumber++;
+        this.builder.insertLabel(conditionLabel);
 
         // the VM places the condition value on top of the execution stack
         children[i++].accept(this);  // condition
@@ -601,7 +611,7 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
                 nextLabel = finishLabel;
             }
         } else {
-            nextLabel = statementPrefix + (this.builder.getClauseNumber() + 1) + '.ConditionClause';
+            nextLabel = statementPrefix + 'ConditionClause_' + clauseNumber;
         }
 
         // if the condition is not true, the VM jumps to the next condition, else block, or the end
@@ -766,19 +776,13 @@ CompilerVisitor.prototype.visitPrecedenceExpression = function(tree) {
 CompilerVisitor.prototype.visitProcedure = function(tree) {
     // record the label for the end of the block in the compiler block context
     var statements = tree.children;
-    var numberOfStatements = statements.length;
     var block = this.builder.blocks.peek();
-    var blockEndLabel = block.prefix + (numberOfStatements + 1) + '.BlockEnd';
-    block.blockEndLabel = blockEndLabel;
 
     // compile the statements
     for (var i = 0; i < statements.length; i++) {
         statements[i].accept(this);
         this.builder.incrementStatementCount();
     }
-
-    // the VM jumps here when flow is interrupted by 'return', 'throw', 'continue', and 'break'
-    this.builder.insertLabel(blockEndLabel);
 };
 
 
@@ -833,7 +837,7 @@ CompilerVisitor.prototype.visitReturnClause = function(tree) {
 
     if (tree.children.length > 0) {
         // the VM stores the value of the result expression in a temporary variable
-        tree.children[0].accept(this);
+        tree.children[0].accept(this);  // expression
         this.builder.insertStoreInstruction('VARIABLE', '$_result_');
     }
 };
@@ -871,7 +875,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
         children = children.slice(1);
     }
     var length = children.length;
-    var elseLabel = statementPrefix + (length / 2 + 1) + '.ElseClause';
+    var elseLabel = statementPrefix + 'ElseClause';
     var finishLabel = this.builder.blocks.peek().finishLabel;
 
     // the VM saves the value of the selector expression in a temporary variable
@@ -880,9 +884,10 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     this.builder.insertStoreInstruction('VARIABLE', selectorVariable);
 
     // check each option
+    var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
-        var clausePrefix = this.builder.getClausePrefix();
-        this.builder.insertLabel(clausePrefix + 'OptionClause');
+        var optionLabel = statementPrefix + 'OptionClause_' + clauseNumber++;
+        this.builder.insertLabel(optionLabel);
 
         // the VM loads the selector value onto the top of the execution stack
         this.builder.insertLoadInstruction('VARIABLE', selectorVariable);
@@ -901,7 +906,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
                 nextLabel = finishLabel;
             }
         } else {
-            nextLabel = statementPrefix + (this.builder.getClauseNumber() + 1) + '.OptionClause';
+            nextLabel = statementPrefix + 'OptionClause_' + clauseNumber;
         }
 
         // if the option does not match, the VM jumps to the next option, the else block, or the end
@@ -961,13 +966,16 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
     // the VM ends up here after the main clause is done or if any exceptions were thrown by the main clause
     if (handleClauses.length > 0) {
         this.builder.insertLabel(handleLabel);
+
+        // the VM jumps past the handle clauses if there is no exception
+        this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
+        this.builder.insertJumpInstruction(finishLabel, 'ON NONE');
+
+        var handlerNumber = 1;
         for (var i = 0; i < handleClauses.length; i++) {
-            // the VM jumps past the handle clauses if there is no exception
-            this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
-            this.builder.insertJumpInstruction(finishLabel, 'ON NONE');
+            this.builder.blocks.peek().handlerNumber = handlerNumber++;
 
             // the VM attempts to handle the exception
-            this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
             handleClauses[i].accept(this);
         }
     }
@@ -1094,13 +1102,12 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     var length = children.length;
 
     // construct the loop label
-    var loopLabel = 'WhileCondition';  // default loop label
+    var loopLabel = 'LoopClause';  // default loop label
     if (children[0].type === types.LABEL) {
         loopLabel = children[0].value;
         loopLabel = loopLabel.charAt(0).toUpperCase() + loopLabel.slice(1);
     }
-    var clausePrefix = this.builder.getClausePrefix();
-    loopLabel = clausePrefix + loopLabel;
+    loopLabel = statementPrefix + loopLabel;
 
     // setup the compiler state for this loop with respect to 'continue' and 'break' statements
     this.builder.blocks.peek().loopLabel = loopLabel;
@@ -1109,7 +1116,7 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     this.builder.insertStoreInstruction('VARIABLE', continueLoop);
 
     // label the start of the loop
-    this.builder.insertLabel(clausePrefix + loopLabel);
+    this.builder.insertLabel(loopLabel);
 
     // the VM places the value of the continue loop variable on top of the execution stack
     this.builder.insertLoadInstruction('VARIABLE', continueLoop);
@@ -1128,6 +1135,8 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     children[length - 1].accept(this);  // block
 
     // the VM jumps to the top of the loop
+    var repeatLabel = statementPrefix + 'RepeatLoop';
+    this.builder.insertLabel(repeatLabel);
     this.builder.insertJumpInstruction(loopLabel);
 };
 
@@ -1147,13 +1156,12 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     var length = children.length;
 
     // construct the loop label
-    var loopLabel = 'WithItem';  // default loop label
+    var loopLabel = 'LoopClause';  // default loop label
     if (children[0].type === types.LABEL) {
         loopLabel = children[0].value;
         loopLabel = loopLabel.charAt(0).toUpperCase() + loopLabel.slice(1);
     }
-    var clausePrefix = this.builder.getClausePrefix();
-    loopLabel = clausePrefix + loopLabel;
+    loopLabel = statementPrefix + loopLabel;
 
     // construct the symbol
     var item;
@@ -1180,7 +1188,7 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     this.builder.insertStoreInstruction('VARIABLE', continueLoop);
 
     // label the start of the loop
-    this.builder.insertLabel(clausePrefix + loopLabel);
+    this.builder.insertLabel(loopLabel);
 
     // the VM places the value of the continue loop variable on top of the execution stack
     this.builder.insertLoadInstruction('VARIABLE', continueLoop);
@@ -1211,6 +1219,8 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     children[length - 1].accept(this);  // block
 
     // the VM jumps to the top of the loop
+    var repeatLabel = statementPrefix + 'RepeatLoop';
+    this.builder.insertLabel(repeatLabel);
     this.builder.insertJumpInstruction(loopLabel);
 };
 
@@ -1247,17 +1257,17 @@ InstructionBuilder.prototype.constructor = InstructionBuilder;
  */
 InstructionBuilder.prototype.pushBlockContext = function() {
     if (this.blocks.length > 0) {
-        var block = this.blocks.peek();
+        var parent = this.blocks.peek();
         this.blocks.push({
-            clauseCount: 1,
             statementCount: 1,
-            prefix: block.prefix + block.statementCount + '.' + block.clauseCount + '.'
+            clauseCount: 1,
+            prefix: parent.prefix + parent.statementCount + '.'
         });
-        block.clauseCount++;
+        parent.clauseCount++;
     } else {
         this.blocks.push({
-            clauseCount: 1,
             statementCount: 1,
+            clauseCount: 1,
             prefix: ''
         });
     }
@@ -1314,16 +1324,6 @@ InstructionBuilder.prototype.incrementStatementCount = function() {
 InstructionBuilder.prototype.getStatementPrefix = function() {
     var block = this.blocks.peek();
     var prefix = block.prefix + this.getStatementNumber() + '.';
-    return prefix;
-};
-
-
-/*
- * This method returns the label prefix for the current clause within the current
- * block context.
- */
-InstructionBuilder.prototype.getClausePrefix = function() {
-    var prefix = this.getStatementPrefix() + this.getClauseNumber() + '.';
     return prefix;
 };
 

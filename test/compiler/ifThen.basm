@@ -2,20 +2,14 @@
 1.IfStatement:
 SKIP INSTRUCTION
 
-1.1.ConditionClause:
+1.ConditionClause_1:
 LOAD LITERAL `true`
 JUMP TO 1.FinishClause ON FALSE
 
-1.1.1.EvaluateStatement:
+1.1.EvaluateStatement:
 LOAD VARIABLE $yes
 STORE VARIABLE $_result_
 
-1.1.2.BlockEnd:
-SKIP INSTRUCTION
-
 1.FinishClause:
-SKIP INSTRUCTION
-
-2.BlockEnd:
 SKIP INSTRUCTION
 

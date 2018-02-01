@@ -8,9 +8,9 @@ STORE MESSAGE $_queue_1
 1.HandleClauses:
 LOAD VARIABLE $_exception_
 JUMP TO 1.FinishClause ON NONE
-LOAD VARIABLE $_exception_
 
-1.1.HandleClause:
+1.HandleClause_1:
+LOAD VARIABLE $_exception_
 STORE VARIABLE $error
 LOAD VARIABLE $error
 LOAD LITERAL `1`
@@ -19,22 +19,22 @@ LOAD LITERAL `$type`
 LOAD LITERAL `'bad'`
 INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.1.ClauseEnd ON FALSE
+JUMP TO 1.HandleEnd_1 ON FALSE
 
-1.1.1.EvaluateStatement:
+1.1.EvaluateStatement:
 LOAD LITERAL `any`
 STORE VARIABLE $_result_
 
-1.1.2.BlockEnd:
+1.Handled_1:
 LOAD LITERAL `none`
 STORE VARIABLE $_exception_
+JUMP TO 1.FinishClause
 
-1.1.ClauseEnd:
-LOAD VARIABLE $_exception_
-JUMP TO 1.FinishClause ON NONE
-LOAD VARIABLE $_exception_
+1.HandleEnd_1:
+SKIP INSTRUCTION
 
-1.2.HandleClause:
+1.HandleClause_2:
+LOAD VARIABLE $_exception_
 STORE VARIABLE $error
 LOAD VARIABLE $error
 LOAD LITERAL `1`
@@ -43,22 +43,20 @@ LOAD LITERAL `$type`
 LOAD LITERAL `'horrid'`
 INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.2.ClauseEnd ON FALSE
+JUMP TO 1.HandleEnd_2 ON FALSE
 
-1.2.1.EvaluateStatement:
+1.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
-1.2.2.BlockEnd:
+1.Handled_2:
 LOAD LITERAL `none`
 STORE VARIABLE $_exception_
+JUMP TO 1.FinishClause
 
-1.2.ClauseEnd:
+1.HandleEnd_2:
 SKIP INSTRUCTION
 
 1.FinishClause:
-SKIP INSTRUCTION
-
-2.BlockEnd:
 SKIP INSTRUCTION
 
