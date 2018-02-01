@@ -207,16 +207,10 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
         }
     }
 
-    // look for the first enclosing loop
-    for (var j = 0; j < numberOfBlocks; j++) {
-        block = blocks[numberOfBlocks - j - 2];  // work backwards starting with parent block
-        var finishLabel = block.finishLabel;
-        if (finishLabel) {
-            // the VM jumps to the end of the first enclosing loop
-            this.builder.insertJumpInstruction(finishLabel);
-            break;
-        }
-    }
+    // the VM jumps to the finish clause of the parent block
+    block = blocks[numberOfBlocks - 2];
+    var finishLabel = block.finishLabel;
+    this.builder.insertJumpInstruction(finishLabel);
 };
 
 
@@ -330,30 +324,34 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
         label = label.charAt(0).toUpperCase() + label.slice(1);
     }
 
+    // mark each enclosing loop as done
     var blocks = this.builder.blocks;
+    var block;
     var numberOfBlocks = blocks.length;
     for (var i = 0; i < numberOfBlocks; i++) {
-        var block = blocks[numberOfBlocks - i - 1];  // work backwards
+        block = blocks[numberOfBlocks - i - 1];  // work backwards
         var loopLabel = block.loopLabel;
         if (loopLabel) {
-            if (label === undefined || label === null || loopLabel.endsWith(label)) {
-                // found the matching enclosing loop
-                // the VM jumps to the end of the parent block
-                // NOTE: we can't just jump straight to the matching loop or we will miss
-                // executing final handlers along the way
-                var finishLabel = this.builder.blocks.peek().finishLabel;
-                this.builder.insertJumpInstruction(finishLabel);
-                return;
-            }
-            // not yet found the matching enclosing loop so break out of this one
+            // for each enclosing loop EXCEPT THE LAST we need to tell it that its done
             // the VM sets the 'continueLoop' variable for this block to 'false'
+            if (label === undefined || label === null || loopLabel.endsWith(label)) {
+                // we found the matching enclosing loop and marked all enclosed loops as done
+                break;
+            }
             var continueLoop = this.createContinueVariable(loopLabel);
-            this.builder.insertLoadInstruction('LITERAL', false);
+            this.builder.insertLoadInstruction('LITERAL', 'false');
             this.builder.insertStoreInstruction('VARIABLE', continueLoop);
         }
+        if (i === numberOfBlocks - 1) {
+            // there was no matching enclosing loop with that label which should never happen
+            throw new Error('COMPILER: An unknown label was found in a continue clause: ' + label);
+        }
     }
-    // if we get here there was no matching enclosing loop which should never happen
-    throw new Error('COMPILER: An unknown label was found in a continue clause: ' + label);
+
+    // the VM jumps to the finish clause of the parent block
+    block = blocks[numberOfBlocks - 2];
+    var finishLabel = block.finishLabel;
+    this.builder.insertJumpInstruction(finishLabel);
 };
 
 
@@ -591,12 +589,13 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
     var length = children.length;
     var elseLabel = statementPrefix + 'ElseClause';
     var finishLabel = this.builder.blocks.peek().finishLabel;
+    var doneLabel;
 
     // compile each condition
     var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
         var conditionLabel = statementPrefix + 'ConditionClause_' + clauseNumber;
-        var doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
+        doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
         this.builder.insertLabel(conditionLabel);
 
         // the VM places the condition value on top of the execution stack
@@ -633,6 +632,9 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
     if (elseBlock) {
         this.builder.insertLabel(elseLabel);
         elseBlock.accept(this);
+        doneLabel = statementPrefix + 'ElseDone';
+        this.builder.insertLabel(doneLabel);
+        this.builder.insertJumpInstruction(finishLabel);
     }
 };
 
@@ -879,6 +881,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     var length = children.length;
     var elseLabel = statementPrefix + 'ElseClause';
     var finishLabel = this.builder.blocks.peek().finishLabel;
+    var doneLabel;
 
     // the VM saves the value of the selector expression in a temporary variable
     selector.accept(this);
@@ -889,7 +892,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
         var optionLabel = statementPrefix + 'OptionClause_' + clauseNumber;
-        var doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
+        doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
         this.builder.insertLabel(optionLabel);
 
         // the VM loads the selector value onto the top of the execution stack
@@ -930,6 +933,9 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     if (elseBlock) {
         this.builder.insertLabel(elseLabel);
         elseBlock.accept(this);
+        doneLabel = statementPrefix + 'ElseDone';
+        this.builder.insertLabel(doneLabel);
+        this.builder.insertJumpInstruction(finishLabel);
     }
 };
 
@@ -959,9 +965,7 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
     var handleClauses = finishClause ? children.slice(1, -1) : children.slice(1);
 
     var statementPrefix = this.builder.getStatementPrefix();
-    var handleLabel = statementPrefix + 'HandleClauses';
     var finishLabel = statementPrefix + 'FinishClause';
-    if (handleClauses.length > 0) this.builder.blocks.peek().handleLabel = handleLabel;
     this.builder.blocks.peek().finishLabel = finishLabel;
 
     // the VM attempts to execute the main clause
@@ -969,12 +973,6 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
 
     // the VM ends up here after the main clause is done or if any exceptions were thrown by the main clause
     if (handleClauses.length > 0) {
-        this.builder.insertLabel(handleLabel);
-
-        // the VM jumps past the handle clauses if there is no exception
-        this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
-        this.builder.insertJumpInstruction(finishLabel, 'ON NONE');
-
         this.builder.blocks.peek().handlerCount = handleClauses.length;
         var handlerNumber = 1;
         for (var i = 0; i < handleClauses.length; i++) {

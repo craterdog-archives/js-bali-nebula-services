@@ -49,6 +49,9 @@ SKIP INSTRUCTION
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
+1.ElseDone:
+JUMP TO 1.FinishClause
+
 1.FinishClause:
 SKIP INSTRUCTION
 

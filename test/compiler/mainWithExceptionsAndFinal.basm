@@ -5,10 +5,6 @@ STORE VARIABLE $_queue_1
 LOAD VARIABLE $message
 STORE MESSAGE $_queue_1
 
-1.HandleClauses:
-LOAD VARIABLE $_exception_
-JUMP TO 1.FinishClause ON NONE
-
 1.HandleClause_1:
 LOAD VARIABLE $_exception_
 STORE VARIABLE $error

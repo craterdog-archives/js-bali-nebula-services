@@ -32,7 +32,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $y
 
 1.2.2.ContinueStatement:
-JUMP TO 1.2.2.FinishClause
+JUMP TO 1.2.FinishClause
 
 1.2.FinishClause:
 SKIP INSTRUCTION

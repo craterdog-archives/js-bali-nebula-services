@@ -68,9 +68,8 @@ STORE VARIABLE $_result_
 1.3.ReturnStatement:
 SKIP INSTRUCTION
 
-1.HandleClauses:
-LOAD VARIABLE $_exception_
-JUMP TO 1.FinishClause ON NONE
+1.ElseDone:
+JUMP TO 1.FinishClause
 
 1.HandleClause_1:
 LOAD VARIABLE $_exception_
@@ -252,7 +251,10 @@ SKIP INSTRUCTION
 2.2.1.1.1.ContinueStatement:
 LOAD LITERAL `false`
 STORE VARIABLE $_continue_2_2_1_LoopClause_
-JUMP TO 2.2.1.1.1.FinishClause
+JUMP TO 2.2.1.1.FinishClause
+
+2.2.1.1.ElseDone:
+JUMP TO 2.2.1.1.FinishClause
 
 2.2.1.1.FinishClause:
 SKIP INSTRUCTION
@@ -270,6 +272,9 @@ SKIP INSTRUCTION
 2.2.1.1.EvaluateStatement:
 LOAD LITERAL `$innerDone`
 STORE VARIABLE $_result_
+
+2.2.ElseDone:
+JUMP TO 2.2.FinishClause
 
 2.2.FinishClause:
 SKIP INSTRUCTION
