@@ -542,11 +542,12 @@ CompilerVisitor.prototype.visitFunctionExpression = function(tree) {
 CompilerVisitor.prototype.visitHandleClause = function(tree) {
     // setup the labels
     var statementPrefix = this.builder.getStatementPrefix();
+    var finishLabel = this.builder.blocks.peek().finishLabel;
     var handlerNumber = this.builder.blocks.peek().handlerNumber;
     var handleLabel = statementPrefix + 'HandleClause_' + handlerNumber;
     var handledLabel = statementPrefix + 'Handled_' + handlerNumber;
-    var endLabel = statementPrefix + 'HandleEnd_' + handlerNumber;
-    var finishLabel = this.builder.blocks.peek().finishLabel;
+    var nextLabel = statementPrefix + 'HandleClause_' + (handlerNumber + 1);
+    if (this.builder.blocks.peek().handlerCount === handlerNumber) nextLabel = finishLabel;
     this.builder.insertLabel(handleLabel);
 
     // the VM stores the exception that is on top of the execution stack in the variable
@@ -560,21 +561,20 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
     this.builder.insertInvokeInstruction('$matches', 2);
 
     // the VM jumps past this exception handler if the template and exception did not match
-    this.builder.insertJumpInstruction(endLabel, 'ON FALSE');
+    this.builder.insertJumpInstruction(nextLabel, 'ON FALSE');
 
     // the VM executes the handler block
     tree.children[2].accept(this);  // block
 
-    // the VM clears the exception variable
+    // the exception has been handled so the VM clears the exception variable
     this.builder.insertLabel(handledLabel);
     this.builder.insertLoadInstruction('LITERAL', 'none');
     this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
 
-    // the VM jumps past the rest of the handlers to the finish clause
-    this.builder.insertJumpInstruction(finishLabel);
-
-    // the VM jumps here if the exception did not match the template
-    this.builder.insertLabel(endLabel);
+    if (nextLabel !== finishLabel) {
+        // the VM jumps past the rest of the handlers to the finish clause
+        this.builder.insertJumpInstruction(finishLabel);
+    }
 };
 
 
@@ -971,6 +971,7 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
         this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
         this.builder.insertJumpInstruction(finishLabel, 'ON NONE');
 
+        this.builder.blocks.peek().handlerCount = handleClauses.length;
         var handlerNumber = 1;
         for (var i = 0; i < handleClauses.length; i++) {
             this.builder.blocks.peek().handlerNumber = handlerNumber++;

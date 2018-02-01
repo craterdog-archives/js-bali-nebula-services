@@ -78,7 +78,7 @@ LOAD LITERAL `$type`
 LOAD LITERAL `$warning`
 INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.HandleEnd_1 ON FALSE
+JUMP TO 1.HandleClause_2 ON FALSE
 
 1.1.EvaluateStatement:
 LOAD VARIABLE $count
@@ -102,9 +102,6 @@ LOAD LITERAL `none`
 STORE VARIABLE $_exception_
 JUMP TO 1.FinishClause
 
-1.HandleEnd_1:
-SKIP INSTRUCTION
-
 1.HandleClause_2:
 LOAD VARIABLE $_exception_
 STORE VARIABLE $exception
@@ -115,7 +112,7 @@ LOAD LITERAL `$type`
 LOAD LITERAL `$moderate`
 INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.HandleEnd_2 ON FALSE
+JUMP TO 1.FinishClause ON FALSE
 
 1.1.EvaluateStatement:
 LOAD LITERAL `2`
@@ -135,10 +132,6 @@ STORE VARIABLE $_exception_
 1.Handled_2:
 LOAD LITERAL `none`
 STORE VARIABLE $_exception_
-JUMP TO 1.FinishClause
-
-1.HandleEnd_2:
-SKIP INSTRUCTION
 
 1.FinishClause:
 SKIP INSTRUCTION
