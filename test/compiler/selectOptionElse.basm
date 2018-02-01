@@ -1,58 +1,58 @@
 
-1.SelectClause:
+1.SelectStatement:
 LOAD LITERAL `$selection`
 STORE VARIABLE $_selector_1
 
-1.1.OptionBlock:
+1.1.OptionClause:
 LOAD VARIABLE $_selector_1
 LOAD LITERAL `'alpha'`
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.2.OptionBlock ON FALSE
+JUMP TO 1.2.OptionClause ON FALSE
 
-1.1.1.EvaluateClause:
+1.1.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.1.2.BlockEnd:
-JUMP TO 1.StatementEnd
+JUMP TO 1.FinishClause
 
-1.2.OptionBlock:
+1.2.OptionClause:
 LOAD VARIABLE $_selector_1
 LOAD LITERAL `'beta'`
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.3.OptionBlock ON FALSE
+JUMP TO 1.3.OptionClause ON FALSE
 
-1.2.1.EvaluateClause:
+1.2.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.2.2.BlockEnd:
-JUMP TO 1.StatementEnd
+JUMP TO 1.FinishClause
 
-1.3.OptionBlock:
+1.3.OptionClause:
 LOAD VARIABLE $_selector_1
 LOAD LITERAL `'gamma'`
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.4.ElseBlock ON FALSE
+JUMP TO 1.4.ElseClause ON FALSE
 
-1.3.1.EvaluateClause:
+1.3.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.3.2.BlockEnd:
-JUMP TO 1.StatementEnd
+JUMP TO 1.FinishClause
 
-1.4.ElseBlock:
+1.4.ElseClause:
 SKIP INSTRUCTION
 
-1.4.1.EvaluateClause:
+1.4.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.4.2.BlockEnd:
 SKIP INSTRUCTION
 
-1.StatementEnd:
+1.FinishClause:
 SKIP INSTRUCTION
 
 2.BlockEnd:

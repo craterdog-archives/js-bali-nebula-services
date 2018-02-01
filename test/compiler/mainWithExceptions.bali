@@ -1,6 +1,6 @@
 {
-    throw [$type: 'whine'] handle $error matching [$type: 'bad'] with {
-        none
+    queue message on <bali:/queues/myqueue> handle $error matching [$type: 'bad'] with {
+        any
     } handle $error matching [$type: 'horrid'] with {
         none
     }

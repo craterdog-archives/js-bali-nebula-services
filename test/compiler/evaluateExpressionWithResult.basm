@@ -1,9 +1,9 @@
 
-1.EvaluateClause:
+1.EvaluateStatement:
 LOAD VARIABLE $bar
 STORE VARIABLE $foo
 
-2.EvaluateClause:
+2.EvaluateStatement:
 LOAD VARIABLE $document
 LOAD LITERAL `$customer`
 INVOKE INTRINSIC $getValue WITH 2 PARAMETERS

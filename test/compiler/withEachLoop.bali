@@ -1,7 +1,10 @@
 {
     with each $symbol in $sequence do {
-        true
-        continue
-        none
+        $x := true
+        if x then {
+            $y := none
+            continue
+        }
+        $z := any
     }
 }

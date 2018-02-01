@@ -1,19 +1,19 @@
 
-1.IfClause:
+1.IfStatement:
 SKIP INSTRUCTION
 
-1.1.ConditionBlock:
+1.1.ConditionClause:
 LOAD LITERAL `true`
-JUMP TO 1.StatementEnd ON FALSE
+JUMP TO 1.FinishClause ON FALSE
 
-1.1.1.EvaluateClause:
-LOAD LITERAL `true`
+1.1.1.EvaluateStatement:
+LOAD VARIABLE $yes
 STORE VARIABLE $_result_
 
 1.1.2.BlockEnd:
 SKIP INSTRUCTION
 
-1.StatementEnd:
+1.FinishClause:
 SKIP INSTRUCTION
 
 2.BlockEnd:

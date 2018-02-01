@@ -2,7 +2,4 @@
 ----------------------------------------------------------------------
 [001]:    2001    10     1    LOAD LITERAL 1
 [002]:    5801    23     1    STORE VARIABLE 1
-[003]:    2001    10     1    LOAD LITERAL 1
-[004]:    5801    23     1    STORE VARIABLE 1
-[005]:    0000    00 [000]    SKIP INSTRUCTION
-[006]:    0000    00 [000]    SKIP INSTRUCTION
+[003]:    0000    00 [000]    SKIP INSTRUCTION

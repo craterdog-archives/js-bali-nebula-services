@@ -1,7 +1,9 @@
 {
     label: while condition do {
-        true
-        continue to label
-        none
+        $a := b
+        if a then {
+            break from label
+        }
+        $a := c
     }
 }

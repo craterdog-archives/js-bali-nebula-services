@@ -1,7 +1,9 @@
 {
     while condition do {
-        true
-        break
-        none
+        $a := b
+        if a then {
+            break
+        }
+        $a := c
     }
 }

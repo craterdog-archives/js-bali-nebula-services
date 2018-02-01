@@ -1,16 +1,13 @@
 
-1.ThrowClause:
-LOAD LITERAL `1`
-INVOKE INTRINSIC $table WITH PARAMETER
-LOAD LITERAL `$type`
-LOAD LITERAL `'whine'`
-INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
-STORE VARIABLE $_exception_
-JUMP TO 2.BlockEnd
+1.QueueStatement:
+LOAD LITERAL `<bali:/queues/myqueue>`
+STORE VARIABLE $_queue_1
+LOAD VARIABLE $message
+STORE MESSAGE $_queue_1
 
 1.HandleClauses:
 LOAD VARIABLE $_exception_
-JUMP TO 1.StatementEnd ON NONE
+JUMP TO 1.FinishClause ON NONE
 LOAD VARIABLE $_exception_
 
 1.1.HandleClause:
@@ -24,8 +21,8 @@ INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
 JUMP TO 1.1.ClauseEnd ON FALSE
 
-1.1.1.EvaluateClause:
-LOAD LITERAL `none`
+1.1.1.EvaluateStatement:
+LOAD LITERAL `any`
 STORE VARIABLE $_result_
 
 1.1.2.BlockEnd:
@@ -34,7 +31,7 @@ STORE VARIABLE $_exception_
 
 1.1.ClauseEnd:
 LOAD VARIABLE $_exception_
-JUMP TO 1.StatementEnd ON NONE
+JUMP TO 1.FinishClause ON NONE
 LOAD VARIABLE $_exception_
 
 1.2.HandleClause:
@@ -48,7 +45,7 @@ INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
 JUMP TO 1.2.ClauseEnd ON FALSE
 
-1.2.1.EvaluateClause:
+1.2.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
@@ -59,7 +56,7 @@ STORE VARIABLE $_exception_
 1.2.ClauseEnd:
 SKIP INSTRUCTION
 
-1.StatementEnd:
+1.FinishClause:
 SKIP INSTRUCTION
 
 2.BlockEnd:

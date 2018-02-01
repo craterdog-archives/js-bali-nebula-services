@@ -1,7 +1,10 @@
 {
     with $sequence do {
-        true
-        continue
-        none
+        $x := true
+        if x then {
+            $y := none
+            break
+        }
+        $z := any
     }
 }

@@ -1,7 +1,7 @@
 {
     if true then {
-        true
+        yes
     } else {
-        false
+        no
     }
 }
