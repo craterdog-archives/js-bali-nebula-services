@@ -9,6 +9,8 @@ JUMP TO 1.ConditionClause_2 ON FALSE
 1.1.EvaluateStatement:
 LOAD VARIABLE $yes
 STORE VARIABLE $_result_
+
+1.ClauseDone_1:
 JUMP TO 1.FinishClause
 
 1.ConditionClause_2:

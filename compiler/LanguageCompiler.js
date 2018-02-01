@@ -595,7 +595,8 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
     // compile each condition
     var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
-        var conditionLabel = statementPrefix + 'ConditionClause_' + clauseNumber++;
+        var conditionLabel = statementPrefix + 'ConditionClause_' + clauseNumber;
+        var doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
         this.builder.insertLabel(conditionLabel);
 
         // the VM places the condition value on top of the execution stack
@@ -623,6 +624,7 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
         // completed execution of the block
         if (elseBlock || i < length - 1) {
             // not the last block so the VM jumps to the end of the statement
+            this.builder.insertLabel(doneLabel);
             this.builder.insertJumpInstruction(finishLabel);
         }
     }
@@ -886,7 +888,8 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     // check each option
     var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
-        var optionLabel = statementPrefix + 'OptionClause_' + clauseNumber++;
+        var optionLabel = statementPrefix + 'OptionClause_' + clauseNumber;
+        var doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
         this.builder.insertLabel(optionLabel);
 
         // the VM loads the selector value onto the top of the execution stack
@@ -918,6 +921,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
         // completed execution of the block
         if (elseBlock || i < length - 1) {
             // not the last block so the VM jumps to the end of the statement
+            this.builder.insertLabel(doneLabel);
             this.builder.insertJumpInstruction(finishLabel);
         }
     }
