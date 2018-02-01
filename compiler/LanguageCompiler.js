@@ -844,6 +844,12 @@ CompilerVisitor.prototype.visitReturnClause = function(tree) {
         tree.children[0].accept(this);  // expression
         this.builder.insertStoreInstruction('VARIABLE', '$_result_');
     }
+
+    // the VM jumps to the finish clause of the parent block
+    var blocks = this.builder.blocks;
+    var block = blocks[blocks.length - 2];
+    var finishLabel = block.finishLabel;
+    this.builder.insertJumpInstruction(finishLabel);
 };
 
 
@@ -1060,6 +1066,12 @@ CompilerVisitor.prototype.visitThrowClause = function(tree) {
     // the VM stores the exception in a temporary variable
     tree.children[0].accept(this);  // exception expression
     this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
+
+    // the VM jumps to the finish clause of the parent block
+    var blocks = this.builder.blocks;
+    var block = blocks[blocks.length - 2];
+    var finishLabel = block.finishLabel;
+    this.builder.insertJumpInstruction(finishLabel);
 };
 
 

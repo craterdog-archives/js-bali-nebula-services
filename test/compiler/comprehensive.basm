@@ -19,6 +19,7 @@ STORE VARIABLE $b
 1.3.ThrowStatement:
 LOAD VARIABLE $exception
 STORE VARIABLE $_exception_
+JUMP TO 1.FinishClause
 
 1.ClauseDone_1:
 JUMP TO 1.FinishClause
@@ -45,6 +46,7 @@ STORE VARIABLE $c
 1.3.ReturnStatement:
 LOAD VARIABLE $c
 STORE VARIABLE $_result_
+JUMP TO 1.FinishClause
 
 1.ClauseDone_2:
 JUMP TO 1.FinishClause
@@ -66,7 +68,7 @@ LOAD LITERAL `(3, 4i)`
 STORE VARIABLE $_result_
 
 1.3.ReturnStatement:
-SKIP INSTRUCTION
+JUMP TO 1.FinishClause
 
 1.ElseDone:
 JUMP TO 1.FinishClause
@@ -131,6 +133,7 @@ STORE VARIABLE $exception
 1.2.ThrowStatement:
 LOAD VARIABLE $exception
 STORE VARIABLE $_exception_
+JUMP TO 1.FinishClause
 
 1.Handled_2:
 LOAD LITERAL `none`
