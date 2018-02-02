@@ -32,7 +32,7 @@ var intrinsics = {
     array: function(capacity) {},
     isFalse: function(document) {},
     isNone: function(document) {},
-    isZero: function(document) {},
+    isTrue: function(document) {},
     table: function(capacity) {}
 };
 
@@ -318,8 +318,8 @@ VirtualMachine.prototype.handleJumpInstruction = function(modifier, address) {
         case 'ON FALSE':
             this.jumpOnFalse(address);
             break;
-        case 'ON ZERO':
-            this.jumpOnZero(address);
+        case 'ON TRUE':
+            this.jumpOnTrue(address);
             break;
         default:
             throw new Error('BALI VM: Invalid modifier for the JUMP instruction: ' + modifier);
@@ -443,9 +443,9 @@ VirtualMachine.prototype.jumpOnFalse = function(address) {
 };
 
 
-VirtualMachine.prototype.jumpOnZero = function(address) {
+VirtualMachine.prototype.jumpOnTrue = function(address) {
     var document = this.getDocument();
-    if (intrinsics.isZero(document)) this.currentContext().instructionPointer = address;
+    if (intrinsics.isTrue(document)) this.currentContext().instructionPointer = address;
 };
 
 

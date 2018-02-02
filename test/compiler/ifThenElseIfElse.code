@@ -2,12 +2,12 @@
 ----------------------------------------------------------------------
 [001]:    0000    00 [000]    SKIP INSTRUCTION
 [002]:    2001    10     1    LOAD LITERAL 1
-[003]:    1007    02 [007]    JUMP TO [007] ON FALSE
+[003]:    1807    03 [007]    JUMP TO [007] ON FALSE
 [004]:    3801    13     1    LOAD VARIABLE 1
 [005]:    5802    23     2    STORE VARIABLE 2
 [006]:    0010    00 [010]    JUMP TO [010]
 [007]:    2002    10     2    LOAD LITERAL 2
-[008]:    100C    02 [00C]    JUMP TO [00C] ON FALSE
+[008]:    180C    03 [00C]    JUMP TO [00C] ON FALSE
 [009]:    3803    13     3    LOAD VARIABLE 3
 [00A]:    5802    23     2    STORE VARIABLE 2
 [00B]:    0010    00 [010]    JUMP TO [010]

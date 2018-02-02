@@ -196,7 +196,7 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
         label = label.charAt(0).toUpperCase() + label.slice(1);
     }
 
-    // mark each enclosing loop as done
+    // the VM marks each enclosing loop as done and sets a flag
     var blocks = this.builder.blocks;
     var block;
     var loopLabel;
@@ -220,6 +220,8 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
             throw new Error('COMPILER: An unknown label was found in a break clause: ' + label);
         }
     }
+    this.builder.insertLoadInstruction('LITERAL', 'true');
+    this.builder.insertStoreInstruction('VARIABLE', '$_loop_interrupted_');
 
     // the VM jumps to the loop label or the finish clause of the parent block
     var parent = this.parentBlock();
@@ -343,7 +345,7 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
         label = label.charAt(0).toUpperCase() + label.slice(1);
     }
 
-    // mark each enclosing loop as done
+    // the VM marks each enclosing loop as done and sets a flag
     var blocks = this.builder.blocks;
     var block;
     var loopLabel;
@@ -367,6 +369,8 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
             throw new Error('COMPILER: An unknown label was found in a continue clause: ' + label);
         }
     }
+    this.builder.insertLoadInstruction('LITERAL', 'true');
+    this.builder.insertStoreInstruction('VARIABLE', '$_loop_interrupted_');
 
     // the VM jumps to the loop label or the finish clause of the parent block
     var parent = this.parentBlock();
@@ -863,11 +867,14 @@ CompilerVisitor.prototype.visitReturnClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     this.builder.insertLabel(statementPrefix + 'ReturnStatement');
 
+    // the VM stores the result in a temporary variable and sets a flag
     if (tree.children.length > 0) {
         // the VM stores the value of the result expression in a temporary variable
         tree.children[0].accept(this);  // expression
         this.builder.insertStoreInstruction('VARIABLE', '$_result_');
     }
+    this.builder.insertLoadInstruction('LITERAL', 'true');
+    this.builder.insertStoreInstruction('VARIABLE', '$_result_returned_');
 
     // the VM jumps to the finish clause of the parent block
     var parent = this.parentBlock();
@@ -1020,7 +1027,38 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
         if (finishClause) {
             finishClause.accept(this);
         }
+
+        // the VM jumps to the appropriate clause depending on current state
+        var parent = this.parentBlock();
+        if (parent) {
+            handleLabel = parent.handleLabel;
+            var loopLabel = parent.loopLabel;
+            finishLabel = parent.finishLabel;
+
+            // handle 'throw' first
+            this.builder.insertLoadInstruction('VARIABLE', '$_exception_thrown_');
+            if (handleLabel) {
+                this.builder.insertJumpInstruction(handleLabel, 'ON TRUE');
+            } else {
+                this.builder.insertJumpInstruction(finishLabel, 'ON TRUE');
+            }
+
+            // handle 'continue' and 'break' next
+            this.builder.insertLoadInstruction('VARIABLE', '$_loop_interrupted_');
+            if (loopLabel) {
+                this.builder.insertJumpInstruction(loopLabel, 'ON TRUE');
+            } else {
+                this.builder.insertJumpInstruction(finishLabel, 'ON TRUE');
+            }
+
+            // then handle 'return'
+            this.builder.insertLoadInstruction('VARIABLE', '$_result_returned_');
+            this.builder.insertJumpInstruction(finishLabel, 'ON TRUE');
+        } else {
+            // the VM has reached the end of the procedure
+        }
     }
+    // otherwise the VM executes the next statement
 };
 
 
@@ -1088,9 +1126,11 @@ CompilerVisitor.prototype.visitThrowClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     this.builder.insertLabel(statementPrefix + 'ThrowStatement');
 
-    // the VM stores the exception in a temporary variable
+    // the VM stores the exception in a temporary variable and sets a flag
     tree.children[0].accept(this);  // exception expression
     this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
+    this.builder.insertLoadInstruction('LITERAL', 'true');
+    this.builder.insertStoreInstruction('VARIABLE', '$_exception_thrown_');
 
     // the VM jumps to the handler clauses or finish clause of the parent block
     var parent = this.parentBlock();

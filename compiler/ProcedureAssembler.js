@@ -182,8 +182,8 @@ AssemblerVisitor.prototype.visitSkipInstruction = function(instruction) {
 // jumpInstruction:
 //     'JUMP' 'TO' LABEL |
 //     'JUMP' 'TO' LABEL 'ON' 'NONE' |
-//     'JUMP' 'TO' LABEL 'ON' 'FALSE' |
-//     'JUMP' 'TO' LABEL 'ON' 'ZERO'
+//     'JUMP' 'TO' LABEL 'ON' 'TRUE' |
+//     'JUMP' 'TO' LABEL 'ON' 'FALSE'
 AssemblerVisitor.prototype.visitJumpInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var label = instruction.label;

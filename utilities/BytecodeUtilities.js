@@ -334,8 +334,8 @@ var VARIABLE = 0x1800;
 
 // conditions
 var ON_NONE = 0x0800;
-var ON_FALSE = 0x1000;
-var ON_ZERO = 0x1800;
+var ON_TRUE = 0x1000;
+var ON_FALSE = 0x1800;
 
 // procedures
 var WITH_PARAMETERS = 0x0800;
@@ -355,8 +355,8 @@ var MODCODES = {
     'VARIABLE': VARIABLE,
     'LITERAL': LITERAL,
     'ON NONE': ON_NONE,
+    'ON TRUE': ON_TRUE,
     'ON FALSE': ON_FALSE,
-    'ON ZERO': ON_ZERO,
     'WITH PARAMETERS': WITH_PARAMETERS,
     'ON TARGET': ON_TARGET,
     'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS
@@ -381,8 +381,8 @@ var STORE_TYPES = [
 var CONDITIONS = [
     '',
     'ON NONE',
-    'ON FALSE',
-    'ON ZERO'
+    'ON TRUE',
+    'ON FALSE'
 ];
 
 // procedures

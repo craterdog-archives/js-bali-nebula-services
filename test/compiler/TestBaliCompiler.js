@@ -100,8 +100,8 @@ var EXPECTED_INSTRUCTIONS =
 '[001]:    0000    00 [000]    SKIP INSTRUCTION\n' +
 '[002]:    0006    00 [006]    JUMP TO [006]\n' +
 '[003]:    080A    01 [00A]    JUMP TO [00A] ON NONE\n' +
-'[004]:    100E    02 [00E]    JUMP TO [00E] ON FALSE\n' +
-'[005]:    1812    03 [012]    JUMP TO [012] ON ZERO\n' +
+'[004]:    100E    02 [00E]    JUMP TO [00E] ON TRUE\n' +
+'[005]:    1812    03 [012]    JUMP TO [012] ON FALSE\n' +
 '[006]:    2001    10     1    LOAD LITERAL 1\n' +
 '[007]:    2801    11     1    LOAD DOCUMENT 1\n' +
 '[008]:    3002    12     2    LOAD MESSAGE 2\n' +

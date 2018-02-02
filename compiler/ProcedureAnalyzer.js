@@ -83,8 +83,8 @@ AnalyzerVisitor.prototype.visitSkipInstruction = function(instruction) {
 // jumpInstruction:
 //     'JUMP' 'TO' LABEL |
 //     'JUMP' 'TO' LABEL 'ON' 'NONE' |
-//     'JUMP' 'TO' LABEL 'ON' 'FALSE' |
-//     'JUMP' 'TO' LABEL 'ON' 'ZERO'
+//     'JUMP' 'TO' LABEL 'ON' 'TRUE' |
+//     'JUMP' 'TO' LABEL 'ON' 'FALSE'
 AnalyzerVisitor.prototype.visitJumpInstruction = function(instruction) {
     this.address++;
 };

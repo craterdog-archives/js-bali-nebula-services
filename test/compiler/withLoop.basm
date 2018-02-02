@@ -34,10 +34,17 @@ STORE VARIABLE $y
 1.2.2.BreakStatement:
 LOAD LITERAL `false`
 STORE VARIABLE $_continue_1_LoopClause_
+LOAD LITERAL `true`
+STORE VARIABLE $_loop_interrupted_
 JUMP TO 1.2.FinishClause
 
 1.2.FinishClause:
-SKIP INSTRUCTION
+LOAD VARIABLE $_exception_thrown_
+JUMP TO 1.FinishClause ON TRUE
+LOAD VARIABLE $_loop_interrupted_
+JUMP TO 1.LoopClause ON TRUE
+LOAD VARIABLE $_result_returned_
+JUMP TO 1.FinishClause ON TRUE
 
 1.3.EvaluateStatement:
 LOAD LITERAL `any`

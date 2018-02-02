@@ -3,8 +3,8 @@ SKIP INSTRUCTION
 1.jump:
 JUMP TO 2.load
 JUMP TO 3.store ON NONE
-JUMP TO 4.invoke ON FALSE
-JUMP TO 5.execute ON ZERO
+JUMP TO 4.invoke ON TRUE
+JUMP TO 5.execute ON FALSE
 
 2.load:
 LOAD LITERAL `"This is a literal text string
