@@ -66,6 +66,19 @@ CompilerVisitor.prototype.createContinueVariable = function(loopLabel) {
 };
 
 
+CompilerVisitor.prototype.currentBlock = function() {
+    var block = this.builder.blocks.peek();
+    return block;
+};
+
+
+CompilerVisitor.prototype.parentBlock = function() {
+    var blocks = this.builder.blocks;
+    var parent = blocks[blocks.length - 2];
+    return parent;
+};
+
+
 CompilerVisitor.prototype.getResult = function() {
     this.builder.finalize();
     return this.builder.asmcode;
@@ -186,10 +199,11 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
     // mark each enclosing loop as done
     var blocks = this.builder.blocks;
     var block;
+    var loopLabel;
     var numberOfBlocks = blocks.length;
     for (var i = 0; i < numberOfBlocks; i++) {
         block = blocks[numberOfBlocks - i - 1];  // work backwards
-        var loopLabel = block.loopLabel;
+        loopLabel = block.loopLabel;
         if (loopLabel) {
             // for each enclosing loop we need to tell it that its done
             // the VM sets the 'continueLoop' variable for this block to 'false'
@@ -207,10 +221,15 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
         }
     }
 
-    // the VM jumps to the finish clause of the parent block
-    block = blocks[numberOfBlocks - 2];
-    var finishLabel = block.finishLabel;
-    this.builder.insertJumpInstruction(finishLabel);
+    // the VM jumps to the loop label or the finish clause of the parent block
+    var parent = this.parentBlock();
+    loopLabel = parent.loopLabel;
+    if (loopLabel) {
+        this.builder.insertJumpInstruction(loopLabel);
+    } else {
+        var finishLabel = parent.finishLabel;
+        this.builder.insertJumpInstruction(finishLabel);
+    }
 };
 
 
@@ -327,10 +346,11 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
     // mark each enclosing loop as done
     var blocks = this.builder.blocks;
     var block;
+    var loopLabel;
     var numberOfBlocks = blocks.length;
     for (var i = 0; i < numberOfBlocks; i++) {
         block = blocks[numberOfBlocks - i - 1];  // work backwards
-        var loopLabel = block.loopLabel;
+        loopLabel = block.loopLabel;
         if (loopLabel) {
             // for each enclosing loop EXCEPT THE LAST we need to tell it that its done
             // the VM sets the 'continueLoop' variable for this block to 'false'
@@ -348,10 +368,15 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
         }
     }
 
-    // the VM jumps to the finish clause of the parent block
-    block = blocks[numberOfBlocks - 2];
-    var finishLabel = block.finishLabel;
-    this.builder.insertJumpInstruction(finishLabel);
+    // the VM jumps to the loop label or the finish clause of the parent block
+    var parent = this.parentBlock();
+    loopLabel = parent.loopLabel;
+    if (loopLabel) {
+        this.builder.insertJumpInstruction(loopLabel);
+    } else {
+        var finishLabel = parent.finishLabel;
+        this.builder.insertJumpInstruction(finishLabel);
+    }
 };
 
 
@@ -540,12 +565,12 @@ CompilerVisitor.prototype.visitFunctionExpression = function(tree) {
 CompilerVisitor.prototype.visitHandleClause = function(tree) {
     // setup the labels
     var statementPrefix = this.builder.getStatementPrefix();
-    var finishLabel = this.builder.blocks.peek().finishLabel;
-    var handlerNumber = this.builder.blocks.peek().handlerNumber;
+    var finishLabel = this.currentBlock().finishLabel;
+    var handlerNumber = this.currentBlock().handlerNumber;
     var handleLabel = statementPrefix + 'HandleClause_' + handlerNumber;
     var handledLabel = statementPrefix + 'Handled_' + handlerNumber;
     var nextLabel = statementPrefix + 'HandleClause_' + (handlerNumber + 1);
-    if (this.builder.blocks.peek().handlerCount === handlerNumber) nextLabel = finishLabel;
+    if (this.currentBlock().handlerCount === handlerNumber) nextLabel = finishLabel;
     this.builder.insertLabel(handleLabel);
 
     // the VM stores the exception that is on top of the execution stack in the variable
@@ -588,7 +613,7 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
     }
     var length = children.length;
     var elseLabel = statementPrefix + 'ElseClause';
-    var finishLabel = this.builder.blocks.peek().finishLabel;
+    var finishLabel = this.currentBlock().finishLabel;
     var doneLabel;
 
     // compile each condition
@@ -780,7 +805,6 @@ CompilerVisitor.prototype.visitPrecedenceExpression = function(tree) {
 CompilerVisitor.prototype.visitProcedure = function(tree) {
     // record the label for the end of the block in the compiler block context
     var statements = tree.children;
-    var block = this.builder.blocks.peek();
 
     // compile the statements
     for (var i = 0; i < statements.length; i++) {
@@ -846,9 +870,8 @@ CompilerVisitor.prototype.visitReturnClause = function(tree) {
     }
 
     // the VM jumps to the finish clause of the parent block
-    var blocks = this.builder.blocks;
-    var block = blocks[blocks.length - 2];
-    var finishLabel = block.finishLabel;
+    var parent = this.parentBlock();
+    var finishLabel = parent.finishLabel;
     this.builder.insertJumpInstruction(finishLabel);
 };
 
@@ -886,7 +909,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     }
     var length = children.length;
     var elseLabel = statementPrefix + 'ElseClause';
-    var finishLabel = this.builder.blocks.peek().finishLabel;
+    var finishLabel = this.currentBlock().finishLabel;
     var doneLabel;
 
     // the VM saves the value of the selector expression in a temporary variable
@@ -971,18 +994,20 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
     var handleClauses = finishClause ? children.slice(1, -1) : children.slice(1);
 
     var statementPrefix = this.builder.getStatementPrefix();
+    var handleLabel = statementPrefix + 'HandleClause_1';  // start with the first handler
+    if (handleClauses.length > 0) this.currentBlock().handleLabel = handleLabel;
     var finishLabel = statementPrefix + 'FinishClause';
-    this.builder.blocks.peek().finishLabel = finishLabel;
+    this.currentBlock().finishLabel = finishLabel;
 
     // the VM attempts to execute the main clause
     mainClause.accept(this);
 
     // the VM ends up here after the main clause is done or if any exceptions were thrown by the main clause
     if (handleClauses.length > 0) {
-        this.builder.blocks.peek().handlerCount = handleClauses.length;
+        this.currentBlock().handlerCount = handleClauses.length;
         var handlerNumber = 1;
         for (var i = 0; i < handleClauses.length; i++) {
-            this.builder.blocks.peek().handlerNumber = handlerNumber++;
+            this.currentBlock().handlerNumber = handlerNumber++;
 
             // the VM attempts to handle the exception
             handleClauses[i].accept(this);
@@ -1067,11 +1092,15 @@ CompilerVisitor.prototype.visitThrowClause = function(tree) {
     tree.children[0].accept(this);  // exception expression
     this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
 
-    // the VM jumps to the finish clause of the parent block
-    var blocks = this.builder.blocks;
-    var block = blocks[blocks.length - 2];
-    var finishLabel = block.finishLabel;
-    this.builder.insertJumpInstruction(finishLabel);
+    // the VM jumps to the handler clauses or finish clause of the parent block
+    var parent = this.parentBlock();
+    var handleLabel = parent.handleLabel;
+    if (handleLabel) {
+        this.builder.insertJumpInstruction(handleLabel);
+    } else {
+        var finishLabel = parent.finishLabel;
+        this.builder.insertJumpInstruction(finishLabel);
+    }
 };
 
 
@@ -1125,7 +1154,7 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     loopLabel = statementPrefix + loopLabel;
 
     // setup the compiler state for this loop with respect to 'continue' and 'break' statements
-    this.builder.blocks.peek().loopLabel = loopLabel;
+    this.currentBlock().loopLabel = loopLabel;
     var continueLoop = this.createContinueVariable(loopLabel);
     this.builder.insertLoadInstruction('LITERAL', 'true');
     this.builder.insertStoreInstruction('VARIABLE', continueLoop);
@@ -1143,7 +1172,7 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     this.builder.insertInvokeInstruction('$and', 2);
 
     // if the condition is false or the continue flag is false, the VM jumps to the end
-    var finishLabel = this.builder.blocks.peek().finishLabel;
+    var finishLabel = this.currentBlock().finishLabel;
     this.builder.insertJumpInstruction(finishLabel, 'ON FALSE');
 
     // if the condition is true, then the VM enters the block
@@ -1197,7 +1226,7 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     this.builder.insertStoreInstruction('VARIABLE', iterator);
 
     // setup the compiler state for this loop with respect to 'continue' and 'break' statements
-    this.builder.blocks.peek().loopLabel = loopLabel;
+    this.currentBlock().loopLabel = loopLabel;
     var continueLoop = this.createContinueVariable(loopLabel);
     this.builder.insertLoadInstruction('LITERAL', 'true');
     this.builder.insertStoreInstruction('VARIABLE', continueLoop);
@@ -1218,7 +1247,7 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     this.builder.insertInvokeInstruction('$and', 2);
 
     // if the condition is false or the continue flag is false, the VM jumps to the end
-    var finishLabel = this.builder.blocks.peek().finishLabel;
+    var finishLabel = this.currentBlock().finishLabel;
     this.builder.insertJumpInstruction(finishLabel, 'ON FALSE');
 
     // the VM places the iterator back onto the execution stack

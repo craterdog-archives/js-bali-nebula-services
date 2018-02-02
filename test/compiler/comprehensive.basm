@@ -19,7 +19,7 @@ STORE VARIABLE $b
 1.3.ThrowStatement:
 LOAD VARIABLE $exception
 STORE VARIABLE $_exception_
-JUMP TO 1.FinishClause
+JUMP TO 1.HandleClause_1
 
 1.ClauseDone_1:
 JUMP TO 1.FinishClause
@@ -133,7 +133,7 @@ STORE VARIABLE $exception
 1.2.ThrowStatement:
 LOAD VARIABLE $exception
 STORE VARIABLE $_exception_
-JUMP TO 1.FinishClause
+JUMP TO 1.HandleClause_1
 
 1.Handled_2:
 LOAD LITERAL `none`

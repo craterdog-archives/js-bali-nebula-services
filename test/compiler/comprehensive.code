@@ -11,7 +11,7 @@
 [009]:    5802    23     2    STORE VARIABLE 2
 [00A]:    3804    13     4    LOAD VARIABLE 4
 [00B]:    5805    23     5    STORE VARIABLE 5
-[00C]:    005D    00 [05D]    JUMP TO [05D]
+[00C]:    002B    00 [02B]    JUMP TO [02B]
 [00D]:    005D    00 [05D]    JUMP TO [05D]
 [00E]:    3801    13     1    LOAD VARIABLE 1
 [00F]:    2001    10     1    LOAD LITERAL 1
@@ -89,7 +89,7 @@
 [057]:    5804    23     4    STORE VARIABLE 4
 [058]:    3804    13     4    LOAD VARIABLE 4
 [059]:    5805    23     5    STORE VARIABLE 5
-[05A]:    005D    00 [05D]    JUMP TO [05D]
+[05A]:    002B    00 [02B]    JUMP TO [02B]
 [05B]:    200D    10    13    LOAD LITERAL 13
 [05C]:    5805    23     5    STORE VARIABLE 5
 [05D]:    0000    00 [000]    SKIP INSTRUCTION
