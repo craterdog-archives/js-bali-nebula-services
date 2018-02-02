@@ -620,7 +620,7 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
     var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
         var conditionLabel = statementPrefix + 'ConditionClause_' + clauseNumber;
-        doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
+        doneLabel = statementPrefix + 'ConditionDone_' + clauseNumber++;
         this.builder.insertLabel(conditionLabel);
 
         // the VM places the condition value on top of the execution stack
@@ -921,7 +921,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     var clauseNumber = 1;
     for (var i = 0; i < length; i++) {
         var optionLabel = statementPrefix + 'OptionClause_' + clauseNumber;
-        doneLabel = statementPrefix + 'ClauseDone_' + clauseNumber++;
+        doneLabel = statementPrefix + 'OptionDone_' + clauseNumber++;
         this.builder.insertLabel(optionLabel);
 
         // the VM loads the selector value onto the top of the execution stack

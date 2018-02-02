@@ -21,7 +21,7 @@ LOAD VARIABLE $exception
 STORE VARIABLE $_exception_
 JUMP TO 1.HandleClause_1
 
-1.ClauseDone_1:
+1.ConditionDone_1:
 JUMP TO 1.FinishClause
 
 1.ConditionClause_2:
@@ -48,7 +48,7 @@ LOAD VARIABLE $c
 STORE VARIABLE $_result_
 JUMP TO 1.FinishClause
 
-1.ClauseDone_2:
+1.ConditionDone_2:
 JUMP TO 1.FinishClause
 
 1.ElseClause:
@@ -195,7 +195,7 @@ LOAD LITERAL `false`
 STORE VARIABLE $_continue_2_Outer_
 JUMP TO 2.2.FinishClause
 
-2.2.ClauseDone_1:
+2.2.ConditionDone_1:
 JUMP TO 2.2.FinishClause
 
 2.2.ElseClause:
@@ -232,7 +232,7 @@ JUMP TO 2.2.1.1.OptionClause_2 ON FALSE
 LOAD LITERAL `true`
 STORE VARIABLE $_result_
 
-2.2.1.1.ClauseDone_1:
+2.2.1.1.OptionDone_1:
 JUMP TO 2.2.1.1.FinishClause
 
 2.2.1.1.OptionClause_2:
@@ -245,7 +245,7 @@ JUMP TO 2.2.1.1.ElseClause ON FALSE
 LOAD LITERAL `false`
 STORE VARIABLE $_result_
 
-2.2.1.1.ClauseDone_2:
+2.2.1.1.OptionDone_2:
 JUMP TO 2.2.1.1.FinishClause
 
 2.2.1.1.ElseClause:

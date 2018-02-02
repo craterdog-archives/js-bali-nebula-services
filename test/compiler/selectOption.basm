@@ -13,7 +13,7 @@ JUMP TO 1.OptionClause_2 ON FALSE
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
-1.ClauseDone_1:
+1.OptionDone_1:
 JUMP TO 1.FinishClause
 
 1.OptionClause_2:
@@ -26,7 +26,7 @@ JUMP TO 1.OptionClause_3 ON FALSE
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
-1.ClauseDone_2:
+1.OptionDone_2:
 JUMP TO 1.FinishClause
 
 1.OptionClause_3:
