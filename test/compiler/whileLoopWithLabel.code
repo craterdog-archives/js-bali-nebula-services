@@ -3,8 +3,8 @@
 [001]:    2001    10     1    LOAD LITERAL 1
 [002]:    5801    23     1    STORE VARIABLE 1
 [003]:    3801    13     1    LOAD VARIABLE 1
-[004]:    3802    13     2    LOAD VARIABLE 2
-[005]:    7001    32     1    INVOKE INTRINSIC 1 WITH 2 PARAMETERS
+[004]:    101A    02 [01A]    JUMP TO [01A] ON TRUE
+[005]:    3802    13     2    LOAD VARIABLE 2
 [006]:    181A    03 [01A]    JUMP TO [01A] ON FALSE
 [007]:    3803    13     3    LOAD VARIABLE 3
 [008]:    5804    23     4    STORE VARIABLE 4
@@ -13,7 +13,7 @@
 [00B]:    1811    03 [011]    JUMP TO [011] ON FALSE
 [00C]:    2002    10     2    LOAD LITERAL 2
 [00D]:    5801    23     1    STORE VARIABLE 1
-[00E]:    2001    10     1    LOAD LITERAL 1
+[00E]:    2002    10     2    LOAD LITERAL 2
 [00F]:    5805    23     5    STORE VARIABLE 5
 [010]:    0011    00 [011]    JUMP TO [011]
 [011]:    3806    13     6    LOAD VARIABLE 6

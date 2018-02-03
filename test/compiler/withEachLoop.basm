@@ -3,14 +3,14 @@
 LOAD LITERAL `$sequence`
 INVOKE INTRINSIC $createIterator WITH PARAMETER
 STORE VARIABLE $_iterator_1
-LOAD LITERAL `true`
-STORE VARIABLE $_continue_1_LoopClause_
+LOAD LITERAL `false`
+STORE VARIABLE $_loop_done_1_LoopClause_
 
 1.LoopClause:
-LOAD VARIABLE $_continue_1_LoopClause_
+LOAD VARIABLE $_loop_done_1_LoopClause_
+JUMP TO 1.FinishClause ON TRUE
 LOAD VARIABLE $_iterator_1
 INVOKE INTRINSIC $hasNext WITH PARAMETER
-INVOKE INTRINSIC $and WITH 2 PARAMETERS
 JUMP TO 1.FinishClause ON FALSE
 LOAD VARIABLE $_iterator_1
 INVOKE INTRINSIC $getNext WITH PARAMETER

@@ -1,12 +1,12 @@
 
 1.WhileStatement:
-LOAD LITERAL `true`
-STORE VARIABLE $_continue_1_LoopClause_
+LOAD LITERAL `false`
+STORE VARIABLE $_loop_done_1_LoopClause_
 
 1.LoopClause:
-LOAD VARIABLE $_continue_1_LoopClause_
+LOAD VARIABLE $_loop_done_1_LoopClause_
+JUMP TO 1.FinishClause ON TRUE
 LOAD VARIABLE $condition
-INVOKE INTRINSIC $and WITH 2 PARAMETERS
 JUMP TO 1.FinishClause ON FALSE
 
 1.1.EvaluateStatement:
@@ -21,8 +21,8 @@ LOAD VARIABLE $a
 JUMP TO 1.2.FinishClause ON FALSE
 
 1.2.1.BreakStatement:
-LOAD LITERAL `false`
-STORE VARIABLE $_continue_1_LoopClause_
+LOAD LITERAL `true`
+STORE VARIABLE $_loop_done_1_LoopClause_
 LOAD LITERAL `true`
 STORE VARIABLE $_loop_interrupted_
 JUMP TO 1.2.FinishClause
