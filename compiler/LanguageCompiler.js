@@ -262,55 +262,29 @@ CompilerVisitor.prototype.visitCatalog = function(tree) {
  * document is loaded onto the top of the execution stack by the VM and then
  * assigned to the variable associated with the specified symbol.
  */
-// checkoutClause: 'checkout' (symbol | variable indices) 'from' expression
+// checkoutClause: 'checkout' recipient 'from' expression
 CompilerVisitor.prototype.visitCheckoutClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     this.builder.insertLabel(statementPrefix + 'CheckoutStatement');
-    var children = tree.children;
-    var length = children.length;
-    var location;
+    var recipient = tree.children[0];
+    var location = tree.children[1];
 
-    switch (length) {
-        case 2:
-            // the VM loads the value of the reference to the location of the document
-            // onto the top of the execution stack
-            children[1].accept(this);  // reference expression
+    // the VM processes the recipient as needed
+    recipient.accept(this);
 
-            // the VM stores the value of the reference to the location into a temporary variable
-            location = this.createTemporaryVariable('location');
-            this.builder.insertStoreInstruction('VARIABLE', location);
+    // the VM places the value of the reference to the location of the document
+    // on top of the execution stack
+    location.accept(this);
 
-            // the VM loads the document from the remote location onto the top of the execution stack
-            this.builder.insertLoadInstruction('DOCUMENT', location);
+    // the VM stores the value of the reference to the location into a temporary variable
+    location = this.createTemporaryVariable('location');
+    this.builder.insertStoreInstruction('VARIABLE', location);
 
-            // the VM stores the document that is on top of the execution stack in the variable
-            var symbol = children[0].value;
-            this.builder.insertStoreInstruction('VARIABLE', symbol);
-            break;
-        case 3:
-            // the VM places the value of the component variable onto the top of the execution stack
-            children[0].accept(this);  // variable
+    // the VM loads the document from the remote location onto the top of the execution stack
+    this.builder.insertLoadInstruction('DOCUMENT', location);
 
-            // the VM replaces the component on the execution stack with the parent and index of the subcomponent
-            children[1].accept(this);  // indices
-
-            // the VM loads the value of the reference to the location of the document
-            // onto the top of the execution stack
-            children[2].accept(this);  // reference expression
-
-            // the VM stores the value of the reference to the location into a temporary variable
-            location = this.createTemporaryVariable('location');
-            this.builder.insertStoreInstruction('VARIABLE', location);
-
-            // the VM loads the document from the remote location onto the top of the execution stack
-            this.builder.insertLoadInstruction('DOCUMENT', location);
-
-            // the VM sets the value of the subcomponent at the given index of the parent component
-            this.builder.insertInvokeInstruction('$setValue', 3);
-            break;
-        default:
-            throw new Error('COMPILER: An invalid checkout clause has the wrong number of children: ' + length);
-    }
+    // the VM sets the value of the recipient to the value on the top of the execution stack
+    this.setRecipient(recipient);
 };
 
 
@@ -536,46 +510,29 @@ CompilerVisitor.prototype.visitElement = function(terminal) {
 };
 
 
-// evaluateClause: ((symbol | variable indices) ':=')? expression
+// evaluateClause: (recipient ':=')? expression
 CompilerVisitor.prototype.visitEvaluateClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     this.builder.insertLabel(statementPrefix + 'EvaluateStatement');
-    var children = tree.children;
-    var length = children.length;
 
-    switch (length) {
-        case 1:
-            // the VM places the value of the expression onto the top of the execution stack
-            children[0].accept(this);  // expression
+    if (tree.children.length > 1) {
+        var recipient = tree.children[0];
+        var expression = tree.children[1];
 
-            // the VM stores the value of the expression in the result variable
-            this.builder.insertStoreInstruction('VARIABLE', '$_result_');
-            break;
-        case 2:
-            // extract the symbol for the variable
-            var symbol = children[0].value;  // symbol
+        // the VM processes the recipient as needed
+        recipient.accept(this);
 
-            // the VM places the value of the expression onto the top of the execution stack
-            children[1].accept(this);  // expression
+        // the VM places the value of the expression on top of the execution stack
+        expression.accept(this);
 
-            // the VM stores the value of the expression in the variable
-            this.builder.insertStoreInstruction('VARIABLE', symbol);
-            break;
-        case 3:
-            // the VM places the value of the component variable onto the top of the execution stack
-            children[0].accept(this);  // variable
-
-            // the VM replaces the component on the execution stack with the parent and index of the subcomponent
-            children[1].accept(this);  // indices
-
-            // the VM places the value of the expression onto the top of the execution stack
-            children[2].accept(this);  // expression
-
-            // the VM sets the value of the subcomponent at the given index of the parent component
-            this.builder.insertInvokeInstruction('$setValue', 3);
-            break;
-        default:
-            throw new Error('COMPILER: An invalid evaluate clause has too many children: ' + length);
+        // the VM sets the value of the recipient to the value on the top of the execution stack
+        this.setRecipient(recipient);
+    } else {
+        // the VM places the value of the expression on top of the execution stack
+        tree.children[0].accept(this);
+        
+        // the VM stores the value of the expression in the result variable
+        this.builder.insertStoreInstruction('VARIABLE', '$_result_');
     }
 };
 
@@ -951,6 +908,20 @@ CompilerVisitor.prototype.visitRange = function(tree) {
 };
 
 
+// recipient: symbol | variable indices
+CompilerVisitor.prototype.visitRecipient = function(tree) {
+    var children = tree.children;
+    var length = children.length;
+    if (length > 1) {
+        // the VM places the value of the component variable onto the top of the execution stack
+        children[0].accept(this);  // variable
+
+        // the VM replaces the component on the execution stack with the parent and index of the subcomponent
+        children[1].accept(this);  // indices
+    }
+};
+
+
 // returnClause: 'return' expression?
 CompilerVisitor.prototype.visitReturnClause = function(tree) {
     // TODO: throw an exception if this is not the last statement in the parent block!!!
@@ -1221,55 +1192,30 @@ CompilerVisitor.prototype.visitVariable = function(terminal) {
 };
 
 
-// waitClause: 'wait' 'for' (symbol | variable indices) 'from' expression
+// waitClause: 'wait' 'for' recipient 'from' expression
 CompilerVisitor.prototype.visitWaitClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     this.builder.insertLabel(statementPrefix + 'WaitStatement');
-    var children = tree.children;
-    var length = children.length;
-    var queue;
+    var recipient = tree.children[0];
+    var queue = tree.children[1];
 
-    switch (length) {
-        case 2:
-            // the VM loads the value of the reference to the queue onto the
-            // top of the execution stack
-            children[1].accept(this);  // reference expression
+    // the VM processes the recipient as needed
+    recipient.accept(this);
 
-            // the VM stores the value of the reference to the queue into a temporary variable
-            queue = this.createTemporaryVariable('queue');
-            this.builder.insertStoreInstruction('VARIABLE', queue);
+    // the VM places the value of the reference to the queue
+    // on top of the execution stack
+    queue.accept(this);
 
-            // the VM loads the document from the remote queue onto the top of the execution stack
-            this.builder.insertLoadInstruction('MESSAGE', queue);
+    // the VM stores the value of the reference to the queue into a temporary variable
+    queue = this.createTemporaryVariable('queue');
+    this.builder.insertStoreInstruction('VARIABLE', queue);
 
-            // the VM stores the document that is on top of the execution stack in the variable
-            var symbol = children[0].value;
-            this.builder.insertStoreInstruction('VARIABLE', symbol);
-            break;
-        case 3:
-            // the VM places the value of the component variable onto the top of the execution stack
-            children[0].accept(this);  // variable
+    // the VM loads the next message from the remote queue onto the top of the execution stack
+    // NOTE: this call blocks until a message is available on the queue
+    this.builder.insertLoadInstruction('MESSAGE', queue);
 
-            // the VM replaces the component on the execution stack with the parent and index of the subcomponent
-            children[1].accept(this);  // indices
-
-            // the VM loads the value of the reference to the queue onto the
-            // top of the execution stack
-            children[2].accept(this);  // reference expression
-
-            // the VM stores the value of the reference to the queue into a temporary variable
-            queue = this.createTemporaryVariable('queue');
-            this.builder.insertStoreInstruction('VARIABLE', queue);
-
-            // the VM loads the document from the remote queue onto the top of the execution stack
-            this.builder.insertLoadInstruction('MESSAGE', queue);
-
-            // the VM sets the value of the subcomponent at the given index of the parent component
-            this.builder.insertInvokeInstruction('$setValue', 3);
-            break;
-        default:
-            throw new Error('COMPILER: An invalid wait for clause has the wrong number of children: ' + length);
-    }
+    // the VM sets the value of the recipient to the value on the top of the execution stack
+    this.setRecipient(recipient);
 };
 
 
@@ -1400,6 +1346,19 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     var repeatLabel = statementPrefix + 'RepeatLoop';
     this.builder.insertLabel(repeatLabel);
     this.builder.insertJumpInstruction(loopLabel);
+};
+
+
+CompilerVisitor.prototype.setRecipient = function(recipient) {
+    if (recipient.children.length > 1) {
+        // the VM sets the value of the subcomponent at the given index of the parent component
+        // to the value that is on top of the execution stack
+        this.builder.insertInvokeInstruction('$setValue', 3);
+    } else {
+        // the VM stores the value that is on top of the execution stack in the variable
+        var symbol = recipient.children[0].value;
+        this.builder.insertStoreInstruction('VARIABLE', symbol);
+    }
 };
 
 
