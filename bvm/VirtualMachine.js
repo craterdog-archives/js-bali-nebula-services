@@ -29,11 +29,11 @@ var cloud = {
 
 // TODO: replace with require('bali-primitives/intrinsics')
 var intrinsics = {
-    array: function(capacity) {},
+    list: function(capacity) {},
     isFalse: function(document) {},
     isNone: function(document) {},
     isTrue: function(document) {},
-    table: function(capacity) {}
+    catalog: function(capacity) {}
 };
 
 
@@ -135,7 +135,7 @@ VirtualMachine.prototype.getDocument = function() {
 /**
  * This method returns the literal value associated with a specific index.
  * 
- * @param {number} index The index of the literal in the symbol table.
+ * @param {number} index The index of the literal in the symbol catalog.
  * @returns {Literal} The literal value associated with the index.
  */
 VirtualMachine.prototype.getLiteral = function(index) {
@@ -146,7 +146,7 @@ VirtualMachine.prototype.getLiteral = function(index) {
 /**
  * This method returns the reference associated with a specific index.
  * 
- * @param {number} index The index of the reference in the symbol table.
+ * @param {number} index The index of the reference in the symbol catalog.
  * @returns {Reference} The reference associated with the index.
  */
 VirtualMachine.prototype.getReference = function(index) {
@@ -157,7 +157,7 @@ VirtualMachine.prototype.getReference = function(index) {
 /**
  * This method returns the variable value associated with a specific index.
  * 
- * @param {number} index The index of the variable in the symbol table.
+ * @param {number} index The index of the variable in the symbol catalog.
  * @returns {object} The variable value associated with the index.
  */
 VirtualMachine.prototype.getVariable = function(index) {
@@ -168,7 +168,7 @@ VirtualMachine.prototype.getVariable = function(index) {
 /**
  * This method sets the value of the variable associated with a specific index.
  * 
- * @param {number} index The index of the variable in the symbol table.
+ * @param {number} index The index of the variable in the symbol catalog.
  * @param {object} value The value of the variable to be set.
  */
 VirtualMachine.prototype.setVariable = function(index, value) {
@@ -179,7 +179,7 @@ VirtualMachine.prototype.setVariable = function(index, value) {
 /**
  * This method returns the method name associated with a specific index.
  * 
- * @param {number} index The index of the method in the symbol table.
+ * @param {number} index The index of the method in the symbol catalog.
  * @returns {string} The method name value associated with the index.
  */
 VirtualMachine.prototype.getMethod = function(index) {
@@ -331,7 +331,7 @@ VirtualMachine.prototype.handleJumpInstruction = function(modifier, address) {
  * This method handles the processing of a LOAD instruction.
  * 
  * @param {string} modifier The modifier for the operation.
- * @param {number} index The index into the symbol table.
+ * @param {number} index The index into the symbol catalog.
  */
 VirtualMachine.prototype.handleLoadInstruction = function(modifier, index) {
     switch (modifier) {
@@ -357,7 +357,7 @@ VirtualMachine.prototype.handleLoadInstruction = function(modifier, index) {
  * This method handles the processing of a STORE instruction.
  * 
  * @param {string} modifier The modifier for the operation.
- * @param {number} index The index into the symbol table.
+ * @param {number} index The index into the symbol catalog.
  */
 VirtualMachine.prototype.handleStoreInstruction = function(modifier, index) {
     switch (modifier) {
@@ -383,7 +383,7 @@ VirtualMachine.prototype.handleStoreInstruction = function(modifier, index) {
  * This method handles the processing of a INVOKE instruction.
  * 
  * @param {number} numberOfParameters The number of parameters passed to the intrinsic function.
- * @param {number} index The index into the symbol table.
+ * @param {number} index The index into the symbol catalog.
  */
 VirtualMachine.prototype.handleInvokeInstruction = function(numberOfParameters, index) {
     switch (numberOfParameters) {
@@ -403,7 +403,7 @@ VirtualMachine.prototype.handleInvokeInstruction = function(numberOfParameters, 
  * This method handles the processing of a EXECUTE instruction.
  * 
  * @param {string} modifier The modifier for the operation.
- * @param {number} index The index into the symbol table.
+ * @param {number} index The index into the symbol catalog.
  */
 VirtualMachine.prototype.handleExecuteInstruction = function(modifier, index) {
     switch (modifier) {

@@ -52,12 +52,12 @@ exports.LanguageCompiler = LanguageCompiler;
  * Machine™ instructions. The instructions are returned as a string.
  * 
  * @param {TreeNode} procedureBlock The procedure block syntax tree node to be compiled.
- * @param {object} symbolTables Tables mapping labels, variables and procedures to their
+ * @param {object} symbols A catalog mapping labels, variables and procedures to their
  *     corresponding addresses or indices.
  * @returns {string} The resulting Bali Virtual Machine™ instructions.
  */
-LanguageCompiler.prototype.compileBlock = function(procedureBlock, symbolTables) {
-    var visitor = new CompilerVisitor(symbolTables);
+LanguageCompiler.prototype.compileBlock = function(procedureBlock, symbols) {
+    var visitor = new CompilerVisitor(symbols);
     procedureBlock.accept(visitor);
     return visitor.getResult() + '\n';  // POSIX requires all lines end with a line feed
 };
@@ -71,8 +71,8 @@ LanguageCompiler.prototype.compileBlock = function(procedureBlock, symbolTables)
  * to construct the corresponding Bali Virtual Machine™ instructions for the
  * syntax tree is it traversing.
  */
-function CompilerVisitor(symbolTables) {
-    this.symbolTables = symbolTables;
+function CompilerVisitor(symbols) {
+    this.symbols = symbols;
     this.builder = new InstructionBuilder();
     this.temporaryVariableCount = 1;
     return this;
@@ -118,30 +118,9 @@ CompilerVisitor.prototype.visitArithmeticExpression = function(tree) {
 };
 
 
-// array:
-//     expression (',' expression)* |
-//     NEWLINE (expression NEWLINE)* |
-//     /*empty array*/
-CompilerVisitor.prototype.visitArray = function(tree) {
-    // TODO: change to calling the constructor for the collection type (i.e. list, bag, set, etc.)
-    // the VM places the size of the array on the execution stack
-    var size = tree.children.length;
-    this.builder.insertLoadInstruction('LITERAL', size);
-
-    // the VM replaces the size value on the execution stack with a new array containing the items
-    this.builder.insertInvokeInstruction('$array', 1);
-    for (var i = 0; i < tree.children.length; i++) {
-        tree.children[i].accept(this);
-        this.builder.insertInvokeInstruction('$addItem', 2);
-    }
-
-    // the array remains on the execution stack
-};
-
-
 /*
  * This method places the key-value pair for an association on the execution
- * stack so that they can be added to the parent table.
+ * stack so that they can be added to the parent catalog.
  */
 // association: element ':' expression
 CompilerVisitor.prototype.visitAssociation = function(tree) {
@@ -172,7 +151,7 @@ CompilerVisitor.prototype.visitBlock = function(tree) {
     if (tree.children[1]) {
         var parameters = tree.children[1].children;
         for (var i = 0; i < parameters.length; i++) {
-            // TODO: need to handle ranges, arrays, and tables differently
+            // TODO: need to handle ranges, lists, and catalogs differently
             // the VM stores the value of the parameter in its associated variable
             parameters[i].accept(this);
             this.builder.insertStoreInstruction('VARIABLE', '$_parameter' + i + '_');
@@ -250,6 +229,29 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
         var finishLabel = parent.finishLabel;
         this.builder.insertJumpInstruction(finishLabel);
     }
+};
+
+
+// catalog:
+//     association (',' association)* |
+//     NEWLINE (association NEWLINE)* |
+//     ':' /*empty catalog*/
+CompilerVisitor.prototype.visitCatalog = function(tree) {
+    // TODO: change to calling the constructor for the collection type (i.e. map, dictionary, etc.)
+    // the VM places the size of the catalog on the execution stack
+    var size = tree.children.length;
+    this.builder.insertLoadInstruction('LITERAL', size);
+
+    // the VM replaces the size value on the execution stack with a new catalog containing the associations
+    this.builder.insertInvokeInstruction('$catalog', 1);
+    for (var i = 0; i < tree.children.length; i++) {
+        // the VM places the association's key and value onto the top of the execution stack
+        tree.children[i].accept(this);  // association
+
+        // the VM sets the key in the catalog to the value
+        this.builder.insertInvokeInstruction('$setValue', 3);
+    }
+    // the catalog remains on the execution stack
 };
 
 
@@ -612,7 +614,7 @@ CompilerVisitor.prototype.visitFinishClause = function(tree) {
 CompilerVisitor.prototype.visitFunctionExpression = function(tree) {
     // the VM places a reference to the type that defines the function on top of the execution stack
     var name = '$' + tree.children[0].value;
-    //var typeReference = this.symbolTables.procedures[name];
+    //var typeReference = this.symbols.procedures[name];
     var typeReference = '<bali:/bali/types/SomeType>';
     this.builder.insertLoadInstruction('LITERAL', typeReference);
 
@@ -735,8 +737,8 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
 };
 
 
-// indices: '[' array ']'
-// NOTE: this method traverses all but the last index in the array. It leaves the parent
+// indices: '[' list ']'
+// NOTE: this method traverses all but the last index in the list. It leaves the parent
 // and the index of the final subcomponent on the execution stack so that the outer rule
 // can either use them to get the final subcomponent value or set it depending on the
 // context.
@@ -785,6 +787,27 @@ CompilerVisitor.prototype.visitInversionExpression = function(tree) {
         default:
             throw new Error('COMPILER: Invalid inversion operator found: "' + operator + '"');
     }
+};
+
+
+// list:
+//     expression (',' expression)* |
+//     NEWLINE (expression NEWLINE)* |
+//     /*empty list*/
+CompilerVisitor.prototype.visitList = function(tree) {
+    // TODO: change to calling the constructor for the collection type (i.e. list, bag, set, etc.)
+    // the VM places the size of the list on the execution stack
+    var size = tree.children.length;
+    this.builder.insertLoadInstruction('LITERAL', size);
+
+    // the VM replaces the size value on the execution stack with a new list containing the items
+    this.builder.insertInvokeInstruction('$list', 1);
+    for (var i = 0; i < tree.children.length; i++) {
+        tree.children[i].accept(this);
+        this.builder.insertInvokeInstruction('$addItem', 2);
+    }
+
+    // the list remains on the execution stack
 };
 
 
@@ -1156,29 +1179,6 @@ CompilerVisitor.prototype.visitSubcomponentExpression = function(tree) {
     // the VM retrieves the value of the subcomponent at the given index of the parent component
     this.builder.insertInvokeInstruction('$getValue', 2);
     // the parent and index have been replaced by the value of the subcomponent
-};
-
-
-// table:
-//     association (',' association)* |
-//     NEWLINE (association NEWLINE)* |
-//     ':' /*empty table*/
-CompilerVisitor.prototype.visitTable = function(tree) {
-    // TODO: change to calling the constructor for the collection type (i.e. map, dictionary, etc.)
-    // the VM places the size of the table on the execution stack
-    var size = tree.children.length;
-    this.builder.insertLoadInstruction('LITERAL', size);
-
-    // the VM replaces the size value on the execution stack with a new table containing the associations
-    this.builder.insertInvokeInstruction('$table', 1);
-    for (var i = 0; i < tree.children.length; i++) {
-        // the VM places the association's key and value onto the top of the execution stack
-        tree.children[i].accept(this);  // association
-
-        // the VM sets the key in the table to the value
-        this.builder.insertInvokeInstruction('$setValue', 3);
-    }
-    // the table remains on the execution stack
 };
 
 

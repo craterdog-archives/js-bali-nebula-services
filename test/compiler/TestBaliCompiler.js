@@ -58,14 +58,14 @@ module.exports = testCase({
             var tree = tools.parseBlock(block);
             test.notEqual(tree, null, 'The language parser returned a null tree.');
             var procedure = tools.compileBlock(tree);
-            fs.writeFileSync(basmFile, procedure, 'utf8');
+            //fs.writeFileSync(basmFile, procedure, 'utf8');
             var expected = fs.readFileSync(basmFile, 'utf8');
             test.strictEqual(procedure, expected, 'The compiled procedure does not match the expected output.');
             tree = tools.parseProcedure(procedure);
             test.notEqual(tree, null, 'The procedure parser returned a null tree.');
             var bytecode = tools.assembleProcedure(context, tree);
             var formatted = tools.formatBytecode(bytecode);
-            fs.writeFileSync(codeFile, formatted, 'utf8');
+            //fs.writeFileSync(codeFile, formatted, 'utf8');
             expected = fs.readFileSync(codeFile, 'utf8');
             test.strictEqual(formatted, expected, 'The formatted bytecode does not match the expected output.');
         }

@@ -12,19 +12,19 @@
 /*
  * This class defines a analyzing visitor that "walks" a parse tree
  * produced by the BaliInstructionSetParser and generates a symbol
- * table from the corresponding Bali virtual machine instructions.
+ * catalog from the corresponding Bali virtual machine instructions.
  */
 
 /**
  * This constructor creates a new instruction analyzer.
  * 
  * @constructor
- * @param {object} symbolTables The set of symbol tables for the instructions being
+ * @param {object} symbols The set of symbol catalogs for the instructions being
  * analyzed. 
  * @returns {ProcedureAnalyzer} The new analyzer.
  */
-function ProcedureAnalyzer(symbolTables) {
-    this.symbolTables = symbolTables;
+function ProcedureAnalyzer(symbols) {
+    this.symbols = symbols;
     return this;
 }
 ProcedureAnalyzer.prototype.constructor = ProcedureAnalyzer;
@@ -39,15 +39,15 @@ exports.ProcedureAnalyzer = ProcedureAnalyzer;
  * @param {object} instructions The parse tree structure to be analyzed.
  */
 ProcedureAnalyzer.prototype.analyzeProcedure = function(instructions) {
-    var visitor = new AnalyzerVisitor(this.symbolTables);
+    var visitor = new AnalyzerVisitor(this.symbols);
     instructions.accept(visitor);
 };
 
 
 // PRIVATE CLASSES
 
-function AnalyzerVisitor(symbolTables) {
-    this.symbolTables = symbolTables;
+function AnalyzerVisitor(symbols) {
+    this.symbols = symbols;
     this.address = 1;  // bali VM unit based addressing
     return this;
 }
@@ -68,7 +68,7 @@ AnalyzerVisitor.prototype.visitProcedure = function(procedure) {
 AnalyzerVisitor.prototype.visitStep = function(step) {
     var label = step.label;
     if (label) {
-        this.symbolTables.addresses[label] = this.address;
+        this.symbols.addresses[label] = this.address;
     }
     step.instruction.accept(this);
 };
@@ -113,8 +113,8 @@ AnalyzerVisitor.prototype.visitLoadInstruction = function(instruction) {
         default:
             throw new Error('ANALYZER: Illegal modifier for the LOAD instruction: ' + modifier);
     }
-    if (!this.symbolTables[type].includes(value)) {
-        this.symbolTables[type].push(value);
+    if (!this.symbols[type].includes(value)) {
+        this.symbols[type].push(value);
     }
     this.address++;
 };
@@ -141,8 +141,8 @@ AnalyzerVisitor.prototype.visitStoreInstruction = function(instruction) {
         default:
             throw new Error('ANALYZER: Illegal modifier for the STORE instruction: ' + modifier);
     }
-    if (!this.symbolTables[type].includes(symbol)) {
-        this.symbolTables[type].push(symbol);
+    if (!this.symbols[type].includes(symbol)) {
+        this.symbols[type].push(symbol);
     }
     this.address++;
 };
@@ -154,8 +154,8 @@ AnalyzerVisitor.prototype.visitStoreInstruction = function(instruction) {
 //     'INVOKE' 'INTRINSIC' SYMBOL 'WITH' NUMBER 'PARAMETERS'
 AnalyzerVisitor.prototype.visitInvokeInstruction = function(instruction) {
     var symbol = instruction.symbol;
-    if (!this.symbolTables.intrinsics.includes(symbol)) {
-        this.symbolTables.intrinsics.push(symbol);
+    if (!this.symbols.intrinsics.includes(symbol)) {
+        this.symbols.intrinsics.push(symbol);
     }
     this.address++;
 };
@@ -168,8 +168,8 @@ AnalyzerVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 AnalyzerVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var symbol = instruction.symbol;
-    if (!this.symbolTables.procedures.includes(symbol)) {
-        this.symbolTables.procedures.push(symbol);
+    if (!this.symbols.procedures.includes(symbol)) {
+        this.symbols.procedures.push(symbol);
     }
     this.address++;
 };

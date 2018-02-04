@@ -23,7 +23,7 @@ var bytecode = require('../utilities/BytecodeUtilities');
  * @param {object} type The type containing the method definition.
  * @param {object} target The optional target on which the method operates.
  * @param {string} method The name of the method to be executed.
- * @param {object} parameters The array or table of parameters that were passed to the method.
+ * @param {object} parameters The list or catalog of parameters that were passed to the method.
  * @returns {MethodContext} The new method context.
  */
 function MethodContext(type, target, method, parameters) {

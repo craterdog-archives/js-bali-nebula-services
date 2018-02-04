@@ -11,7 +11,7 @@
 
 /*
  * This class defines a Bali type analzyer that analyzes a Bali type definition
- * extracting a set of symbol tables for all variables, procedures, labels, etc.
+ * extracting a set of symbol catalogs for all variables, procedures, labels, etc.
  */
 
 
@@ -22,7 +22,7 @@
  * @returns {LanguageAnalyzer} The new analyzer.
  */
 function LanguageAnalyzer() {
-    this.symbolTables = {
+    this.symbols = {
         '$types': {},
         '$literals': {},
         '$variables': {},
@@ -38,11 +38,11 @@ exports.LanguageAnalyzer = LanguageAnalyzer;
 
 
 /**
- * This function takes a Bali type definition and extracts from it a set of symbol tables for
+ * This function takes a Bali type definition and extracts from it a set of symbol catalogs for
  * all identifiers used in the type definition.
  * 
  * @param {object} baliTypeReference A reference to the Bali type definition to be analyzed. 
- * @returns {object} The resulting symbol tables for variables, procedures, labels, etc.
+ * @returns {object} The resulting symbol catalogs for variables, procedures, labels, etc.
  */
 LanguageAnalyzer.prototype.analyzeType = function(baliTypeReference) {
 };

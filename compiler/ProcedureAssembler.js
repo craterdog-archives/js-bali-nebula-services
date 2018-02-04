@@ -20,12 +20,12 @@ var utilities = require('../utilities/BytecodeUtilities');
  * This constructor creates a new visitor.
  * 
  * @constructor
- * @param {object} symbolTables The set of symbol tables for the procedure being
+ * @param {object} symbols The set of symbol catalogs for the procedure being
  * assembled. 
  * @returns {ProcedureAssembler} The new assembler.
  */
-function ProcedureAssembler(symbolTables) {
-    this.symbolTables = symbolTables;
+function ProcedureAssembler(symbols) {
+    this.symbols = symbols;
     return this;
 }
 ProcedureAssembler.prototype.constructor = ProcedureAssembler;
@@ -40,7 +40,7 @@ exports.ProcedureAssembler = ProcedureAssembler;
  * @returns {array} The assembled bytecode array.
  */
 ProcedureAssembler.prototype.assembleProcedure = function(procedure) {
-    var visitor = new AssemblerVisitor(this.symbolTables);
+    var visitor = new AssemblerVisitor(this.symbols);
     procedure.accept(visitor);
     return visitor.bytecode;
 };
@@ -59,7 +59,7 @@ ProcedureAssembler.prototype.disassembleBytecode = function(bytecode) {
     var address = 1;  // bali VM unit based addressing
     while (address <= bytecode.length) {
         // check for a label at this address
-        var label = lookupLabel(this.symbolTables, address);
+        var label = lookupLabel(this.symbols, address);
         if (label) {
             procedure += '\n' + label + ':\n';
         }
@@ -70,9 +70,9 @@ ProcedureAssembler.prototype.disassembleBytecode = function(bytecode) {
         var modifier = utilities.decodeModifier(bytes);
         var operand = utilities.decodeOperand(bytes);
         if (utilities.operandIsAddress(bytes)) {
-            operand = lookupLabel(this.symbolTables, operand);
+            operand = lookupLabel(this.symbols, operand);
         } else {
-            operand = lookupSymbol(this.symbolTables, operation, modifier, operand);
+            operand = lookupSymbol(this.symbols, operation, modifier, operand);
         }
 
         // format the instruction
@@ -88,11 +88,11 @@ ProcedureAssembler.prototype.disassembleBytecode = function(bytecode) {
 // PRIVATE FUNCTIONS
 
 /*
- * This function returns, from the symbol tables, the label corresponding
+ * This function returns, from the symbol catalogs, the label corresponding
  * to the specified address.
  */
-function lookupLabel(symbolTables, address) {
-    var entries = Object.entries(symbolTables.addresses);
+function lookupLabel(symbols, address) {
+    var entries = Object.entries(symbols.addresses);
     for (var i = 0; i < entries.length; i++) {
         var entry = entries[i];
         if (address === entry[1]) return entry[0];
@@ -102,10 +102,10 @@ function lookupLabel(symbolTables, address) {
 
 
 /*
- * This function returns, from the symbol tables, the symbol corresponding
+ * This function returns, from the symbol catalogs, the symbol corresponding
  * to the specified index.
  */
-function lookupSymbol(symbolTables, operation, modifier, index) {
+function lookupSymbol(symbols, operation, modifier, index) {
     var key;
     switch (operation) {
         case 'LOAD':
@@ -121,7 +121,7 @@ function lookupSymbol(symbolTables, operation, modifier, index) {
                     key = 'variables';
                     break;
             }
-            return symbolTables[key][index - 1];  // zero based indexing
+            return symbols[key][index - 1];  // zero based indexing
         case 'STORE':
             switch (modifier) {
                 case 'DRAFT':
@@ -133,11 +133,11 @@ function lookupSymbol(symbolTables, operation, modifier, index) {
                     key = 'variables';
                     break;
             }
-            return symbolTables[key][index - 1];  // zero based indexing
+            return symbols[key][index - 1];  // zero based indexing
         case 'INVOKE':
-            return symbolTables.intrinsics[index - 1];  // zero based indexing
+            return symbols.intrinsics[index - 1];  // zero based indexing
         case 'EXECUTE':
-            return symbolTables.procedures[index - 1];  // zero based indexing
+            return symbols.procedures[index - 1];  // zero based indexing
         default:
             throw new Error('ASSEMBLER: Invalid operation with an index: ' + operation);
     }
@@ -147,8 +147,8 @@ function lookupSymbol(symbolTables, operation, modifier, index) {
 
 // PRIVATE CLASSES
 
-function AssemblerVisitor(symbolTables) {
-    this.symbolTables = symbolTables;
+function AssemblerVisitor(symbols) {
+    this.symbols = symbols;
     this.bytecode = [];  // array of bytecode instructions
     return this;
 }
@@ -187,7 +187,7 @@ AssemblerVisitor.prototype.visitSkipInstruction = function(instruction) {
 AssemblerVisitor.prototype.visitJumpInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var label = instruction.label;
-    var address = this.symbolTables.addresses[label];
+    var address = this.symbols.addresses[label];
     var bytes = utilities.encodeInstruction('JUMP', modifier, address);
     this.bytecode.push(bytes);
 };
@@ -204,14 +204,14 @@ AssemblerVisitor.prototype.visitLoadInstruction = function(instruction) {
     var index;
     switch(modifier) {
         case 'LITERAL':
-            index = this.symbolTables.literals.indexOf(value) + 1;  // unit based indexing
+            index = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
             break;
         case 'DOCUMENT':
         case 'MESSAGE':
-            index = this.symbolTables.references.indexOf(value) + 1;  // unit based indexing
+            index = this.symbols.references.indexOf(value) + 1;  // unit based indexing
             break;
         case 'VARIABLE':
-            index = this.symbolTables.variables.indexOf(value) + 1;  // unit based indexing
+            index = this.symbols.variables.indexOf(value) + 1;  // unit based indexing
             break;
         default:
             throw new Error('ASSEMBLER: Illegal modifier for the LOAD instruction: ' + modifier);
@@ -234,10 +234,10 @@ AssemblerVisitor.prototype.visitStoreInstruction = function(instruction) {
         case 'DRAFT':
         case 'DOCUMENT':
         case 'MESSAGE':
-            index = this.symbolTables.references.indexOf(symbol) + 1;  // unit based indexing
+            index = this.symbols.references.indexOf(symbol) + 1;  // unit based indexing
             break;
         case 'VARIABLE':
-            index = this.symbolTables.variables.indexOf(symbol) + 1;  // unit based indexing
+            index = this.symbols.variables.indexOf(symbol) + 1;  // unit based indexing
             break;
         default:
             throw new Error('ASSEMBLER: Illegal modifier for the STORE instruction: ' + modifier);
@@ -254,7 +254,7 @@ AssemblerVisitor.prototype.visitStoreInstruction = function(instruction) {
 AssemblerVisitor.prototype.visitInvokeInstruction = function(instruction) {
     var count = instruction.count;
     var symbol = instruction.symbol;
-    var index = this.symbolTables.intrinsics.indexOf(symbol) + 1;  // bali VM unit based indexing
+    var index = this.symbols.intrinsics.indexOf(symbol) + 1;  // bali VM unit based indexing
     var bytes = utilities.encodeInstruction('INVOKE', count, index);
     this.bytecode.push(bytes);
 };
@@ -268,7 +268,7 @@ AssemblerVisitor.prototype.visitInvokeInstruction = function(instruction) {
 AssemblerVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
-    var index = this.symbolTables.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
+    var index = this.symbols.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
     var bytes = utilities.encodeInstruction('EXECUTE', modifier, index);
     this.bytecode.push(bytes);
 };
