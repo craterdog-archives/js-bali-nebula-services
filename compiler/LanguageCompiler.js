@@ -80,6 +80,10 @@ function CompilerVisitor(symbols) {
 CompilerVisitor.prototype.constructor = CompilerVisitor;
 
 
+/*
+ * This method replaces the values of two expressions that are on top of the
+ * execution stack with the resulting value of an arithmetic operation on them.
+ */
 // arithmeticExpression: expression ('*' | '/' | '//' | '+' | '-') expression
 CompilerVisitor.prototype.visitArithmeticExpression = function(tree) {
     // the VM places the result of the first operand expression on top of the execution stack
@@ -232,6 +236,11 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
 };
 
 
+/*
+ * This method constructs a new catalog component and places it on top of the
+ * execution stack. The catalog contains a sequence of key-value associations.
+ * The order in which the associations are listed is maintained by the catalog.
+ */
 // catalog:
 //     association (',' association)* |
 //     NEWLINE (association NEWLINE)* |
@@ -256,11 +265,9 @@ CompilerVisitor.prototype.visitCatalog = function(tree) {
 
 
 /*
- * This method inserts the instructions needed to checkout from the Bali Cloud
- * Environment™ a persistent document and set it as the value of a variable. A
- * reference to the persistent document is evaluated by the VM. The resulting
- * document is loaded onto the top of the execution stack by the VM and then
- * assigned to the variable associated with the specified symbol.
+ * This method compiles the instructions needed to checkout from the Bali Cloud
+ * Environment™ a persistent document and assign it to a recipient. The recipient
+ * may be either a variable or an indexed child of a composite component.
  */
 // checkoutClause: 'checkout' recipient 'from' expression
 CompilerVisitor.prototype.visitCheckoutClause = function(tree) {
@@ -314,6 +321,10 @@ CompilerVisitor.prototype.visitCommitClause = function(tree) {
 };
 
 
+/*
+ * This method replaces the values of two expressions that are on top of the
+ * execution stack with the resulting value of a comparison operation on them.
+ */
 // comparisonExpression: expression ('<' | '=' | '>' | 'is' | 'matches') expression
 CompilerVisitor.prototype.visitComparisonExpression = function(tree) {
     // the VM places the result of the first operand expression on top of the execution stack
@@ -351,6 +362,10 @@ CompilerVisitor.prototype.visitComparisonExpression = function(tree) {
 };
 
 
+/*
+ * This method replaces the value of the expression that is on top of the
+ * execution stack with the logical complement of the value.
+ */
 // complementExpression: 'not' expression
 CompilerVisitor.prototype.visitComplementExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
@@ -427,19 +442,28 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
 };
 
 
+/*
+ * This method evaluates the first expression and if its 'asBoolean()' value is
+ * 'false', replaces it on top of the execution stack with the value of the
+ * second expression.
+ */
 // defaultExpression: expression '?' expression
 CompilerVisitor.prototype.visitDefaultExpression = function(tree) {
     // the VM places the result of the first operand expression on top of the execution stack
-    tree.children[0].accept(this);
+    tree.children[0].accept(this);  // value to be tested
 
     // the VM places the result of the second operand expression on top of the execution stack
-    tree.children[1].accept(this);
+    tree.children[1].accept(this);  // default value
 
     // the VM leaves the actual value on the top of the execution stack
     this.builder.insertInvokeInstruction('$default', 2);
 };
 
 
+/*
+ * This method replaces the value of the reference expression that is on top of the
+ * execution stack with the value that it references.
+ */
 // dereferenceExpression: '@' expression
 CompilerVisitor.prototype.visitDereferenceExpression = function(tree) {
     // the VM loads the value of the reference to the location onto the top of the execution stack
@@ -456,13 +480,18 @@ CompilerVisitor.prototype.visitDereferenceExpression = function(tree) {
 };
 
 
+/*
+ * This method inserts the instructions needed to discard from the Bali Cloud
+ * Environment™ a persistent draft of a document. A reference to
+ * the location of the persistent draft is evaluated by the VM.
+ */
 // discardClause: 'discard' expression
 CompilerVisitor.prototype.visitDiscardClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     this.builder.insertLabel(statementPrefix + 'DiscardStatement');
 
     // the VM loads the value of the reference to the location onto the top of the execution stack
-    tree.children[0].accept(this);
+    tree.children[0].accept(this);  // reference expression
 
     // the VM stores the value of the reference to the location into a temporary variable
     var location = this.createTemporaryVariable('location');
@@ -474,13 +503,21 @@ CompilerVisitor.prototype.visitDiscardClause = function(tree) {
 };
 
 
+/*
+ * This method unwraps the document and delegates compilation to the
+ * component.
+ */
 // document: NEWLINE* component NEWLINE* EOF
 CompilerVisitor.prototype.visitDocument = function(tree) {
     // the VM places the value of the component on top of the execution stack
-    tree.children[0].accept(this);
+    tree.children[0].accept(this);  // component
 };
 
 
+/*
+ * This method tells the VM to place an element on the execution stack
+ * as a literal value.
+ */
 // element: (
 //     binary |
 //     duration |
@@ -510,6 +547,11 @@ CompilerVisitor.prototype.visitElement = function(terminal) {
 };
 
 
+/*
+ * This method compiles the instructions needed to evaluate an expression and
+ * optionally assign the resulting value to a recipient. The recipient may be
+ * either a variable or an indexed child of a composite component.
+ */
 // evaluateClause: (recipient ':=')? expression
 CompilerVisitor.prototype.visitEvaluateClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
@@ -537,6 +579,10 @@ CompilerVisitor.prototype.visitEvaluateClause = function(tree) {
 };
 
 
+/*
+ * This method replaces the values of two expressions that are on top of the
+ * execution stack with the resulting value of an exponential operation on them.
+ */
 // exponentialExpression: <assoc=right> expression '^' expression
 CompilerVisitor.prototype.visitExponentialExpression = function(tree) {
     // the VM places the result of the base expression on top of the execution stack
@@ -550,6 +596,10 @@ CompilerVisitor.prototype.visitExponentialExpression = function(tree) {
 };
 
 
+/*
+ * This method replaces the value of the expression that is on top of the
+ * execution stack with the mathematical factorial of the value.
+ */
 // factorialExpression: expression '!'
 CompilerVisitor.prototype.visitFactorialExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
@@ -721,6 +771,10 @@ CompilerVisitor.prototype.visitIndices = function(tree) {
 };
 
 
+/*
+ * This method replaces the value of the expression that is on top of the
+ * execution stack with the arithmetic, geometric, or complex inverse of the value.
+ */
 // inversionExpression: ('-' | '/' | '*') expression
 CompilerVisitor.prototype.visitInversionExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
@@ -768,6 +822,10 @@ CompilerVisitor.prototype.visitList = function(tree) {
 };
 
 
+/*
+ * This method replaces the values of two expressions that are on top of the
+ * execution stack with the resulting value of a logical operation on them.
+ */
 // logicalExpression: expression ('and' | 'sans' | 'xor' | 'or') expression
 CompilerVisitor.prototype.visitLogicalExpression = function(tree) {
     // the VM places the value of the first expression on top of the execution stack
@@ -802,6 +860,10 @@ CompilerVisitor.prototype.visitLogicalExpression = function(tree) {
 };
 
 
+/*
+ * This method replaces the value of the expression that is on top of the
+ * execution stack with the numeric magnitude of the value.
+ */
 // magnitudeExpression: '|' expression '|'
 CompilerVisitor.prototype.visitMagnitudeExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
@@ -843,6 +905,11 @@ CompilerVisitor.prototype.visitParameters = function(tree) {
 };
 
 
+/*
+ * This method places the value of a precedence expression on top of the
+ * execution stack. It ensures that this expression is evaluated with
+ * higher precedence than any surrounding expressions.
+ */
 // precedenceExpression: '(' expression ')'
 CompilerVisitor.prototype.visitPrecedenceExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
@@ -908,6 +975,17 @@ CompilerVisitor.prototype.visitRange = function(tree) {
 };
 
 
+/*
+ * This method compiles the instructions needed to prepare the recipient of a
+ * value to receive it. The recipient may be either a variable or an indexed
+ * child of a composite component. If it is a variable (identified by its symbol)
+ * no preparation is needed. But if it is the latter, the children of the composite
+ * component must be traversed using the specified indices until the parent of the
+ * last child and the last child's index are left on the execution stack. This
+ * leaves the stack ready for a call to '$setValue' to set the value of the child
+ * to the value of an expression that will be placed on the top of the execution
+ * stack prior to the call.
+ */
 // recipient: symbol | variable indices
 CompilerVisitor.prototype.visitRecipient = function(tree) {
     var children = tree.children;
@@ -1139,6 +1217,10 @@ CompilerVisitor.prototype.visitStructure = function(tree) {
 };
 
 
+/*
+ * This method replaces the value of an expression that is on top of the
+ * execution stack with its subcomponent referred to by the indices.
+ */
 // subcomponentExpression: expression indices
 CompilerVisitor.prototype.visitSubcomponentExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
@@ -1149,7 +1231,7 @@ CompilerVisitor.prototype.visitSubcomponentExpression = function(tree) {
 
     // the VM retrieves the value of the subcomponent at the given index of the parent component
     this.builder.insertInvokeInstruction('$getValue', 2);
-    // the parent and index have been replaced by the value of the subcomponent
+    // the value of the subcomponent remains on the execution stack
 };
 
 
@@ -1192,6 +1274,12 @@ CompilerVisitor.prototype.visitVariable = function(terminal) {
 };
 
 
+/*
+ * This method compiles the instructions needed to wait for a message from a
+ * queue in the Bali Cloud Environemnt™. The resulting message is assigned
+ * to a recipient. The recipient may be either a variable or an indexed child
+ * of a composite component.
+ */
 // waitClause: 'wait' 'for' recipient 'from' expression
 CompilerVisitor.prototype.visitWaitClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
