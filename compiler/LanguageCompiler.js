@@ -146,14 +146,14 @@ CompilerVisitor.prototype.visitAssociation = function(tree) {
  * NOTE: This stack is different than the runtime execution stack that is
  * maintained by the Bali Virtual Machine™.
  */
-// block: '{' procedure '}' parameters?
+// block: '{' procedure '}'
 CompilerVisitor.prototype.visitBlock = function(tree) {
     // create a new compiler block context in the instruction builder
     this.builder.pushBlockContext();
 
     // the VM adds any parameters to the current VM block context
-    if (tree.children[1]) {
-        var parameters = tree.children[1].children;
+    var parameters = tree.parameters;
+    if (parameters) {
         for (var i = 0; i < parameters.length; i++) {
             // TODO: need to handle ranges, lists, and catalogs differently
             // the VM stores the value of the parameter in its associated variable
@@ -518,7 +518,7 @@ CompilerVisitor.prototype.visitDocument = function(tree) {
  * This method tells the VM to place an element on the execution stack
  * as a literal value.
  */
-// element: (
+// element:
 //     binary |
 //     duration |
 //     moment |
@@ -531,15 +531,15 @@ CompilerVisitor.prototype.visitDocument = function(tree) {
 //     template |
 //     text |
 //     version
-//) parameters?
 CompilerVisitor.prototype.visitElement = function(terminal) {
     // the VM loads the element value onto the top of the execution stack
     var literal = terminal.value;
     this.builder.insertLoadInstruction('LITERAL', literal);
 
-    if (terminal.parameters) {
+    var parameters = terminal.parameters;
+    if (parameters) {
         // the VM loads any parameters associated with the element onto the top of the execution stack
-        terminal.parameters.accept(this);
+        parameters.accept(this);
 
         // the VM sets the parameters for the element
         this.builder.insertInvokeInstruction('$setParameters', 2);
@@ -1202,14 +1202,15 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
 };
 
 
-// structure: '[' composite ']' parameters?
+// structure: '[' composite ']'
 CompilerVisitor.prototype.visitStructure = function(tree) {
     // the VM places the value of the composite on top of the execution stack
     tree.children[0].accept(this);  // composite
 
-    if (tree.children[1]) {
+    var parameters = tree.parameters;
+    if (parameters) {
         // the VM places the value of the parameters on top of the execution stack
-        tree.children[1].accept(this);  // parameters
+        parameters.accept(this);  // parameters
 
         // the VM sets the parameters for the structure
         this.builder.insertInvokeInstruction('$setParameters', 2);
