@@ -13,27 +13,31 @@
  * This class defines the Bali Virtual Machine™.
  */
 var elements = require('../elements');
+// var intrinsics = require('../intrinsics');
 var TaskContext = require('./TaskContext');
-var MethodContext = require('./MethodContext');
+var ProcedureContext = require('./ProcedureContext');
+// var cloud = require('bali-cloud-api');
 
-// TODO: replace with require('bali-virtual-machine/cloud')
+
+// TODO: replace with require('bali-cloud-api')
 var cloud = {
     readDocument: function(reference) {},
     checkoutDocument: function(reference) {},
-    discardDocument: function(reference) {},
-    writeDocument: function(reference, document) {},
+    discardDraft: function(reference) {},
+    saveDraft: function(reference, document) {},
     commitDocument: function(reference, document) {},
     readMessage: function(reference) {},
-    writeMessage: function(message, reference) {}
+    writeMessage: function(message, reference) {},
+    publishEvent: function(event) {}
 };
 
-// TODO: replace with require('bali-primitives/intrinsics')
+// TODO: replace with require('../intrinsics')
 var intrinsics = {
-    list: function(capacity) {},
-    isFalse: function(document) {},
-    isNone: function(document) {},
-    isTrue: function(document) {},
-    catalog: function(capacity) {}
+    catalog: function(capacity) {},
+    isFalse: function(component) {},
+    isNone: function(component) {},
+    isTrue: function(component) {},
+    list: function(capacity) {}
 };
 
 
@@ -60,15 +64,16 @@ exports.VirtualMachine = VirtualMachine;
 
 /**
  * This method processes the instructions in the current task until the end of the
- * instructions is reached or the task is waiting to receive a message from another
- * task. If the virtual machine is in a 'stepping' state for debugging, then this
- * method processes the next instruction only.
+ * instructions is reached or the task is waiting to receive a message from a queue
+ * If the virtual machine is in a 'stepping' state for debugging, then this method
+ * processes the next instruction only.
  */
 VirtualMachine.prototype.processInstructions = function() {
     // process the instructions
     while (this.isReady()) {
         this.fetchInstruction();
         this.executeInstruction();
+
         // check for debug mode
         if (this.isStepping()) break;  // after a each instruction
     }
@@ -77,8 +82,9 @@ VirtualMachine.prototype.processInstructions = function() {
     if (this.isDone()) {
         // the task completed either successfully or with an exception
         this.publishCompletionEvent();
+
     } else {
-        // waiting on a message from another task so stop for now
+        // waiting on a message from a queue so stop for now
         this.saveState();
     }
 };
@@ -87,7 +93,7 @@ VirtualMachine.prototype.processInstructions = function() {
 /**
  * This method determines whether or not the virtual machine is ready to process
  * more instructions. When the current task is done, or waiting on a message from
- * another task, the virtual machine is not ready.
+ * a queue, the virtual machine is not ready.
  * 
  * @returns {boolean} Whether or not the virtual machine is ready to process more
  * instructions.
@@ -123,12 +129,12 @@ VirtualMachine.prototype.isDone = function() {
 
 
 /**
- * This method retrieves the document that is on top of the execution stack.
+ * This method retrieves the component that is on top of the execution stack.
  * 
- * @returns {object} The document from the top of the execution stack.
+ * @returns {object} The component from the top of the execution stack.
  */
-VirtualMachine.prototype.getDocument = function() {
-    return this.taskContext.popDocument();
+VirtualMachine.prototype.getComponent = function() {
+    return this.taskContext.popComponent();
 };
 
 
@@ -177,30 +183,30 @@ VirtualMachine.prototype.setVariable = function(index, value) {
 
 
 /**
- * This method returns the method name associated with a specific index.
+ * This method returns the procedure name associated with a specific index.
  * 
- * @param {number} index The index of the method in the symbol catalog.
- * @returns {string} The method name value associated with the index.
+ * @param {number} index The index of the procedure in the symbol catalog.
+ * @returns {string} The procedure name value associated with the index.
  */
-VirtualMachine.prototype.getMethod = function(index) {
+VirtualMachine.prototype.getProcedure = function(index) {
     return this.currentContext().symbols.procedures[index - 1];  // JS zero based indexing
 };
 
 
 /**
- * This method places a document on top of the execution stack.
+ * This method places a component on top of the execution stack.
  * 
- * @param {object} document The document.
+ * @param {object} component The component.
  */
-VirtualMachine.prototype.pushDocument = function(document) {
-    this.taskContext.pushDocument(document);
+VirtualMachine.prototype.pushComponent = function(component) {
+    this.taskContext.pushComponent(component);
 };
 
 
 /**
- * This method places a new method context on top of the context stack.
+ * This method places a new procedure context on top of the context stack.
  * 
- * @param {MethodContex} context The new method context.
+ * @param {ProcedureContex} context The new procedure context.
  */
 VirtualMachine.prototype.pushContext = function(context) {
     this.taskContext.pushContext(context);
@@ -208,9 +214,9 @@ VirtualMachine.prototype.pushContext = function(context) {
 
 
 /**
- * This method returns the method context that is on top of the context stack.
+ * This method returns the procedure context that is on top of the context stack.
  * 
- * @returns {MethodContex} The current method context.
+ * @returns {ProcedureContex} The current procedure context.
  */
 VirtualMachine.prototype.currentContext = function() {
     return this.taskContext.currentContext();
@@ -218,9 +224,9 @@ VirtualMachine.prototype.currentContext = function() {
 
 
 /**
- * This method removes the method context is was on top of the context stack.
+ * This method removes the procedure context is was on top of the context stack.
  * 
- * @returns {MethodContex} The method context that was on top of the context stack.
+ * @returns {ProcedureContex} The procedure context that was on top of the context stack.
  */
 VirtualMachine.prototype.popContext = function() {
     return this.taskContext.popContext();
@@ -237,7 +243,7 @@ VirtualMachine.prototype.pauseForMessage = function() {
 
 
 /**
- * This method fetches the next instruction for the current method into the
+ * This method fetches the next instruction for the current procedure into the
  * virtual machine.
  */
 VirtualMachine.prototype.fetchInstruction = function() {
@@ -282,7 +288,7 @@ VirtualMachine.prototype.executeInstruction = function() {
  * so that processing on it can continue at a later time.
  */
 VirtualMachine.prototype.saveState = function() {
-    cloud.writeDocument(this.taskReference, this.taskContext);
+    cloud.saveDraft(this.taskReference, this.taskContext);
 };
 
 
@@ -294,8 +300,8 @@ VirtualMachine.prototype.publishCompletionEvent = function() {
     var event = {
         '$type': '$completion',
         '$task': this.taskReference,
-        '$result': this.getDocument()
-        // TODO: need to handle exceptions as well...
+        '$result': this.getComponent()
+        // TODO: need to handle unhandled exceptions as well...
     };
     cloud.writeMessage(event, new elements.Reference('bali:/bali/EventQueue>'));
 };
@@ -426,39 +432,40 @@ VirtualMachine.prototype.handleExecuteInstruction = function(modifier, index) {
 
 
 VirtualMachine.prototype.jump = function(address) {
+    // address === 0 means a SKIP INSTRUCTION (aka NOOP)
     if (address > 0) this.currentContext().instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.jumpOnNone = function(address) {
-    var document = this.getDocument();
-    if (intrinsics.isNone(document)) this.currentContext().instructionPointer = address;
+    var component = this.getComponent();
+    if (intrinsics.isNone(component)) this.currentContext().instructionPointer = address;
 
-};
-
-
-VirtualMachine.prototype.jumpOnFalse = function(address) {
-    var document = this.getDocument();
-    if (intrinsics.isFalse(document)) this.currentContext().instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.jumpOnTrue = function(address) {
-    var document = this.getDocument();
-    if (intrinsics.isTrue(document)) this.currentContext().instructionPointer = address;
+    var component = this.getComponent();
+    if (intrinsics.isTrue(component)) this.currentContext().instructionPointer = address;
+};
+
+
+VirtualMachine.prototype.jumpOnFalse = function(address) {
+    var component = this.getComponent();
+    if (intrinsics.isFalse(component)) this.currentContext().instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.loadLiteral = function(index) {
     var literal = this.getLiteral(index);
-    this.pushDocument(literal);
+    this.pushComponent(literal);
 };
 
 
 VirtualMachine.prototype.loadDocument = function(index) {
     var reference = this.getReference(index);
-    var document = cloud.readDocument(reference);
-    this.pushDocument(document);
+    var component = cloud.readDocument(reference);
+    this.pushComponent(component);
 };
 
 
@@ -466,7 +473,7 @@ VirtualMachine.prototype.loadMessage = function(index) {
     var reference = this.getReference(index);
     var message = cloud.readMessage(reference);
     if (message) {
-        this.pushDocument(message);
+        this.pushComponent(message);
     } else {
         // set the task status to 'waiting'
         this.pauseForMessage();
@@ -478,84 +485,89 @@ VirtualMachine.prototype.loadMessage = function(index) {
 
 VirtualMachine.prototype.loadVariable = function(index) {
     var variable = this.getVariable(index);
-    this.pushDocument(variable);
+    this.pushComponent(variable);
 };
 
 
 VirtualMachine.prototype.storeDraft = function(index) {
     var reference = this.getReference(index);
-    var document = this.getDocument();
-    cloud.writeDocument(reference, document);
+    var draft = this.getComponent();
+    cloud.saveDraft(reference, draft);
 };
 
 
 VirtualMachine.prototype.storeDocument = function(index) {
     var reference = this.getReference(index);
-    var document = this.getDocument();
+    var document = this.getComponent();
     cloud.commitDocument(reference, document);
 };
 
 
 VirtualMachine.prototype.storeMessage = function(index) {
     var reference = this.getReference(index);
-    var message = this.getDocument();
+    var message = this.getComponent();
     cloud.writeMessage(message, reference);
 };
 
 
 VirtualMachine.prototype.storeVariable = function(index) {
-    var variable = this.getDocument();
+    var variable = this.getComponent();
     this.setVariable(index, variable);
 };
 
 
 VirtualMachine.prototype.invokeIntrinsic = function(index, numberOfParameters) {
+    // pop the parameters off the execution stack
     var parameters = [];
-    while (numberOfParameters-- > 0) parameters.push(this.getDocument());
+    while (numberOfParameters-- > 0) parameters.push(this.getComponent());
+
+    // execute the intrinsic function passing the parameters
     var result = intrinsics[index - 1].apply(this, parameters);
-    if (result) this.pushDocument(result);
+
+    // push the result of the function onto the top of the execution stack
+    this.pushComponent(result);
 };
 
 
 VirtualMachine.prototype.executeProcedure = function(index) {
-    var typeReference = this.getDocument();
+    var typeReference = this.getComponent();
     var type = cloud.readDocument(typeReference);
     var target = null;
-    var method = this.getMethod(index);
+    var procedure = this.getProcedure(index);
     var parameters = [];
-    var newContext = new MethodContext(type, target, method, parameters);
+    var newContext = new ProcedureContext(type, target, procedure, parameters);
     this.pushContext(newContext);
 };
 
 
 VirtualMachine.prototype.executeProcedureWithParameters = function(index) {
-    var typeReference = this.getDocument();
+    var typeReference = this.getComponent();
     var type = cloud.readDocument(typeReference);
     var target = null;
-    var method = this.getMethod(index);
-    var parameters = this.getDocument();
-    var newContext = new MethodContext(type, target, method, parameters);
+    var procedure = this.getProcedure(index);
+    var parameters = this.getComponent();
+    var newContext = new ProcedureContext(type, target, procedure, parameters);
     this.pushContext(newContext);
 };
 
 
 VirtualMachine.prototype.executeProcedureOnTarget = function(index) {
-    var typeReference = this.getDocument();
+    var typeReference = this.getComponent();
     var type = cloud.readDocument(typeReference);
-    var target = this.getDocument();
-    var method = this.getMethod(index);
+    var target = this.getComponent();
+    var procedure = this.getProcedure(index);
     var parameters = [];
-    var newContext = new MethodContext(type, target, method, parameters);
+    var newContext = new ProcedureContext(type, target, procedure, parameters);
     this.pushContext(newContext);
 };
 
 
 VirtualMachine.prototype.executeProcedureOnTargetWithParameters = function(index) {
-    var typeReference = this.getDocument();
+    var typeReference = this.getComponent();
     var type = cloud.readDocument(typeReference);
-    var target = this.getDocument();
-    var method = this.getMethod(index);
-    var parameters = this.getDocument();
-    var newContext = new MethodContext(type, target, method, parameters);
+    var target = this.getComponent();
+    var procedure = this.getProcedure(index);
+    var parameters = this.getComponent();
+    var newContext = new ProcedureContext(type, target, procedure, parameters);
     this.pushContext(newContext);
 };

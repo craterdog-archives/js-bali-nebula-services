@@ -118,33 +118,33 @@ TaskContext.prototype.isDone = function() {
 
 
 /**
- * This method returns the Bali document that is currently on top of the document
+ * This method returns the Bali component that is currently on top of the component
  * stack, or <code>null</code> if the stack is empty.
  * 
- * @returns {object} The Bali document that is currently on top of the execution stack.
+ * @returns {object} The Bali component that is currently on top of the execution stack.
  */
-TaskContext.prototype.topDocument = function() {
+TaskContext.prototype.topComponent = function() {
     return this.executionStack.peek();
 };
 
 
 /**
- * This method pushes a Bali document onto the top of the execution stack.
+ * This method pushes a Bali component onto the top of the execution stack.
  * 
- * @param {object} document The Bali document to be pushed onto the execution stack.
+ * @param {object} component The Bali component to be pushed onto the execution stack.
  */
-TaskContext.prototype.pushDocument = function(document) {
-    this.executionStack.push(document);
+TaskContext.prototype.pushComponent = function(component) {
+    this.executionStack.push(component);
 };
 
 
 /**
- * This method removes from the top of the execution stack the Bali document that
+ * This method removes from the execution stack the Bali component that
  * is currently on top of the execution stack.
  * 
- * @returns {object} The Bali document that was on top of the execution stack.
+ * @returns {object} The Bali component that was on top of the execution stack.
  */
-TaskContext.prototype.popDocument = function() {
+TaskContext.prototype.popComponent = function() {
     return this.executionStack.pop();
 };
 

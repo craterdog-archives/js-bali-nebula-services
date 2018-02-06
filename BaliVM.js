@@ -21,7 +21,7 @@ var LanguageCompiler = require('./compiler/LanguageCompiler').LanguageCompiler;
 var ProcedureAnalyzer = require('./compiler/ProcedureAnalyzer').ProcedureAnalyzer;
 var ProcedureAssembler = require('./compiler/ProcedureAssembler').ProcedureAssembler;
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
-var MethodContext = require('./bvm/MethodContext').MethodContext;
+var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
 
 // TODO: replace with require('bali-virtual-machine/cloud')
 var cloud = {
@@ -170,8 +170,8 @@ exports.processMessage = function(typeReference, targetReference, message, param
     var type = cloud.readDocument(typeReference);
     var target = cloud.readDocument(targetReference);
     var virtualMachine = new VirtualMachine();
-    var methodContext = new MethodContext(type, target, message, parameters);
-    virtualMachine.pushContext(methodContext);
+    var procedureContext = new ProcedureContext(type, target, message, parameters);
+    virtualMachine.pushContext(procedureContext);
     virtualMachine.processProcedure();
 };
 
