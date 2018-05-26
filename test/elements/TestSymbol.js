@@ -7,33 +7,49 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var Symbol = require('../../elements/Symbol').Symbol;
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
-module.exports = testCase({
-    'Test Constructor': function(test) {
-        test.expect(4);
+describe('Bali Virtual Machine™', function() {
 
-        test.throws(
-            function() {
-                var empty = new Symbol();
-            }
-        );
+    describe('Test symbol constructors', function() {
 
-        test.throws(
-            function() {
-                var bad = new Symbol('White Space');
-            }
-        );
+        it('should throw an exception for an empty symbol', function() {
+            expect(
+                function() {
+                    var empty = new Symbol();
+                }
+            ).to.throw();
+            expect(
+                function() {
+                    var empty = new Symbol('');
+                }
+            ).to.throw();
+        });
 
-        var symbol = new Symbol('$foobar');
-        var string = symbol.toString();
-        test.equal(string, '$foobar', "The symbol should have been '$foobar'.");
-        var identifier = symbol.getIdentifier();
-        test.equal(identifier, 'foobar', "The identifier should have been 'foobar'.");
+        it('should throw an exception for a symbol containing white space', function() {
+            expect(
+                function() {
+                    var bad = new Symbol(' ');
+                }
+            ).to.throw();
+            expect(
+                function() {
+                    var bad = new Symbol('White Space');
+                }
+            ).to.throw();
+        });
 
-        test.done();
-    }
+        it('should construct a symbol and format the same symbol', function() {
+            var symbol = new Symbol('$foobar');
+            var string = symbol.toString();
+            expect(string).to.equal('$foobar');
+            var identifier = symbol.getIdentifier();
+            expect(identifier).to.equal('foobar');
+        });
+
+    });
+
 });

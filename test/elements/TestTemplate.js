@@ -7,27 +7,35 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var Template = require('../../elements/Template').Template;
-var testCase = require('nodeunit').testCase;
-/* global NaN, Infinity */
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
+describe('Bali Virtual Machine™', function() {
 
-module.exports = testCase({
-    'Test Constructor': function(test) {
-        test.expect(4);
+    describe('Test template constructors', function() {
 
-        test.strictEqual(new Template().toString(), Template.NONE.toString(), "1 The template value should have been Template.NONE.");
-        test.strictEqual(new Template('none').toString(), Template.NONE.toString(), "2 The template value should have been Template.NONE.");
-        test.strictEqual(new Template('any').toString(), Template.ANY.toString(), "3 The template value should have been Template.ANY.");
+        it('should generate a default none template', function() {
+            expect(new Template().toString()).to.equal(Template.NONE.toString());
+        });
 
-        test.throws(
-            function() {
-                new Template('foobar');
-            }
-        );
+        it('should generate an explicit none template', function() {
+            expect(new Template('none').toString()).to.equal(Template.NONE.toString());
+        });
 
-        test.done();
-    }
+        it('should generate an explicit any template', function() {
+            expect(new Template('any').toString()).to.equal(Template.ANY.toString());
+        });
+
+        it('should throw an exception for an invalid template', function() {
+            expect(
+                function() {
+                    new Template('foobar');
+                }
+            ).to.throw();
+        });
+
+    });
+
 });

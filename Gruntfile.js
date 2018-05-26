@@ -20,26 +20,19 @@ module.exports = function(grunt) {
       }
     },
 
-    // grunt-contrib-watch plugin configuration (monitor file changes)
-    watch: {
-      scripts: {
-        files: ['<%= jshint.files %>'],
-        tasks: ['clean', 'jshint', 'nodeunit', 'concat', 'uglify'],
-        options: {
-          spawn: true,
-          reload: true
-        }
-      }
-    },
-
     // grunt-contrib-clean plugin configuration (clean up files)
     clean: {
       build: ['dist/*']
     },
 
-    // grunt-contrib-nodeunit plugin configuration (unit testing)
-    nodeunit: {
-      tests: 'test/**/*.js'
+    // grunt-mocha-test plugin configuration (unit testing)
+    mochaTest: {
+      test: {
+        options: {
+          reporter: 'spec'
+        },
+        src: ['test/**/*.js']
+      }
     },
 
     // grunt-contrib-concat plugin configuration (file concatenation)
@@ -73,11 +66,11 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-nodeunit');
+  grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
 
-  grunt.registerTask('build', 'Build the library.', ['clean:build', 'jshint', 'nodeunit', 'concat', 'uglify']);
-  grunt.registerTask('default', 'The default task.', ['clean:build', 'jshint', 'nodeunit', 'concat', 'uglify']);
+  grunt.registerTask('build', 'Build the library.', ['clean:build', 'jshint', 'mochaTest', 'concat', 'uglify']);
+  grunt.registerTask('default', 'The default task.', ['build']);
 
 };

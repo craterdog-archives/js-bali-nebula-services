@@ -7,42 +7,60 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var fs = require('fs');
 var tools = require('../../BaliVM');
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
-var source = [
-    'test/compiler/main',
-    'test/compiler/mainWithFinal',
-    'test/compiler/mainWithExceptions',
-    'test/compiler/mainWithExceptionsAndFinal',
-    'test/compiler/evaluateExpression',
-    'test/compiler/evaluateExpressionWithResult',
-    'test/compiler/lifecycle',
-    'test/compiler/ifThen',
-    'test/compiler/ifThenElse',
-    'test/compiler/ifThenElseIf',
-    'test/compiler/ifThenElseIfElse',
-    'test/compiler/selectOption',
-    'test/compiler/selectOptionElse',
-    'test/compiler/whileLoop',
-    'test/compiler/whileLoopWithLabel',
-    'test/compiler/withLoop',
-    'test/compiler/withLoopWithLabel',
-    'test/compiler/withEachLoop',
-    'test/compiler/withEachLoopWithLabel',
-    'test/compiler/queueMessage',
-    'test/compiler/waitForMessage',
-    'test/compiler/publishEvent',
-    'test/compiler/comprehensive'
-];
 
-module.exports = testCase({
-    'Test Compiler': function(test) {
-        test.expect(4 * source.length);
-        for (var i = 0; i < source.length; i++) {
+describe('Bali Virtual Machine™', function() {
+
+    describe('Test compiler and assembler', function() {
+
+        it('should compile and assemble source documents', function() {
+            var testFolder = 'test/compiler/';
+            var files = fs.readdirSync(testFolder);
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                if (!file.endsWith('.bali')) continue;
+                //console.log('      ' + file);
+                var context = {
+                    addresses: {},
+                    intrinsics: [],
+                    procedures: [],
+                    references: [],
+                    variables: [],
+                    literals: []
+                };
+                var prefix = file.split('.').slice(0, 1);
+                var baliFile = testFolder + file;
+                var basmFile = testFolder + prefix + '.basm';
+                var codeFile = testFolder + prefix + '.code';
+                var block = fs.readFileSync(baliFile, 'utf8');
+                expect(block).to.exist;  // jshint ignore:line
+                var tree = tools.parseBlock(block);
+                expect(tree).to.exist;  // jshint ignore:line
+                var procedure = tools.compileBlock(tree);
+                expect(procedure).to.exist;  // jshint ignore:line
+                //fs.writeFileSync(basmFile, procedure, 'utf8');
+                var expected = fs.readFileSync(basmFile, 'utf8');
+                expect(expected).to.exist;  // jshint ignore:line
+                expect(procedure).to.equal(expected);
+                tree = tools.parseProcedure(procedure);
+                expect(tree).to.exist;  // jshint ignore:line
+                var bytecode = tools.assembleProcedure(context, tree);
+                expect(bytecode).to.exist;  // jshint ignore:line
+                var formatted = tools.formatBytecode(bytecode);
+                expect(formatted).to.exist;  // jshint ignore:line
+                //fs.writeFileSync(codeFile, formatted, 'utf8');
+                expected = fs.readFileSync(codeFile, 'utf8');
+                expect(expected).to.exist;  // jshint ignore:line
+                expect(formatted).to.equal(expected);
+            }
+        });
+
+        it('should assemble and disassemble procedures', function() {
             var context = {
                 addresses: {},
                 intrinsics: [],
@@ -51,52 +69,25 @@ module.exports = testCase({
                 variables: [],
                 literals: []
             };
-            var baliFile = source[i] + '.bali';
-            var basmFile = source[i] + '.basm';
-            var codeFile = source[i] + '.code';
-            var block = fs.readFileSync(baliFile, 'utf8');
-            var tree = tools.parseBlock(block);
-            test.notEqual(tree, null, 'The language parser returned a null tree.');
-            var procedure = tools.compileBlock(tree);
-            //fs.writeFileSync(basmFile, procedure, 'utf8');
-            var expected = fs.readFileSync(basmFile, 'utf8');
-            test.strictEqual(procedure, expected, 'The compiled procedure does not match the expected output.');
-            tree = tools.parseProcedure(procedure);
-            test.notEqual(tree, null, 'The procedure parser returned a null tree.');
-            var bytecode = tools.assembleProcedure(context, tree);
+            var source = fs.readFileSync('test/compiler/procedure.basm', 'utf8');
+            expect(source).to.exist;  // jshint ignore:line
+            var procedure = tools.parseProcedure(source);
+            expect(procedure).to.exist;  // jshint ignore:line
+            var bytecode = tools.assembleProcedure(context, procedure);
+            expect(bytecode).to.exist;  // jshint ignore:line
             var formatted = tools.formatBytecode(bytecode);
-            //fs.writeFileSync(codeFile, formatted, 'utf8');
-            expected = fs.readFileSync(codeFile, 'utf8');
-            test.strictEqual(formatted, expected, 'The formatted bytecode does not match the expected output.');
-        }
-        test.done();
-    },
+            expect(formatted).to.exist;  // jshint ignore:line
+            expect(formatted).to.equal(EXPECTED_INSTRUCTIONS);
+            //console.log('\nEXPECTED_INSTRUCTIONS:\n' + formatted);
+            var disassembled = tools.disassembleBytecode(context, bytecode);
+            expect(disassembled).to.exist;  // jshint ignore:line
+            expect(disassembled).to.equal(source);
+            //console.log('\nDISASSEMBLED:\n' + disassembled);
+        });
 
-    'Test Assembler and Disassembler': function(test) {
-        var context = {
-            addresses: {},
-            intrinsics: [],
-            procedures: [],
-            references: [],
-            variables: [],
-            literals: []
-        };
-        test.expect(3);
-        var source = fs.readFileSync('test/compiler/procedure.basm', 'utf8');
-        var procedure = tools.parseProcedure(source);
-        test.notEqual(procedure, null, 'The parser returned a null list.');
-        var bytecode = tools.assembleProcedure(context, procedure);
-        var formatted = tools.formatBytecode(bytecode);
-        test.strictEqual(formatted, EXPECTED_INSTRUCTIONS, 'The formatter returned different procedure.');
-        //console.log('\nEXPECTED_INSTRUCTIONS:\n' + formatted);
-        var disassembled = tools.disassembleBytecode(context, bytecode);
-        test.strictEqual(disassembled, source, 'The disassembler returned different source.');
-        //console.log('\nDISASSEMBLED:\n' + disassembled);
-        test.done();
-    }
+    });
 
 });
-
 
 var EXPECTED_INSTRUCTIONS =
 ' Addr     Bytes   Bytecode                  Instruction\n' +
@@ -122,3 +113,4 @@ var EXPECTED_INSTRUCTIONS =
 '[013]:    8802    41     2    EXECUTE PROCEDURE 2 WITH PARAMETERS\n' +
 '[014]:    9003    42     3    EXECUTE PROCEDURE 3 ON TARGET\n' +
 '[015]:    9804    43     4    EXECUTE PROCEDURE 4 ON TARGET WITH PARAMETERS\n';
+

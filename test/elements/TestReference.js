@@ -7,36 +7,51 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var Reference = require('../../elements/Reference').Reference;
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
-module.exports = testCase({
-    'Test Constructor': function(test) {
-        test.expect(7);
+describe('Bali Virtual Machine™', function() {
 
-        test.throws(
-            function() {
-                var empty = new Reference();
+    describe('Test reference constructors', function() {
+
+        it('should throw an exception for an empty reference', function() {
+            expect(
+                function() {
+                    var empty = new Reference();
+                }
+            ).to.throw();
+            expect(
+                function() {
+                    var empty = new Reference('');
+                }
+            ).to.throw();
+            expect(
+                function() {
+                    var empty = new Reference('<>');
+                }
+            ).to.throw();
+        });
+
+        it('should construct references and format matching references', function() {
+            for (var i = 0; i < tests.length; i++) {
+                var expected = tests[i];
+                var reference = new Reference(expected);
+                var string = reference.toString();
+                expect(string).to.equal(expected);
             }
-        );
+        });
 
-        var tests = [
-            '<https://google.com/>',
-            '<bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYM>',
-            '<bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYMv3.1>',
-            '<bali:/bali/elements/Text>',
-            '<bali:/bali/elements/Text?version=6.12.1>',
-            '<bali:/abcCorp/reports/2010/Q3>'
-        ];
-        for (var i = 0; i < tests.length; i++) {
-            var expected = tests[i];
-            var reference = new Reference(expected);
-            var string = reference.toString();
-            test.equal(string, expected, "" + (i + 1) + " The references didn't match.");
-        }
+    });
 
-        test.done();
-    }
 });
+
+var tests = [
+    '<https://google.com/>',
+    '<bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYM>',
+    '<bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYMv3.1>',
+    '<bali:/bali/elements/Text>',
+    '<bali:/bali/elements/Text?version=6.12.1>',
+    '<bali:/abcCorp/reports/2010/Q3>'
+];

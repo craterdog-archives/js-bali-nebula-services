@@ -7,39 +7,47 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var Text = require('../../elements/Text').Text;
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
-module.exports = testCase({
-    'Test Constructor': function(test) {
-        test.expect(8);
+describe('Bali Virtual Machine™', function() {
 
-        var text = new Text();
-        var string = text.toString();
-        test.equal(string, '""', "1 The text strings didn't match.");
-        var raw = text.getRawString();
-        test.equal(raw, '', "1 The raw strings didn't match.");
+    describe('Test text constructors', function() {
 
-        text = new Text('""');
-        string = text.toString();
-        test.equal(string, '""', "2 The text strings didn't match.");
-        raw = text.getRawString();
-        test.equal(raw, '', "2 The raw strings didn't match.");
+        it('should generate a default empty text string', function() {
+            var text = new Text();
+            var string = text.toString();
+            expect(string).to.equal('""');
+            var raw = text.getRawString();
+            expect(raw).to.equal('');
+        });
 
-        text = new Text('"This is a text string."');
-        string = text.toString();
-        test.equal(string, '"This is a text string."', "2 The text strings didn't match.");
-        raw = text.getRawString();
-        test.equal(raw, 'This is a text string.', "2 The raw strings didn't match.");
+        it('should generate an explicit empty text string', function() {
+            var text = new Text('""');
+            var string = text.toString();
+            expect(string).to.equal('""');
+            var raw = text.getRawString();
+            expect(raw).to.equal('');
+        });
 
-        text = new Text('"\nThis is a \"text block\" containing \'quotes\'.\n"');
-        string = text.toString();
-        test.equal(string, '"\nThis is a \"text block\" containing \'quotes\'.\n"', "2 The text strings didn't match.");
-        raw = text.getRawString();
-        test.equal(raw, '\nThis is a \"text block\" containing \'quotes\'.\n', "2 The raw strings didn't match.");
+        it('should generate a specific text string', function() {
+            var text = new Text('"This is a text string."');
+            var string = text.toString();
+            expect(string).to.equal('"This is a text string."');
+            var raw = text.getRawString();
+            expect(raw).to.equal('This is a text string.');
+        });
 
-        test.done();
-    }
+        it('should generate a specific text bloc containing quotes', function() {
+            var text = new Text('"\nThis is a \"text block\" containing \'quotes\'.\n"');
+            var string = text.toString();
+            expect(string).to.equal('"\nThis is a \"text block\" containing \'quotes\'.\n"');
+            var raw = text.getRawString();
+            expect(raw).to.equal('\nThis is a \"text block\" containing \'quotes\'.\n');
+        });
+
+    });
+
 });

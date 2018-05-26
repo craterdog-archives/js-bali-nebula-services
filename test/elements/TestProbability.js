@@ -7,64 +7,78 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var Probability = require('../../elements/Probability').Probability;
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
-module.exports = testCase({
-    'Test Constructor': function(test) {
-        test.expect(13);
+describe('Bali Virtual Machine™', function() {
 
-        var empty = new Probability();
-        var number = empty.toNumber();
-        test.equal(number, 0, 'The probability should have been number 0.');
-        var string = empty.toString();
-        test.equal(string, 'false', "The probability should have been string 'false'.");
-        test.ok(!empty.toBoolean(), "The probability should have been false.");
+    describe('Test probability constructors', function() {
 
-        var zero = new Probability(0);
-        number = zero.toNumber();
-        test.equal(number, 0, 'The probability should have been number 0.');
-        string = zero.toString();
-        test.equal(string, 'false', "The probability should have been string 'false'.");
-        test.ok(!zero.toBoolean(), "The probability should have been false.");
+        it('should construct a default probability of zero', function() {
+            var empty = new Probability();
+            var number = empty.toNumber();
+            expect(number).to.equal(0);
+            var string = empty.toString();
+            expect(string).to.equal('false');
+            expect(empty.toBoolean()).to.be.false;  // jshint ignore:line
+        });
 
-        var half = new Probability(0.5);
-        number = half.toNumber();
-        test.equal(number, 0.5, 'The probability should have been number 0.5');
-        string = half.toString();
-        test.equal(string, '.5', "The probability should have been string '0.5'.");
+        it('should construct a probability of zero', function() {
+            var zero = new Probability(0);
+            var number = zero.toNumber();
+            expect(number).to.equal(0);
+            var string = zero.toString();
+            expect(string).to.equal('false');
+            expect(zero.toBoolean()).to.be.false;  // jshint ignore:line
+        });
 
-        var one = new Probability(1);
-        number = one.toNumber();
-        test.equal(number, 1, 'The probability should have been number 1.');
-        string = one.toString();
-        test.equal(string, 'true', "The probability should have been string 'true'.");
-        test.ok(one.toBoolean(), "The probability should have been true.");
+        it('should construct a probability of one half', function() {
+            var half = new Probability(0.5);
+            var number = half.toNumber();
+            expect(number).to.equal(0.5);
+            var string = half.toString();
+            expect(string).to.equal('.5');
+        });
 
-        test.throws(
-            function() {
-                var negative = new Probability(-1);
+        it('should construct a probability of one', function() {
+            var one = new Probability(1);
+            var number = one.toNumber();
+            expect(number).to.equal(1);
+            var string = one.toString();
+            expect(string).to.equal('true');
+            expect(one.toBoolean()).to.be.true;  // jshint ignore:line
+        });
+
+        it('should throw an exception for negative probabilities', function() {
+            expect(
+                function() {
+                    var negative = new Probability(-1);
+                }
+            ).to.throw();
+        });
+
+        it('should throw an exception for probabilities greater than 1', function() {
+            expect(
+                function() {
+                    var two = new Probability(2);
+                }
+            ).to.throw();
+        });
+
+/*      // uncomment this test as needed, but it runs slowly ;-)
+        it('should average very near 50% for many coin flips', function() {
+            var even = new Probability(0.5);
+            var heads = 0;
+            var tosses = 10000;
+            for (var i = 1; i < tosses; i++) {
+                if (even.toBoolean()) heads++;
             }
+            expect(tosses * 0.485 < heads && heads < tosses * 0.515).to.be.true;  // jshint ignore:line
         );
+*/
 
-        test.throws(
-            function() {
-                var two = new Probability(2);
-            }
-        );
-        test.done();
-/*  },  // uncomment this test as needed, but it runs slowly ;-)
-    'Test Accuracy': function(test) {
-        test.expect(1);
-        var even = new Probability(0.5);
-        var heads = 0;
-        var tosses = 10000;
-        for (var i = 1; i < tosses; i++) {
-            if (even.toBoolean()) heads++;
-        }
-        test.ok(tosses * 0.485 < heads && heads < tosses * 0.515, 'The coin toss is not fair: ' + heads * 100 / tosses + '%');
-        test.done();
-*/  }
+    });
+
 });

@@ -7,53 +7,54 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var utilities = require('../../utilities/BytecodeUtilities');
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
+
+describe('Bali Virtual Machine™', function() {
+
+    describe('Test bytecode utilities on instructions', function() {
+
+        it('should construct and compare instructions without operands', function() {
+            for (var i = 0; i < 32; i++) {
+                var instruction = i << 11;  // no operand
+                var opcode = instruction & OPCODE_MASK;
+                var modcode = instruction & MODCODE_MASK;
+                var operand = instruction & OPERAND_MASK;
+                var encoded = opcode | modcode | operand;
+                expect(instruction).to.equal(encoded);
+            }
+        });
+
+        it('should construct and compare instructions with operands', function() {
+            var bytecode = [];
+            // handle the SKIP INSTRUCTION specifically
+            var instruction = utilities.encodeInstruction('JUMP', '', 0);
+            bytecode.push(instruction);
+            for (var i = 0; i < 32; i++) {
+                instruction = i << 11 | (i + 1);
+                var operation = utilities.decodeOperation(instruction);
+                var modifier = utilities.decodeModifier(instruction);
+                var encoded = utilities.encodeInstruction(operation, modifier, i + 1);
+                expect(instruction).to.equal(encoded);
+                if (utilities.instructionIsValid(instruction)) {
+                    bytecode.push(instruction);
+                }
+            }
+            var formattedInstructions = utilities.bytecodeAsString(bytecode);
+            //console.log('\nValid Instructions:\n' + formattedInstructions);
+            expect(formattedInstructions).to.equal(EXPECTED_INSTRUCTIONS);
+        });
+
+    });
+
+});
 
 // masks
 var OPCODE_MASK = 0xE000;
 var MODCODE_MASK = 0x1800;
 var OPERAND_MASK = 0x07FF;
-
-module.exports = testCase({
-    'Test Simple Instructions': function(test) {
-        test.expect(32);
-        for (var i = 0; i < 32; i++) {
-            var instruction = i << 11;
-            var opcode = instruction & OPCODE_MASK;
-            var modcode = instruction & MODCODE_MASK;
-            var operand = instruction & OPERAND_MASK;
-            var encoded = opcode | modcode | operand;
-            test.strictEqual(instruction, encoded, 'The bytecode utilities masking is incorrect.');
-        }
-        test.done();
-    },
-    'Test Instructions with Operands': function(test) {
-        test.expect(33);
-        var bytecode = [];
-        
-        // handle SKIP INSTRUCTION specifically
-        var instruction = utilities.encodeInstruction('JUMP', '', 0);
-        bytecode.push(instruction);
-
-        for (var i = 0; i < 32; i++) {
-            instruction = i << 11 | (i + 1);
-            var operation = utilities.decodeOperation(instruction);
-            var modifier = utilities.decodeModifier(instruction);
-            var encoded = utilities.encodeInstruction(operation, modifier, i + 1);
-            test.strictEqual(instruction, encoded, 'The bytecode utilities decode/encode roundtrip returned a different instruction.');
-            if (utilities.instructionIsValid(instruction)) {
-                bytecode.push(instruction);
-            }
-        }
-        var formattedInstructions = utilities.bytecodeAsString(bytecode);
-        //console.log('\nValid Instructions:\n' + formattedInstructions);
-        test.strictEqual(formattedInstructions, EXPECTED_INSTRUCTIONS, 'The bytecode utilities returned different formatted instructions.');
-        test.done();
-    }
-});
 
 var EXPECTED_INSTRUCTIONS =
 ' Addr     Bytes   Bytecode                  Instruction\n' +

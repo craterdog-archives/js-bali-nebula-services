@@ -7,55 +7,83 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var Version = require('../../elements/Version').Version;
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
-module.exports = testCase({
-    'Test Constructor': function(test) {
-        test.expect(8);
+describe('Bali Virtual Machine™', function() {
 
-        var empty = new Version();
-        var string = empty.toString();
-        test.equal(string, 'v1', "1 The version strings didn't match.");
+    describe('Test version constructors', function() {
 
-        var major = new Version('v42');
-        string = major.toString();
-        test.equal(string, 'v42', "2 The version strings didn't match.");
+        it('should generate a default first version string', function() {
+            var empty = new Version();
+            var string = empty.toString();
+            expect(string).to.equal('v1');
+        });
 
-        var minor = new Version('v41.6');
-        string = minor.toString();
-        test.equal(string, 'v41.6', "3 The version strings didn't match.");
+        it('should generate an explicit single level version string', function() {
+            var major = new Version('v42');
+            var string = major.toString();
+            expect(string).to.equal('v42');
+        });
 
-        var bug = new Version('v2.13.5');
-        string = bug.toString();
-        test.equal(string, 'v2.13.5', "4 The version strings didn't match.");
+        it('should generate an explicit two level version string', function() {
+            var minor = new Version('v41.6');
+            var string = minor.toString();
+            expect(string).to.equal('v41.6');
+        });
 
-        test.throws(
-            function() {
-                new Version('1');
-            }
-        );
+        it('should generate an explicit three level version string', function() {
+            var bug = new Version('v2.13.5');
+            var string = bug.toString();
+            expect(string).to.equal('v2.13.5');
+        });
 
-        test.throws(
-            function() {
-                new Version('v1.');
-            }
-        );
+    });
 
-        test.throws(
-            function() {
-                new Version('v1.0');
-            }
-        );
+    describe('Test invalid version constructors', function() {
 
-        test.throws(
-            function() {
-                new Version('v1.0.2');
-            }
-        );
+        it('should generate an exception for a missing prefix', function() {
+            expect(
+                function() {
+                    new Version('1');
+                }
+            ).to.throw();
+        });
 
-        test.done();
-    }
+        it('should generate an exception for a trailing dot', function() {
+            expect(
+                function() {
+                    new Version('v1.');
+                }
+            ).to.throw();
+        });
+
+        it('should generate an exception for a zero version number', function() {
+            expect(
+                function() {
+                    new Version('v0');
+                }
+            ).to.throw();
+        });
+
+        it('should generate an exception for a zero trailing version number', function() {
+            expect(
+                function() {
+                    new Version('v1.0');
+                }
+            ).to.throw();
+        });
+
+        it('should generate an exception for a zero subversion number', function() {
+            expect(
+                function() {
+                    new Version('v1.0.2');
+                }
+            ).to.throw();
+        });
+
+    });
+
 });

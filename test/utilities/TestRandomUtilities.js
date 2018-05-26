@@ -7,16 +7,20 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
+
 var random = require('../../utilities/RandomUtilities');
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
 
+describe('Bali Virtual Machine™', function() {
 
-module.exports = testCase({
-    'Test Coin Toss': function(test) {
-        test.expect(2);
-        test.ok(!random.coinToss(0));
-        test.ok(random.coinToss(1));
-        test.done();
-    }
+    describe('Test random number utilities', function() {
+
+        it('should test extreme coin tosses', function() {
+            expect(random.coinToss(0)).is.false;  // jshint ignore:line
+            expect(random.coinToss(1)).is.true;  // jshint ignore:line
+        });
+
+    });
+
 });

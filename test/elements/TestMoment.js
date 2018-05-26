@@ -7,10 +7,33 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 var Moment = require('../../elements/Moment').Moment;
-var testCase = require('nodeunit').testCase;
+var mocha = require('mocha');
+var expect = require('chai').expect;
+
+describe('Bali Virtual Machine™', function() {
+
+    describe('Test moment constructors', function() {
+
+        it('should construct a default moment of zero', function() {
+            var time = new Moment();
+            var string = time.toString();
+            expect(string.length).to.equal(25);
+        });
+
+        it('should construct a moment and format the same', function() {
+            for (var i = 0; i < tests.length; i++) {
+                var expected = tests[i];
+                var time = new Moment(expected);
+                var string = time.toString();
+                expect(string).to.equal(expected);
+            }
+        });
+
+    });
+
+});
 
 var tests = [
     '<2017-12-30T17:38:35.726>',
@@ -23,21 +46,3 @@ var tests = [
     '<-10000>'
 ];
 
-module.exports = testCase({
-    'Test Constructor': function(test) {
-        test.expect(tests.length + 1);
-
-        var time = new Moment();
-        var string = time.toString();
-        test.equal(string.length, 25, 'The time should have been 25 characters long: ' + string);
-
-        for (var i = 0; i < tests.length; i++) {
-            var expected = tests[i];
-            time = new Moment(expected);
-            string = time.toString();
-            test.equal(string, expected, "" + (i + 1) + " The times didn't match.");
-        }
-
-        test.done();
-    }
-});
