@@ -1,0 +1,23 @@
+ Addr     Bytes   Bytecode                  Instruction
+----------------------------------------------------------------------
+[001]:    0000    00 [000]    SKIP INSTRUCTION
+[002]:    0006    00 [006]    JUMP TO [006]
+[003]:    080A    01 [00A]    JUMP TO [00A] ON NONE
+[004]:    100E    02 [00E]    JUMP TO [00E] ON TRUE
+[005]:    1812    03 [012]    JUMP TO [012] ON FALSE
+[006]:    2001    10     1    LOAD LITERAL 1
+[007]:    2801    11     1    LOAD DOCUMENT 1
+[008]:    3002    12     2    LOAD MESSAGE 2
+[009]:    3801    13     1    LOAD VARIABLE 1
+[00A]:    4001    20     1    STORE DRAFT 1
+[00B]:    4801    21     1    STORE DOCUMENT 1
+[00C]:    5002    22     2    STORE MESSAGE 2
+[00D]:    5801    23     1    STORE VARIABLE 1
+[00E]:    6001    30     1    INVOKE INTRINSIC 1
+[00F]:    6802    31     2    INVOKE INTRINSIC 2 WITH PARAMETER
+[010]:    7003    32     3    INVOKE INTRINSIC 3 WITH 2 PARAMETERS
+[011]:    7804    33     4    INVOKE INTRINSIC 4 WITH 3 PARAMETERS
+[012]:    8001    40     1    EXECUTE PROCEDURE 1
+[013]:    8802    41     2    EXECUTE PROCEDURE 2 WITH PARAMETERS
+[014]:    9003    42     3    EXECUTE PROCEDURE 3 ON TARGET
+[015]:    9804    43     4    EXECUTE PROCEDURE 4 ON TARGET WITH PARAMETERS

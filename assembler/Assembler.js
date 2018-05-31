@@ -10,56 +10,43 @@
 'use strict';
 var utilities = require('../utilities/BytecodeUtilities');
 
-/*
- * This class defines a custom visitor that "walks" a parse tree
- * produced by the BaliInstructionSetParser and generates the
- * associated bytecode.
+/**
+ * This library provides functions that assemble and disassemble instructions
+ * for the Bali Virtual Machine™.
  */
+
+
+// PUBLIC FUNCTIONS
 
 /**
- * This constructor creates a new visitor.
+ * This function traverses a parse tree structure containing assembly
+ * instructions and generates the corresponding bytecode.
  * 
- * @constructor
- * @param {object} symbols The set of symbol catalogs for the procedure being
- * assembled. 
- * @returns {ProcedureAssembler} The new assembler.
+ * @param {object} procedure The parse tree structure to be traversed.
+ * @param {object} symbols The symbol table for the procedure.
+ * @returns {array} The corresponding bytecode array.
  */
-function ProcedureAssembler(symbols) {
-    this.symbols = symbols;
-    return this;
-}
-ProcedureAssembler.prototype.constructor = ProcedureAssembler;
-exports.ProcedureAssembler = ProcedureAssembler;
-
-
-/**
- * This method walks a parse tree structure containing a procedure
- * and generates the corresponding bytecode for the BaliVM.
- * 
- * @param {object} procedure The parse tree structure to be assembled.
- * @returns {array} The assembled bytecode array.
- */
-ProcedureAssembler.prototype.assembleProcedure = function(procedure) {
-    var visitor = new AssemblerVisitor(this.symbols);
+exports.assembleBytecode = function(procedure, symbols) {
+    var visitor = new AssemblerVisitor(symbols);
     procedure.accept(visitor);
     return visitor.bytecode;
 };
 
 
 /**
- * This method analyzes bytecode and regenerates the source code
- * that was used to assemble the bytecode.
+ * This function analyzes bytecode and regenerates the assembly instructions
+ * in the procedure that was used to generate the bytecode.
  * 
- * @param {array} bytecode The bytecode array containing the procedure
- * to be disassembled.
- * @returns {string} The regenerated source code.
+ * @param {array} bytecode The bytecode array.
+ * @param {object} symbols The symbol table for the instructions.
+ * @returns {string} The regenerated procedure.
  */
-ProcedureAssembler.prototype.disassembleBytecode = function(bytecode) {
+exports.disassembleBytecode = function(bytecode, symbols) {
     var procedure = '';
     var address = 1;  // bali VM unit based addressing
     while (address <= bytecode.length) {
         // check for a label at this address
-        var label = lookupLabel(this.symbols, address);
+        var label = lookupLabel(symbols, address);
         if (label) {
             procedure += '\n' + label + ':\n';
         }
@@ -70,9 +57,9 @@ ProcedureAssembler.prototype.disassembleBytecode = function(bytecode) {
         var modifier = utilities.decodeModifier(bytes);
         var operand = utilities.decodeOperand(bytes);
         if (utilities.operandIsAddress(bytes)) {
-            operand = lookupLabel(this.symbols, operand);
+            operand = lookupLabel(symbols, operand);
         } else {
-            operand = lookupSymbol(this.symbols, operation, modifier, operand);
+            operand = lookupSymbol(symbols, operation, modifier, operand);
         }
 
         // format the instruction
@@ -81,6 +68,7 @@ ProcedureAssembler.prototype.disassembleBytecode = function(bytecode) {
 
         address++;
     }
+    procedure += '\n';
     return procedure;
 };
 
@@ -264,7 +252,7 @@ AssemblerVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' 'PROCEDURE' SYMBOL |
 //     'EXECUTE' 'PROCEDURE' SYMBOL 'WITH' 'PARAMETERS' |
 //     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' |
-//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' 'AND' 'PARAMETERS'
+//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 AssemblerVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;

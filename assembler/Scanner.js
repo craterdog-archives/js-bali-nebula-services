@@ -9,45 +9,41 @@
  ************************************************************************/
 'use strict';
 
-/*
- * This class defines a analyzing visitor that "walks" a parse tree
- * produced by the BaliInstructionSetParser and generates a symbol
- * catalog from the corresponding Bali virtual machine instructions.
+/**
+ * This library provides functions that scan assembly instructions for the
+ * Bali Virtual Machine™ extracting useful information about symbols and
+ * addresses.
  */
+
+
+// PUBLIC FUNCTIONS
 
 /**
- * This constructor creates a new instruction analyzer.
+ * This function traverses a parse tree structure containing assembly
+ * instructions and extracts label information that will be needed by the
+ * assembler to generate the bytecode.
  * 
- * @constructor
- * @param {object} symbols The set of symbol catalogs for the instructions being
- * analyzed. 
- * @returns {ProcedureAnalyzer} The new analyzer.
+ * @param {object} procedure The parse tree structure for the procedure.
+ * @returns {object} The symbol table for the procedure.
  */
-function ProcedureAnalyzer(symbols) {
-    this.symbols = symbols;
-    return this;
-}
-ProcedureAnalyzer.prototype.constructor = ProcedureAnalyzer;
-exports.ProcedureAnalyzer = ProcedureAnalyzer;
-
-
-/**
- * This method analyzes a parse tree structure containing instructions
- * and extracts label information that will be needed by the assembler
- * to generate the bytecode.
- * 
- * @param {object} instructions The parse tree structure to be analyzed.
- */
-ProcedureAnalyzer.prototype.analyzeProcedure = function(instructions) {
-    var visitor = new AnalyzerVisitor(this.symbols);
-    instructions.accept(visitor);
+exports.extractSymbols = function(procedure) {
+    var visitor = new AnalyzerVisitor();
+    procedure.accept(visitor);
+    return visitor.symbols;
 };
 
 
 // PRIVATE CLASSES
 
-function AnalyzerVisitor(symbols) {
-    this.symbols = symbols;
+function AnalyzerVisitor() {
+    this.symbols = {
+        literals: [],
+        variables: [],
+        addresses: {},
+        references: [],
+        intrinsics: [],
+        procedures: []
+    };
     this.address = 1;  // bali VM unit based addressing
     return this;
 }

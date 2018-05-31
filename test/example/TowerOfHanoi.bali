@@ -1,0 +1,108 @@
+[
+    $description: "
+This class encapsulates a /Tower of Hanoi/ game with three pegs (A, B, and C) and a
+parameterized number of disks. To play the game do the following:
+ # Initialize a game with 3 disks.
+`$game := [:]($type: <bali:/?name=bali.games.TowerOfHanoi>, $disks: 3)`
+ # Play the game.
+`game.play()`
+
+The output should be:
+`
+ 1. Move top disk on peg A to peg C
+ 2. Move top disk on peg A to peg B
+ 3. Move top disk on peg C to peg B
+ 4. Move top disk on peg A to peg C
+ 5. Move top disk on peg B to peg A
+ 6. Move top disk on peg B to peg C
+ 7. Move top disk on peg A to peg C
+`
+"
+    $parameters: [
+        $disks: [
+            $description: "The number of disks."
+            $type: Number(1..infinity)
+            $default: 5
+        ]
+    ]
+    $attributes: [
+        $pegs: [
+            $description: "The three pegs (A, B and C) that are used to hold the disks."
+            $type: Map(Stack(Number(1..infinity)))
+            $default: 5
+        ]
+        $steps: [
+            $description: "The steps needed to move the disks."
+            $type: List(Text)
+        ]
+    ]
+    $messages: [
+        $play: [
+            $description: "This message causes the game to (re)initialize itself and play the game."
+            $result: Map(Number(1..infinity), Text)
+        ]
+        $moveTower: [
+            $description: "This message causes the game to move a tower of disks of a certain height from one peg to another peg using a third peg as a buffer."
+            $parameters: [
+                $height: [
+                    $description: "The height of the tower to be moved."
+                    $type: Number(1..infinity)
+                ]
+                $fromPeg: [
+                    $description: "The peg from which the disks originate."
+                    $type: Text
+                ]
+                $toPeg: [
+                    $description: "The peg to which the disks should be moved."
+                    $type: Text
+                ]
+                $withPeg: [
+                    $description: "The peg to use to buffer the disks during the move."
+                    $type: Text
+                ]
+            ]
+        ]($private)
+        $moveDisk: [
+            $description: "This message causes the game to move the top disk from one peg to another."
+            $parameters: [
+                $fromPeg: [
+                    $description: "The peg from which the disk originates."
+                    $type: Text
+                ]
+                $toPeg: [
+                    $description: "The peg to which the disk should be moved."
+                    $type: Text
+                ]
+            ]
+        ]($private)
+    ]
+    $procedures: [
+        $play: {
+            $pegs := [
+                "peg A": [ ]
+                "peg B": [ ]
+                "peg C": [ ]
+            ]
+            $steps := [ ]
+            with each $n in [disks..1] do {
+                pegs["peg A"].push(n)
+            }
+            target.moveTower(disks, "peg A", "peg C", "peg B")
+            return steps.asMap()
+        }
+        $moveTower: {
+            $result := ""
+            if height then {
+                target.moveTower(height - 1, fromPeg, withPeg, toPeg)
+                target.moveDisk(fromPeg, toPeg)
+                target.moveTower(height - 1, withPeg, toPeg, fromPeg)
+            }
+            return result
+        }
+        $moveDisk: {
+            $disk := pegs[fromPeg].pop()
+            pegs[toPeg].push(disk)
+            steps.append("Move disk {disk} from {fromPeg} to {toPeg}.")
+        }
+    ]
+]($type: Class)

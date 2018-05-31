@@ -14,12 +14,10 @@
  * Bali Cloud Operating System™. For more information about the Bali Cloud
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
-var language = require('bali-language/BaliLanguage');
-var instructionSet = require('bali-instruction-set/BaliInstructionSet');
-var utilities = require('./utilities/BytecodeUtilities');
-var LanguageCompiler = require('./compiler/LanguageCompiler').LanguageCompiler;
-var ProcedureAnalyzer = require('./compiler/ProcedureAnalyzer').ProcedureAnalyzer;
-var ProcedureAssembler = require('./compiler/ProcedureAssembler').ProcedureAssembler;
+var analyzer = require('./compiler/Analyzer');
+var compiler = require('./compiler/Compiler');
+var scanner = require('./assembler/Scanner');
+var assembler = require('./assembler/Assembler');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
 
@@ -32,129 +30,19 @@ var cloud = {
 // PUBLIC FUNCTIONS
 
 /**
- * This function takes a source code string containing a Bali block
- * and parses it into the corresponding parse tree structure.
+ * This function compiles a Bali Document Language™ type.
  * 
- * @param {string} source The source code string.
- * @returns {BlockContext} The corresponding parse tree structure.
+ * @param {DocumentContext} baliType The Bali document context for the type to be compiled.
  */
-exports.parseBlock = function(source) {
-    var block = language.parseBlock(source);
-    return block;
-};
-
-
-/**
- * This function takes a Bali document and formats it as source code.
- * 
- * @param {BlockContext} baliBlock The Bali block to be formatted.
- * @returns {string} The formatted source code string.
- */
-exports.formatBlock = function(baliBlock) {
-    var source = language.formatDocument(baliBlock, '');
-    return source;
-};
-
-
-/**
- * This function takes a Bali document and formats it as source code. Each
- * line will be prepended with the specified padding string.
- * 
- * @param {BlockContext} baliBlock The Bali block to be formatted.
- * @param {string} padding The string that should be prepended to each line.
- * @returns {string} The formatted source code string.
- */
-exports.formatBlockWithPadding = function(baliBlock, padding) {
-    var source = language.formatDocument(baliBlock, padding);
-    return source;
-};
-
-
-/**
- * This function compiles a Bali Document Language™ block.
- * 
- * @param {BlockContext} baliBlock The Bali block context to be compiled.
- * @returns {string} The resulting BaliVM assembly source code.
- */
-exports.compileBlock = function(baliBlock) {
-    var compiler = new LanguageCompiler();
-    var procedure = compiler.compileBlock(baliBlock);
-    return procedure;
-};
-
-
-/**
- * This function takes a source code string containing a BaliVM procedure
- * and parses it into a parse tree structure containing the same
- * procedure.
- * 
- * @param {string} source The source code.
- * @returns {object} The resulting parse tree.
- */
-exports.parseProcedure = function(source) {
-    var procedure = instructionSet.parseProcedure(source);
-    return procedure;
-};
-
-
-/**
- * This function takes a parse tree structure containing a procedure
- * and formats it back into a source code string containing the BaliVM
- * procedure.
- * 
- * @param {object} procedure The parse tree structure to be formatted.
- * @returns {string} The resulting source code string.
- */
-exports.formatProcedure = function(procedure) {
-    var source = instructionSet.formatProcedure(procedure);
-    return source;
-};
-
-
-/**
- * This function walks a parse tree structure containing a procedure
- * and generates the corresponding bytecode for the BaliVM.
- * 
- * @param {object} context The context information gathered by the
- * compiler and analyzer.
- * @param {object} procedure The parse tree structure to be assembled.
- * @returns {array} The assembled bytecode array.
- */
-exports.assembleProcedure = function(context, procedure) {
-    var analyzer = new ProcedureAnalyzer(context);
-    analyzer.analyzeProcedure(procedure);
-    var assembler = new ProcedureAssembler(context);
-    var bytecode = assembler.assembleProcedure(procedure);
-    return bytecode;
-};
-
-
-/**
- * This function analyzes bytecode and regenerates the source code
- * that was used to assemble the bytecode.
- * 
- * @param {object} context The context information gathered by the
- * compiler and analyzer.
- * @param {array} bytecode The bytecode array to be disassembled.
- * @returns {string} The regenerated source code.
- */
-exports.disassembleBytecode = function(context, bytecode) {
-    var assembler = new ProcedureAssembler(context);
-    var procedure = assembler.disassembleBytecode(bytecode);
-    return procedure;
-};
-
-
-/**
- * This function formats a bytecode array in a human/nerd readable format
- * that can be used to troubleshoot the bytecode.
- * 
- * @param {array} bytecode The bytecode array to be formatted.
- * @returns {string} The formatted string.
- */
-exports.formatBytecode = function(bytecode) {
-    var string = utilities.bytecodeAsString(bytecode);
-    return string;
+exports.compileType = function(baliType) {
+    var context = analyzer.analyzeType(baliType);
+    var procedures = analyzer.extractProcedures(baliType);
+    for (var i = 0; i < procedures.length; i++) {
+        var procedure = procedures[i];
+        procedure.instructions = compiler.compileProcedure(procedure, context);
+        procedure.symbols = scanner.extractSymbols(procedure.instructions);
+        procedure.bytecode = assembler.assembleBytecode(procedure.instructions, procedure.symbols);
+    }
 };
 
 
