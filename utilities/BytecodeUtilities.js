@@ -73,9 +73,9 @@ exports.decodeModifier = function(instruction) {
         case STORE:
             return STORE_TYPES[number];
         case INVOKE:
-        case OPCODE6:
-        case OPCODE7:
-        case OPCODE8:
+        case PUSH:
+        case POP:
+        case HANDLE:
             return number;
         case EXECUTE:
             return PROCEDURES[number];
@@ -94,7 +94,13 @@ exports.decodeModifier = function(instruction) {
  */
 exports.operandIsAddress = function(instruction) {
     var opcode = extractOpcode(instruction);
-    return opcode === JUMP;
+    switch (opcode) {
+        case JUMP:
+        case PUSH:
+            return true;
+        default:
+            return false;
+    }
 };
 
 
@@ -107,7 +113,15 @@ exports.operandIsAddress = function(instruction) {
  */
 exports.operandIsIndex = function(instruction) {
     var opcode = extractOpcode(instruction);
-    return opcode !== JUMP;
+    switch (opcode) {
+        case LOAD:
+        case STORE:
+        case INVOKE:
+        case EXECUTE:
+            return true;
+        default:
+            return false;
+    }
 };
 
 
@@ -132,16 +146,28 @@ exports.decodeOperand = function(instruction) {
  */
 exports.instructionIsValid = function(instruction) {
     var opcode = extractOpcode(instruction);
+    var modcode = extractModcode(instruction);
+    var operand = exports.decodeOperand(instruction);
+    var isValid = true;
     switch (opcode) {
         case JUMP:
+            if (modcode !== 0 && operand === 0) isValid = false;
+            break;
         case LOAD:
         case STORE:
         case INVOKE:
         case EXECUTE:
-            return true;
+        case PUSH:
+            if (operand === 0) isValid = false;
+            break;
+        case POP:
+        case HANDLE:
+            if (operand !== 0) isValid = false;
+            break;
         default:
-            return false;
+            isValid = false;
     }
+    return isValid;
 };
 
 
@@ -259,6 +285,15 @@ exports.instructionAsString = function(operation, modifier, operand) {
             instruction = 'EXECUTE PROCEDURE ' + operand;
             if (modifier) instruction += ' ' + modifier;
             break;
+        case 'PUSH':
+            instruction = 'PUSH HANDLERS ' + operand;
+            break;
+        case 'POP':
+            instruction = 'POP HANDLERS';
+            break;
+        case 'HANDLE':
+            instruction = 'HANDLE EXCEPTION';
+            break;
     }
     return instruction;
 };
@@ -296,9 +331,9 @@ var LOAD = 0x2000;
 var STORE = 0x4000;
 var INVOKE = 0x6000;
 var EXECUTE = 0x8000;
-var OPCODE6 = 0xA000;
-var OPCODE7 = 0xC000;
-var OPCODE8 = 0xE000;
+var PUSH = 0xA000;
+var POP = 0xC000;
+var HANDLE = 0xE000;
 
 // operations
 var OPERATIONS = [
@@ -307,9 +342,9 @@ var OPERATIONS = [
     'STORE',
     'INVOKE',
     'EXECUTE',
-    'OPCODE6',
-    'OPCODE7',
-    'OPCODE8'
+    'PUSH',
+    'POP',
+    'HANDLE'
 ];
 
 // opcodes
@@ -320,9 +355,9 @@ var OPCODES = {
     'STORE': STORE,
     'INVOKE': INVOKE,
     'EXECUTE': EXECUTE,
-    'OPCODE6': OPCODE6,
-    'OPCODE7': OPCODE7,
-    'OPCODE8': OPCODE8
+    'PUSH': PUSH,
+    'POP': POP,
+    'HANDLE': HANDLE
 };
 
 // types

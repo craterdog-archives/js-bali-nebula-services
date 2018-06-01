@@ -58,8 +58,10 @@ exports.disassembleBytecode = function(bytecode, symbols) {
         var operand = utilities.decodeOperand(bytes);
         if (utilities.operandIsAddress(bytes)) {
             operand = lookupLabel(symbols, operand);
-        } else {
+        } else if (utilities.operandIsIndex(bytes)) {
             operand = lookupSymbol(symbols, operation, modifier, operand);
+        } else {
+            operand = 0;
         }
 
         // format the instruction
@@ -258,5 +260,36 @@ AssemblerVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var symbol = instruction.symbol;
     var index = this.symbols.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
     var bytes = utilities.encodeInstruction('EXECUTE', modifier, index);
+    this.bytecode.push(bytes);
+};
+
+
+// pushInstruction:
+//     'PUSH' 'HANDLERS' LABEL
+AssemblerVisitor.prototype.visitPushInstruction = function(instruction) {
+    var modifier = 0;
+    var label = instruction.label;
+    var address = this.symbols.addresses[label];
+    var bytes = utilities.encodeInstruction('PUSH', modifier, address);
+    this.bytecode.push(bytes);
+};
+
+
+// popInstruction:
+//     'POP' 'HANDLERS'
+AssemblerVisitor.prototype.visitPopInstruction = function(instruction) {
+    var modifier = 0;
+    var address = 0;
+    var bytes = utilities.encodeInstruction('POP', modifier, address);
+    this.bytecode.push(bytes);
+};
+
+
+// handleInstruction:
+//     'HANDLE' 'EXCEPTION'
+AssemblerVisitor.prototype.visitHandleInstruction = function(instruction) {
+    var modifier = 0;
+    var address = 0;
+    var bytes = utilities.encodeInstruction('HANDLE', modifier, address);
     this.bytecode.push(bytes);
 };

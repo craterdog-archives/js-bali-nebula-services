@@ -169,3 +169,24 @@ AnalyzerVisitor.prototype.visitExecuteInstruction = function(instruction) {
     }
     this.address++;
 };
+
+
+// pushInstruction:
+//     'PUSH' 'HANDLERS' LABEL
+AnalyzerVisitor.prototype.visitPushInstruction = function(instruction) {
+    this.address++;
+};
+
+
+// popInstruction:
+//     'POP' 'HANDLERS'
+AnalyzerVisitor.prototype.visitPopInstruction = function(instruction) {
+    this.address++;
+};
+
+
+// handleInstruction:
+//     'HANDLE' 'EXCEPTION'
+AnalyzerVisitor.prototype.visitHandleInstruction = function(instruction) {
+    this.address++;
+};
