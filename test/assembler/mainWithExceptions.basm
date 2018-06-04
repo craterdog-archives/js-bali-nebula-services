@@ -1,13 +1,16 @@
 
 1.QueueStatement:
+PUSH HANDLERS 1.1.HandleClause
 LOAD LITERAL `<bali:/queues/myqueue>`
 STORE VARIABLE $_queue_1
 LOAD VARIABLE $message
 STORE MESSAGE $_queue_1
+POP HANDLERS
+JUMP TO 1.StatementDone
 
 1.1.HandleClause:
-LOAD VARIABLE $_exception_
 STORE VARIABLE $error
+LOAD VARIABLE $error
 LOAD VARIABLE $error
 LOAD LITERAL `1`
 INVOKE INTRINSIC $catalog WITH PARAMETER
@@ -22,13 +25,11 @@ LOAD LITERAL `any`
 STORE VARIABLE $_result_
 
 1.1.HandleDone:
-LOAD LITERAL `none`
-STORE VARIABLE $_exception_
-JUMP TO 1.3.FinishClause
+JUMP TO 1.StatementDone
 
 1.2.HandleClause:
-LOAD VARIABLE $_exception_
 STORE VARIABLE $error
+LOAD VARIABLE $error
 LOAD VARIABLE $error
 LOAD LITERAL `1`
 INVOKE INTRINSIC $catalog WITH PARAMETER
@@ -36,16 +37,18 @@ LOAD LITERAL `$type`
 LOAD LITERAL `'horrid'`
 INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.3.FinishClause ON FALSE
+JUMP TO 1.UnhandledException ON FALSE
 
 1.2.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.2.HandleDone:
-LOAD LITERAL `none`
-STORE VARIABLE $_exception_
+JUMP TO 1.StatementDone
 
-1.3.FinishClause:
+1.UnhandledException:
+HANDLE EXCEPTION
+
+1.StatementDone:
 SKIP INSTRUCTION
 

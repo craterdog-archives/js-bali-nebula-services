@@ -11,7 +11,7 @@ LOAD VARIABLE $yes
 STORE VARIABLE $_result_
 
 1.1.ConditionDone:
-JUMP TO 1.3.FinishClause
+JUMP TO 1.StatementDone
 
 1.2.ElseClause:
 SKIP INSTRUCTION
@@ -21,8 +21,8 @@ LOAD VARIABLE $no
 STORE VARIABLE $_result_
 
 1.2.ElseDone:
-JUMP TO 1.3.FinishClause
+SKIP INSTRUCTION
 
-1.3.FinishClause:
+1.StatementDone:
 SKIP INSTRUCTION
 

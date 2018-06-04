@@ -1,6 +1,6 @@
 
 1.IfStatement:
-SKIP INSTRUCTION
+PUSH HANDLERS 1.4.HandleClause
 
 1.1.ConditionClause:
 LOAD VARIABLE $a
@@ -18,13 +18,10 @@ STORE VARIABLE $b
 
 1.1.3.ThrowStatement:
 LOAD VARIABLE $exception
-STORE VARIABLE $_exception_
-LOAD LITERAL `true`
-STORE VARIABLE $_exception_thrown_
-JUMP TO 1.4.HandleClause
+HANDLE EXCEPTION
 
 1.1.ConditionDone:
-JUMP TO 1.6.FinishClause
+JUMP TO 1.StatementDone
 
 1.2.ConditionClause:
 LOAD VARIABLE $a
@@ -48,11 +45,11 @@ STORE VARIABLE $c
 1.2.3.ReturnStatement:
 LOAD VARIABLE $c
 STORE VARIABLE $_result_
-LOAD LITERAL `true`
-STORE VARIABLE $_result_returned_
+LOAD VARIABLE $_result_
+HANDLE RESULT
 
 1.2.ConditionDone:
-JUMP TO 1.6.FinishClause
+JUMP TO 1.StatementDone
 
 1.3.ElseClause:
 SKIP INSTRUCTION
@@ -71,15 +68,16 @@ LOAD LITERAL `(3, 4i)`
 STORE VARIABLE $_result_
 
 1.3.3.ReturnStatement:
-LOAD LITERAL `true`
-STORE VARIABLE $_result_returned_
+LOAD VARIABLE $_result_
+HANDLE RESULT
 
 1.3.ElseDone:
-JUMP TO 1.6.FinishClause
+POP HANDLERS
+JUMP TO 1.StatementDone
 
 1.4.HandleClause:
-LOAD VARIABLE $_exception_
 STORE VARIABLE $exception
+LOAD VARIABLE $exception
 LOAD VARIABLE $exception
 LOAD LITERAL `1`
 INVOKE INTRINSIC $catalog WITH PARAMETER
@@ -107,13 +105,11 @@ INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 STORE VARIABLE $_result_
 
 1.4.HandleDone:
-LOAD LITERAL `none`
-STORE VARIABLE $_exception_
-JUMP TO 1.6.FinishClause
+JUMP TO 1.StatementDone
 
 1.5.HandleClause:
-LOAD VARIABLE $_exception_
 STORE VARIABLE $exception
+LOAD VARIABLE $exception
 LOAD VARIABLE $exception
 LOAD LITERAL `1`
 INVOKE INTRINSIC $catalog WITH PARAMETER
@@ -121,7 +117,7 @@ LOAD LITERAL `$type`
 LOAD LITERAL `$moderate`
 INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.6.FinishClause ON FALSE
+JUMP TO 1.UnhandledException ON FALSE
 
 1.5.1.EvaluateStatement:
 LOAD LITERAL `2`
@@ -136,57 +132,23 @@ STORE VARIABLE $exception
 
 1.5.2.ThrowStatement:
 LOAD VARIABLE $exception
-STORE VARIABLE $_exception_
-LOAD LITERAL `true`
-STORE VARIABLE $_exception_thrown_
-JUMP TO 1.4.HandleClause
+HANDLE EXCEPTION
 
 1.5.HandleDone:
-LOAD LITERAL `none`
-STORE VARIABLE $_exception_
+JUMP TO 1.StatementDone
 
-1.6.FinishClause:
-SKIP INSTRUCTION
+1.UnhandledException:
+HANDLE EXCEPTION
 
-1.6.1.QueueStatement:
-LOAD LITERAL `<bali:/#RSTMWSC0HFY00QJP37QD3JA533NLKPP5v3.1>`
-STORE VARIABLE $_queue_1
-LOAD LITERAL `4`
-INVOKE INTRINSIC $list WITH PARAMETER
-LOAD VARIABLE $foo
-INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
-LOAD VARIABLE $bar
-INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
-LOAD VARIABLE $baz
-INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
-LOAD LITERAL `5`
-INVOKE INTRINSIC $addItem WITH 2 PARAMETERS
-STORE MESSAGE $_queue_1
-
-1.6.2.PublishStatement:
-LOAD LITERAL `2`
-INVOKE INTRINSIC $catalog WITH PARAMETER
-LOAD LITERAL `$type`
-LOAD LITERAL `$confirmation`
-INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
-LOAD LITERAL `$timestamp`
-LOAD LITERAL `<bali:/bali/types/SomeType>`
-EXECUTE PROCEDURE $now
-INVOKE INTRINSIC $setValue WITH 3 PARAMETERS
-STORE MESSAGE $_eventQueue_
-
-1.6.FinishDone:
+1.StatementDone:
 SKIP INSTRUCTION
 
 2.WhileStatement:
-LOAD LITERAL `false`
-STORE VARIABLE $_loop_done_2_
+SKIP INSTRUCTION
 
 2.1.ConditionClause:
-LOAD VARIABLE $_loop_done_2_
-JUMP TO 2.2.FinishClause ON TRUE
 LOAD LITERAL `true`
-JUMP TO 2.2.FinishClause ON FALSE
+JUMP TO 2.StatementDone ON FALSE
 
 2.1.1.EvaluateStatement:
 LOAD VARIABLE $bar
@@ -200,13 +162,10 @@ LOAD VARIABLE $foo
 JUMP TO 2.1.2.2.ElseClause ON FALSE
 
 2.1.2.1.1.BreakStatement:
-LOAD LITERAL `true`
-STORE VARIABLE $_loop_done_2_
-LOAD LITERAL `true`
-STORE VARIABLE $_loop_interrupted_
+JUMP TO 2.StatementDone
 
 2.1.2.1.ConditionDone:
-JUMP TO 2.1.2.3.FinishClause
+JUMP TO 2.1.2.StatementDone
 
 2.1.2.2.ElseClause:
 SKIP INSTRUCTION
@@ -214,26 +173,22 @@ SKIP INSTRUCTION
 2.1.2.2.1.WithStatement:
 LOAD VARIABLE $sequence
 INVOKE INTRINSIC $createIterator WITH PARAMETER
-STORE VARIABLE $_iterator_2
-LOAD LITERAL `false`
-STORE VARIABLE $_loop_done_2_1_2_2_1_
+STORE VARIABLE $_iterator_1
 
 2.1.2.2.1.1.ConditionClause:
-LOAD VARIABLE $_loop_done_2_1_2_2_1_
-JUMP TO 2.1.2.2.1.2.FinishClause ON TRUE
-LOAD VARIABLE $_iterator_2
+LOAD VARIABLE $_iterator_1
 INVOKE INTRINSIC $hasNext WITH PARAMETER
-JUMP TO 2.1.2.2.1.2.FinishClause ON FALSE
-LOAD VARIABLE $_iterator_2
+JUMP TO 2.1.2.2.1.StatementDone ON FALSE
+LOAD VARIABLE $_iterator_1
 INVOKE INTRINSIC $getNext WITH PARAMETER
 STORE VARIABLE $item
 
 2.1.2.2.1.1.1.SelectStatement:
 LOAD VARIABLE $selection
-STORE VARIABLE $_selector_3
+STORE VARIABLE $_selector_2
 
 2.1.2.2.1.1.1.1.OptionClause:
-LOAD VARIABLE $_selector_3
+LOAD VARIABLE $_selector_2
 LOAD LITERAL `$first`
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
 JUMP TO 2.1.2.2.1.1.1.2.OptionClause ON FALSE
@@ -243,10 +198,10 @@ LOAD LITERAL `true`
 STORE VARIABLE $_result_
 
 2.1.2.2.1.1.1.1.OptionDone:
-JUMP TO 2.1.2.2.1.1.1.4.FinishClause
+JUMP TO 2.1.2.2.1.1.1.StatementDone
 
 2.1.2.2.1.1.1.2.OptionClause:
-LOAD VARIABLE $_selector_3
+LOAD VARIABLE $_selector_2
 LOAD LITERAL `$second`
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
 JUMP TO 2.1.2.2.1.1.1.3.ElseClause ON FALSE
@@ -256,81 +211,35 @@ LOAD LITERAL `false`
 STORE VARIABLE $_result_
 
 2.1.2.2.1.1.1.2.OptionDone:
-JUMP TO 2.1.2.2.1.1.1.4.FinishClause
+JUMP TO 2.1.2.2.1.1.1.StatementDone
 
 2.1.2.2.1.1.1.3.ElseClause:
 SKIP INSTRUCTION
 
 2.1.2.2.1.1.1.3.1.ContinueStatement:
-LOAD LITERAL `true`
-STORE VARIABLE $_loop_done_2_1_2_2_1_
-LOAD LITERAL `true`
-STORE VARIABLE $_loop_interrupted_
-
-2.1.2.2.1.1.1.3.ElseDone:
-JUMP TO 2.1.2.2.1.1.1.4.FinishClause
-
-2.1.2.2.1.1.1.4.FinishClause:
-SKIP INSTRUCTION
-
-2.1.2.2.1.1.1.4.1.EvaluateStatement:
-LOAD LITERAL `$selectDone`
-STORE VARIABLE $_result_
-
-2.1.2.2.1.1.1.4.FinishDone:
-LOAD VARIABLE $_exception_thrown_
-JUMP TO 2.1.2.2.1.2.FinishClause ON TRUE
-LOAD VARIABLE $_loop_interrupted_
-JUMP TO 2.1.2.2.1.1.ConditionClause ON TRUE
-LOAD VARIABLE $_result_returned_
-JUMP TO 2.1.2.2.1.2.FinishClause ON TRUE
-
-2.1.2.2.1.1.RepeatCondition:
 JUMP TO 2.1.2.2.1.1.ConditionClause
 
-2.1.2.2.1.2.FinishClause:
+2.1.2.2.1.1.1.3.ElseDone:
+JUMP TO 2.1.2.2.1.1.1.StatementDone
+
+2.1.2.2.1.1.1.StatementDone:
 SKIP INSTRUCTION
 
-2.1.2.2.1.2.1.EvaluateStatement:
-LOAD LITERAL `$innerDone`
-STORE VARIABLE $_result_
+2.1.2.2.1.ConditionRepeat:
+JUMP TO 2.1.2.2.1.1.ConditionClause
 
-2.1.2.2.1.2.FinishDone:
-LOAD VARIABLE $_exception_thrown_
-JUMP TO 2.1.2.3.FinishClause ON TRUE
-LOAD VARIABLE $_loop_interrupted_
-JUMP TO 2.1.2.3.FinishClause ON TRUE
-LOAD VARIABLE $_result_returned_
-JUMP TO 2.1.2.3.FinishClause ON TRUE
+2.1.2.2.1.StatementDone:
+SKIP INSTRUCTION
 
 2.1.2.2.ElseDone:
-JUMP TO 2.1.2.3.FinishClause
-
-2.1.2.3.FinishClause:
 SKIP INSTRUCTION
 
-2.1.2.3.1.EvaluateStatement:
-LOAD LITERAL `$ifDone`
-STORE VARIABLE $_result_
+2.1.2.StatementDone:
+SKIP INSTRUCTION
 
-2.1.2.3.FinishDone:
-LOAD VARIABLE $_exception_thrown_
-JUMP TO 1.4.HandleClause ON TRUE
-LOAD VARIABLE $_loop_interrupted_
-JUMP TO 2.1.ConditionClause ON TRUE
-LOAD VARIABLE $_result_returned_
-JUMP TO 2.2.FinishClause ON TRUE
-
-2.1.RepeatCondition:
+2.ConditionRepeat:
 JUMP TO 2.1.ConditionClause
 
-2.2.FinishClause:
-SKIP INSTRUCTION
-
-2.2.1.EvaluateStatement:
-LOAD LITERAL `$outerDone`
-STORE VARIABLE $_result_
-
-2.2.FinishDone:
+2.StatementDone:
 SKIP INSTRUCTION
 

@@ -72,13 +72,14 @@ exports.decodeModifier = function(instruction) {
             return LOAD_TYPES[number];
         case STORE:
             return STORE_TYPES[number];
+        case EXECUTE:
+            return PROCEDURES[number];
+        case HANDLE:
+            return CONTEXTS[number];
         case INVOKE:
         case PUSH:
         case POP:
-        case HANDLE:
             return number;
-        case EXECUTE:
-            return PROCEDURES[number];
         default:
             throw new Error('BYTECODE: Attempted to return the modifier for an invalid opcode: ' + opcode);
     }
@@ -157,12 +158,16 @@ exports.instructionIsValid = function(instruction) {
         case STORE:
         case INVOKE:
         case EXECUTE:
-        case PUSH:
             if (operand === 0) isValid = false;
             break;
+        case PUSH:
+            if (modcode !== 0 || operand === 0) isValid = false;
+            break;
         case POP:
+            if (modcode !== 0 || operand !== 0) isValid = false;
+            break;
         case HANDLE:
-            if (operand !== 0) isValid = false;
+            if (modcode > EXCEPTION || operand !== 0) isValid = false;
             break;
         default:
             isValid = false;
@@ -292,7 +297,7 @@ exports.instructionAsString = function(operation, modifier, operand) {
             instruction = 'POP HANDLERS';
             break;
         case 'HANDLE':
-            instruction = 'HANDLE EXCEPTION';
+            instruction = 'HANDLE ' + modifier;
             break;
     }
     return instruction;
@@ -377,6 +382,10 @@ var WITH_PARAMETERS = 0x0800;
 var ON_TARGET = 0x1000;
 var ON_TARGET_WITH_PARAMETERS = 0x1800;
 
+// contexts
+var RESULT = 0x0000;
+var EXCEPTION = 0x0800;
+
 // modcodes
 var MODCODES = {
     // these first four must be first to allow numbers to work in addition to strings
@@ -394,7 +403,9 @@ var MODCODES = {
     'ON FALSE': ON_FALSE,
     'WITH PARAMETERS': WITH_PARAMETERS,
     'ON TARGET': ON_TARGET,
-    'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS
+    'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS,
+    'RESULT': RESULT,
+    'EXCEPTION': EXCEPTION
 };
 
 // types
@@ -426,4 +437,10 @@ var PROCEDURES = [
     'WITH PARAMETERS',
     'ON TARGET',
     'ON TARGET WITH PARAMETERS'
+];
+
+// contexts
+var CONTEXTS = [
+    'RESULT',
+    'EXCEPTION'
 ];

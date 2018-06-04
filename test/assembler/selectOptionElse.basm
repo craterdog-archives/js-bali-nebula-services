@@ -14,7 +14,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.1.OptionDone:
-JUMP TO 1.5.FinishClause
+JUMP TO 1.StatementDone
 
 1.2.OptionClause:
 LOAD VARIABLE $_selector_1
@@ -27,7 +27,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.2.OptionDone:
-JUMP TO 1.5.FinishClause
+JUMP TO 1.StatementDone
 
 1.3.OptionClause:
 LOAD VARIABLE $_selector_1
@@ -40,7 +40,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.3.OptionDone:
-JUMP TO 1.5.FinishClause
+JUMP TO 1.StatementDone
 
 1.4.ElseClause:
 SKIP INSTRUCTION
@@ -50,8 +50,8 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.4.ElseDone:
-JUMP TO 1.5.FinishClause
+JUMP TO 1.StatementDone
 
-1.5.FinishClause:
+1.StatementDone:
 SKIP INSTRUCTION
 

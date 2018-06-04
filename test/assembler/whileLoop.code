@@ -1,27 +1,16 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2001    10     1    LOAD LITERAL 1
-[002]:    5801    23     1    STORE VARIABLE 1
-[003]:    3801    13     1    LOAD VARIABLE 1
-[004]:    1019    02 [019]    JUMP TO [019] ON TRUE
-[005]:    3802    13     2    LOAD VARIABLE 2
-[006]:    1819    03 [019]    JUMP TO [019] ON FALSE
+[001]:    0000    00 [000]    SKIP INSTRUCTION
+[002]:    3801    13     1    LOAD VARIABLE 1
+[003]:    180E    03 [00E]    JUMP TO [00E] ON FALSE
+[004]:    3802    13     2    LOAD VARIABLE 2
+[005]:    5803    23     3    STORE VARIABLE 3
+[006]:    0000    00 [000]    SKIP INSTRUCTION
 [007]:    3803    13     3    LOAD VARIABLE 3
-[008]:    5804    23     4    STORE VARIABLE 4
-[009]:    0000    00 [000]    SKIP INSTRUCTION
-[00A]:    3804    13     4    LOAD VARIABLE 4
-[00B]:    1810    03 [010]    JUMP TO [010] ON FALSE
-[00C]:    2002    10     2    LOAD LITERAL 2
-[00D]:    5801    23     1    STORE VARIABLE 1
-[00E]:    2002    10     2    LOAD LITERAL 2
-[00F]:    5805    23     5    STORE VARIABLE 5
-[010]:    3806    13     6    LOAD VARIABLE 6
-[011]:    1019    02 [019]    JUMP TO [019] ON TRUE
-[012]:    3805    13     5    LOAD VARIABLE 5
-[013]:    1003    02 [003]    JUMP TO [003] ON TRUE
-[014]:    3807    13     7    LOAD VARIABLE 7
-[015]:    1019    02 [019]    JUMP TO [019] ON TRUE
-[016]:    3808    13     8    LOAD VARIABLE 8
-[017]:    5804    23     4    STORE VARIABLE 4
-[018]:    0003    00 [003]    JUMP TO [003]
-[019]:    0000    00 [000]    SKIP INSTRUCTION
+[008]:    180A    03 [00A]    JUMP TO [00A] ON FALSE
+[009]:    000E    00 [00E]    JUMP TO [00E]
+[00A]:    0000    00 [000]    SKIP INSTRUCTION
+[00B]:    3804    13     4    LOAD VARIABLE 4
+[00C]:    5803    23     3    STORE VARIABLE 3
+[00D]:    0002    00 [002]    JUMP TO [002]
+[00E]:    0000    00 [000]    SKIP INSTRUCTION

@@ -3,7 +3,7 @@
         $x := true
         if x then {
             $y := none
-            continue
+            continue loop
         }
         $z := any
     }

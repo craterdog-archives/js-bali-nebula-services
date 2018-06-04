@@ -23,14 +23,11 @@
             $exception: exception
         ]
         throw exception
-    } finish with {
-        queue [foo, bar, baz, 5] on <bali:/#RSTMWSC0HFY00QJP37QD3JA533NLKPP5v3.1>
-        publish [$type: $confirmation, $timestamp: now()]
     }
-    outer: while (true) do {
+    while (true) do {
         $foo := bar
         if foo then {
-            break
+            break loop
         } else {
             with each $item in sequence do {
                 select selection from $first do {
@@ -38,17 +35,9 @@
                 } $second do {
                     false
                 } else {
-                    continue to outer
-                } finish with {
-                    $selectDone
+                    continue loop
                 }
-            } finish with {
-                $innerDone
             }
-        } finish with {
-            $ifDone
         }
-    } finish with {
-        $outerDone
     }
 }

@@ -2,7 +2,7 @@
     while condition do {
         $a := b
         if a then {
-            break
+            break loop
         }
         $a := c
     }

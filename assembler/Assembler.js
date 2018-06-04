@@ -288,7 +288,7 @@ AssemblerVisitor.prototype.visitPopInstruction = function(instruction) {
 // handleInstruction:
 //     'HANDLE' 'EXCEPTION'
 AssemblerVisitor.prototype.visitHandleInstruction = function(instruction) {
-    var modifier = 0;
+    var modifier = instruction.modifier;
     var address = 0;
     var bytes = utilities.encodeInstruction('HANDLE', modifier, address);
     this.bytecode.push(bytes);

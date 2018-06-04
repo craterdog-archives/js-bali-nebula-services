@@ -14,7 +14,7 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.1.OptionDone:
-JUMP TO 1.4.FinishClause
+JUMP TO 1.StatementDone
 
 1.2.OptionClause:
 LOAD VARIABLE $_selector_1
@@ -27,18 +27,18 @@ LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
 1.2.OptionDone:
-JUMP TO 1.4.FinishClause
+JUMP TO 1.StatementDone
 
 1.3.OptionClause:
 LOAD VARIABLE $_selector_1
 LOAD LITERAL `'gamma'`
 INVOKE INTRINSIC $matches WITH 2 PARAMETERS
-JUMP TO 1.4.FinishClause ON FALSE
+JUMP TO 1.StatementDone ON FALSE
 
 1.3.1.EvaluateStatement:
 LOAD LITERAL `none`
 STORE VARIABLE $_result_
 
-1.4.FinishClause:
+1.StatementDone:
 SKIP INSTRUCTION
 

@@ -34,24 +34,32 @@ describe('Bali Virtual Machine™', function() {
             // handle the SKIP instruction specifically
             var instruction = utilities.encodeInstruction('JUMP', '', 0);
             var operand;
+            var operation;
+            var modifier;
+            var encoded;
             bytecode.push(instruction);
 
             // handle most of the instructions
             for (var i = 0; i < 21; i++) {
                 instruction = i << 11 | (i + 1);
                 operand = i + 1;
-                var operation = utilities.decodeOperation(instruction);
-                var modifier = utilities.decodeModifier(instruction);
-                var encoded = utilities.encodeInstruction(operation, modifier, operand);
+                operation = utilities.decodeOperation(instruction);
+                modifier = utilities.decodeModifier(instruction);
+                encoded = utilities.encodeInstruction(operation, modifier, operand);
                 expect(instruction).to.equal(encoded);
                 if (utilities.instructionIsValid(instruction)) {
                     bytecode.push(instruction);
                 }
             }
             // handle the POP and HANDLE instructions specifically
-            for (var j = 25; j < 32; j += 4) {
+            for (var j = 21; j < 32; j++) {
                 instruction = j << 11;
-                bytecode.push(instruction);
+                operation = utilities.decodeOperation(instruction);
+                modifier = utilities.decodeModifier(instruction);
+                encoded = utilities.encodeInstruction(operation, modifier, 0);
+                if (utilities.instructionIsValid(instruction)) {
+                    bytecode.push(instruction);
+                }
             }
 
             var formattedInstructions = utilities.bytecodeAsString(bytecode);

@@ -4,12 +4,12 @@ SKIP INSTRUCTION
 
 1.1.ConditionClause:
 LOAD LITERAL `true`
-JUMP TO 1.2.FinishClause ON FALSE
+JUMP TO 1.StatementDone ON FALSE
 
 1.1.1.EvaluateStatement:
 LOAD VARIABLE $yes
 STORE VARIABLE $_result_
 
-1.2.FinishClause:
+1.StatementDone:
 SKIP INSTRUCTION
 
