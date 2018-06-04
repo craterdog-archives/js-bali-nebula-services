@@ -3,7 +3,7 @@
 SKIP INSTRUCTION
 
 1.1.ConditionClause:
-LOAD LITERAL `true`
+PUSH DOCUMENT `true`
 JUMP TO 1.2.ConditionClause ON FALSE
 
 1.1.1.EvaluateStatement:
@@ -14,7 +14,7 @@ STORE VARIABLE $_result_
 JUMP TO 1.StatementDone
 
 1.2.ConditionClause:
-LOAD LITERAL `false`
+PUSH DOCUMENT `false`
 JUMP TO 1.StatementDone ON FALSE
 
 1.2.1.EvaluateStatement:

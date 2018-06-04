@@ -1,37 +1,37 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    A008    50 [008]    PUSH HANDLERS [008]
-[002]:    2001    10     1    LOAD LITERAL 1
-[003]:    5801    23     1    STORE VARIABLE 1
-[004]:    3802    13     2    LOAD VARIABLE 2
-[005]:    5001    22     1    STORE MESSAGE 1
-[006]:    C000    60     0    POP HANDLERS
+[001]:    2008    10 [008]    PUSH HANDLER [008]
+[002]:    2801    11     1    PUSH DOCUMENT 1
+[003]:    8001    40     1    STORE VARIABLE 1
+[004]:    6002    30     2    LOAD VARIABLE 2
+[005]:    9801    43     1    STORE MESSAGE 1
+[006]:    4000    20     0    POP HANDLER
 [007]:    0023    00 [023]    JUMP TO [023]
-[008]:    5803    23     3    STORE VARIABLE 3
-[009]:    3803    13     3    LOAD VARIABLE 3
-[00A]:    3803    13     3    LOAD VARIABLE 3
-[00B]:    2002    10     2    LOAD LITERAL 2
-[00C]:    6801    31     1    INVOKE INTRINSIC 1 WITH PARAMETER
-[00D]:    2003    10     3    LOAD LITERAL 3
-[00E]:    2004    10     4    LOAD LITERAL 4
-[00F]:    7802    33     2    INVOKE INTRINSIC 2 WITH 3 PARAMETERS
-[010]:    7003    32     3    INVOKE INTRINSIC 3 WITH 2 PARAMETERS
+[008]:    8003    40     3    STORE VARIABLE 3
+[009]:    6003    30     3    LOAD VARIABLE 3
+[00A]:    6003    30     3    LOAD VARIABLE 3
+[00B]:    2802    11     2    PUSH DOCUMENT 2
+[00C]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[00D]:    2803    11     3    PUSH DOCUMENT 3
+[00E]:    2804    11     4    PUSH DOCUMENT 4
+[00F]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[010]:    B003    52     3    INVOKE 3 WITH 2 PARAMETERS
 [011]:    1815    03 [015]    JUMP TO [015] ON FALSE
-[012]:    2005    10     5    LOAD LITERAL 5
-[013]:    5804    23     4    STORE VARIABLE 4
+[012]:    2805    11     5    PUSH DOCUMENT 5
+[013]:    8004    40     4    STORE VARIABLE 4
 [014]:    0023    00 [023]    JUMP TO [023]
-[015]:    5803    23     3    STORE VARIABLE 3
-[016]:    3803    13     3    LOAD VARIABLE 3
-[017]:    3803    13     3    LOAD VARIABLE 3
-[018]:    2002    10     2    LOAD LITERAL 2
-[019]:    6801    31     1    INVOKE INTRINSIC 1 WITH PARAMETER
-[01A]:    2003    10     3    LOAD LITERAL 3
-[01B]:    2006    10     6    LOAD LITERAL 6
-[01C]:    7802    33     2    INVOKE INTRINSIC 2 WITH 3 PARAMETERS
-[01D]:    7003    32     3    INVOKE INTRINSIC 3 WITH 2 PARAMETERS
+[015]:    8003    40     3    STORE VARIABLE 3
+[016]:    6003    30     3    LOAD VARIABLE 3
+[017]:    6003    30     3    LOAD VARIABLE 3
+[018]:    2802    11     2    PUSH DOCUMENT 2
+[019]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[01A]:    2803    11     3    PUSH DOCUMENT 3
+[01B]:    2806    11     6    PUSH DOCUMENT 6
+[01C]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[01D]:    B003    52     3    INVOKE 3 WITH 2 PARAMETERS
 [01E]:    1822    03 [022]    JUMP TO [022] ON FALSE
-[01F]:    2007    10     7    LOAD LITERAL 7
-[020]:    5804    23     4    STORE VARIABLE 4
+[01F]:    2807    11     7    PUSH DOCUMENT 7
+[020]:    8004    40     4    STORE VARIABLE 4
 [021]:    0023    00 [023]    JUMP TO [023]
-[022]:    E800    71     0    HANDLE EXCEPTION
+[022]:    E000    70     0    HANDLE EXCEPTION
 [023]:    0000    00 [000]    SKIP INSTRUCTION

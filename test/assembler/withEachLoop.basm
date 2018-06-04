@@ -1,19 +1,19 @@
 
 1.WithStatement:
-LOAD LITERAL `$sequence`
-INVOKE INTRINSIC $createIterator WITH PARAMETER
+PUSH DOCUMENT `$sequence`
+INVOKE $createIterator WITH PARAMETER
 STORE VARIABLE $_iterator_1
 
 1.1.ConditionClause:
 LOAD VARIABLE $_iterator_1
-INVOKE INTRINSIC $hasNext WITH PARAMETER
+INVOKE $hasNext WITH PARAMETER
 JUMP TO 1.StatementDone ON FALSE
 LOAD VARIABLE $_iterator_1
-INVOKE INTRINSIC $getNext WITH PARAMETER
+INVOKE $getNext WITH PARAMETER
 STORE VARIABLE $symbol
 
 1.1.1.EvaluateStatement:
-LOAD LITERAL `true`
+PUSH DOCUMENT `true`
 STORE VARIABLE $x
 
 1.1.2.IfStatement:
@@ -24,7 +24,7 @@ LOAD VARIABLE $x
 JUMP TO 1.1.2.StatementDone ON FALSE
 
 1.1.2.1.1.EvaluateStatement:
-LOAD LITERAL `none`
+PUSH DOCUMENT `none`
 STORE VARIABLE $y
 
 1.1.2.1.2.ContinueStatement:
@@ -34,7 +34,7 @@ JUMP TO 1.1.ConditionClause
 SKIP INSTRUCTION
 
 1.1.3.EvaluateStatement:
-LOAD LITERAL `any`
+PUSH DOCUMENT `any`
 STORE VARIABLE $z
 
 1.ConditionRepeat:

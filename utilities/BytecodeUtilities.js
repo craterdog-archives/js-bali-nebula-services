@@ -33,10 +33,11 @@
  *
  * @param {string} operation The operation for the bytecode.
  * @param {string} modifier The modifier for the bytecode.
- * @param {number} operand The operand associated with the operation.
+ * @param {number} optionalOperand The optional operand associated with the operation.
  * @return {number} The bytecode for the instruction.
  */
-exports.encodeInstruction = function(operation, modifier, operand) {
+exports.encodeInstruction = function(operation, modifier, optionalOperand) {
+    var operand = optionalOperand === undefined ? 0 : optionalOperand;
     var instruction = OPCODES[operation] | MODCODES[modifier] | (operand & OPERAND_MASK);
     return instruction;
 };
@@ -68,18 +69,18 @@ exports.decodeModifier = function(instruction) {
     switch (opcode) {
         case JUMP:
             return CONDITIONS[number];
+        case PUSH:
+        case POP:
+            return STACKS[number];
         case LOAD:
-            return LOAD_TYPES[number];
         case STORE:
-            return STORE_TYPES[number];
+            return TYPES[number];
+        case INVOKE:
+            return number;
         case EXECUTE:
             return PROCEDURES[number];
         case HANDLE:
             return CONTEXTS[number];
-        case INVOKE:
-        case PUSH:
-        case POP:
-            return number;
         default:
             throw new Error('BYTECODE: Attempted to return the modifier for an invalid opcode: ' + opcode);
     }
@@ -95,10 +96,12 @@ exports.decodeModifier = function(instruction) {
  */
 exports.operandIsAddress = function(instruction) {
     var opcode = extractOpcode(instruction);
+    var modcode = extractModcode(instruction);
     switch (opcode) {
         case JUMP:
-        case PUSH:
             return true;
+        case PUSH:
+            return modcode === 0;
         default:
             return false;
     }
@@ -114,7 +117,10 @@ exports.operandIsAddress = function(instruction) {
  */
 exports.operandIsIndex = function(instruction) {
     var opcode = extractOpcode(instruction);
+    var modcode = extractModcode(instruction);
     switch (opcode) {
+        case PUSH:
+            return modcode !== 0;
         case LOAD:
         case STORE:
         case INVOKE:
@@ -149,30 +155,45 @@ exports.instructionIsValid = function(instruction) {
     var opcode = extractOpcode(instruction);
     var modcode = extractModcode(instruction);
     var operand = exports.decodeOperand(instruction);
-    var isValid = true;
     switch (opcode) {
         case JUMP:
-            if (modcode !== 0 && operand === 0) isValid = false;
+            // the SKIP INSTRUCTION is the only one allowed to have a zero operand
+            return operand !== 0 || modcode === 0;
+        case PUSH:
+            switch (modcode) {
+                case HANDLER:
+                case DOCUMENT:
+                    return operand !== 0;
+                default:
+                    return false;
+            }
+            break;
+        case POP:
+            switch (modcode) {
+                case HANDLER:
+                case DOCUMENT:
+                    return operand === 0;
+                default:
+                    return false;
+            }
             break;
         case LOAD:
         case STORE:
         case INVOKE:
         case EXECUTE:
-            if (operand === 0) isValid = false;
-            break;
-        case PUSH:
-            if (modcode !== 0 || operand === 0) isValid = false;
-            break;
-        case POP:
-            if (modcode !== 0 || operand !== 0) isValid = false;
-            break;
+            return operand !== 0;
         case HANDLE:
-            if (modcode > EXCEPTION || operand !== 0) isValid = false;
+            switch (modcode) {
+                case EXCEPTION:
+                case RESULT:
+                    return operand === 0;
+                default:
+                    return false;
+            }
             break;
         default:
-            isValid = false;
+            return false;
     }
-    return isValid;
 };
 
 
@@ -271,6 +292,12 @@ exports.instructionAsString = function(operation, modifier, operand) {
                 if (modifier) instruction += ' ' + modifier;
             }
             break;
+        case 'PUSH':
+            instruction = 'PUSH ' + modifier + ' ' + operand;
+            break;
+        case 'POP':
+            instruction = 'POP ' + modifier;
+            break;
         case 'LOAD':
             instruction = 'LOAD ' + modifier + ' ' + operand;
             break;
@@ -278,7 +305,7 @@ exports.instructionAsString = function(operation, modifier, operand) {
             instruction = 'STORE ' + modifier + ' ' + operand;
             break;
         case 'INVOKE':
-            instruction = 'INVOKE INTRINSIC ' + operand;
+            instruction = 'INVOKE ' + operand;
             if (modifier === 1) {
                 instruction += ' WITH PARAMETER';
             }
@@ -287,14 +314,8 @@ exports.instructionAsString = function(operation, modifier, operand) {
             }
             break;
         case 'EXECUTE':
-            instruction = 'EXECUTE PROCEDURE ' + operand;
+            instruction = 'EXECUTE ' + operand;
             if (modifier) instruction += ' ' + modifier;
-            break;
-        case 'PUSH':
-            instruction = 'PUSH HANDLERS ' + operand;
-            break;
-        case 'POP':
-            instruction = 'POP HANDLERS';
             break;
         case 'HANDLE':
             instruction = 'HANDLE ' + modifier;
@@ -332,23 +353,23 @@ var OPERAND_MASK = 0x07FF;
 // opcodes
 var SKIP = 0x0000;
 var JUMP = 0x0000;
-var LOAD = 0x2000;
-var STORE = 0x4000;
-var INVOKE = 0x6000;
-var EXECUTE = 0x8000;
-var PUSH = 0xA000;
-var POP = 0xC000;
+var PUSH = 0x2000;
+var POP = 0x4000;
+var LOAD = 0x6000;
+var STORE = 0x8000;
+var INVOKE = 0xA000;
+var EXECUTE = 0xC000;
 var HANDLE = 0xE000;
 
 // operations
 var OPERATIONS = [
     'JUMP',
+    'PUSH',
+    'POP',
     'LOAD',
     'STORE',
     'INVOKE',
     'EXECUTE',
-    'PUSH',
-    'POP',
     'HANDLE'
 ];
 
@@ -356,26 +377,28 @@ var OPERATIONS = [
 var OPCODES = {
     'SKIP': SKIP,
     'JUMP': JUMP,
+    'PUSH': PUSH,
+    'POP': POP,
     'LOAD': LOAD,
     'STORE': STORE,
     'INVOKE': INVOKE,
     'EXECUTE': EXECUTE,
-    'PUSH': PUSH,
-    'POP': POP,
     'HANDLE': HANDLE
 };
 
-// types
-var LITERAL = 0x0000;
-var DRAFT = 0x0000;
-var DOCUMENT = 0x0800;
-var MESSAGE = 0x1000;
-var VARIABLE = 0x1800;
-
 // conditions
+var ON_ANY = 0x0000;
 var ON_NONE = 0x0800;
 var ON_TRUE = 0x1000;
 var ON_FALSE = 0x1800;
+
+
+// types
+var HANDLER = 0x0000;
+var VARIABLE = 0x0000;
+var DOCUMENT = 0x0800;
+var DRAFT = 0x1000;
+var MESSAGE = 0x1800;
 
 // procedures
 var WITH_PARAMETERS = 0x0800;
@@ -383,8 +406,8 @@ var ON_TARGET = 0x1000;
 var ON_TARGET_WITH_PARAMETERS = 0x1800;
 
 // contexts
-var RESULT = 0x0000;
-var EXCEPTION = 0x0800;
+var EXCEPTION = 0x0000;
+var RESULT = 0x0800;
 
 // modcodes
 var MODCODES = {
@@ -393,54 +416,49 @@ var MODCODES = {
     '1': 0x0800,
     '2': 0x1000,
     '3': 0x1800,
-    'DRAFT': DRAFT,
-    'DOCUMENT': DOCUMENT,
-    'MESSAGE': MESSAGE,
-    'VARIABLE': VARIABLE,
-    'LITERAL': LITERAL,
+    'ON ANY': ON_ANY,
     'ON NONE': ON_NONE,
     'ON TRUE': ON_TRUE,
     'ON FALSE': ON_FALSE,
+    'VARIABLE': VARIABLE,
+    'DOCUMENT': DOCUMENT,
+    'DRAFT': DRAFT,
+    'MESSAGE': MESSAGE,
+    'HANDLER': HANDLER,
     'WITH PARAMETERS': WITH_PARAMETERS,
     'ON TARGET': ON_TARGET,
     'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS,
-    'RESULT': RESULT,
-    'EXCEPTION': EXCEPTION
+    'EXCEPTION': EXCEPTION,
+    'RESULT': RESULT
 };
 
-// types
-var LOAD_TYPES = [
-    'LITERAL',
-    'DOCUMENT',
-    'MESSAGE',
-    'VARIABLE'
-];
-
-var STORE_TYPES = [
-    'DRAFT',
-    'DOCUMENT',
-    'MESSAGE',
-    'VARIABLE'
-];
-
-// conditions
 var CONDITIONS = [
-    '',
+    '',  // same as 'ON_ANY'
     'ON NONE',
     'ON TRUE',
     'ON FALSE'
 ];
 
-// procedures
+var STACKS = [
+    'HANDLER',
+    'DOCUMENT'
+];
+
+var TYPES = [
+    'VARIABLE',
+    'DOCUMENT',
+    'DRAFT',
+    'MESSAGE'
+];
+
 var PROCEDURES = [
-    '',
+    '',  // no target or parameters
     'WITH PARAMETERS',
     'ON TARGET',
     'ON TARGET WITH PARAMETERS'
 ];
 
-// contexts
 var CONTEXTS = [
-    'RESULT',
-    'EXCEPTION'
+    'EXCEPTION',
+    'RESULT'
 ];

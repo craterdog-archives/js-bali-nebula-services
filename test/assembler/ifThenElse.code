@@ -1,13 +1,13 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
 [001]:    0000    00 [000]    SKIP INSTRUCTION
-[002]:    2001    10     1    LOAD LITERAL 1
+[002]:    2801    11     1    PUSH DOCUMENT 1
 [003]:    1807    03 [007]    JUMP TO [007] ON FALSE
-[004]:    3801    13     1    LOAD VARIABLE 1
-[005]:    5802    23     2    STORE VARIABLE 2
+[004]:    6001    30     1    LOAD VARIABLE 1
+[005]:    8002    40     2    STORE VARIABLE 2
 [006]:    000B    00 [00B]    JUMP TO [00B]
 [007]:    0000    00 [000]    SKIP INSTRUCTION
-[008]:    3803    13     3    LOAD VARIABLE 3
-[009]:    5802    23     2    STORE VARIABLE 2
+[008]:    6003    30     3    LOAD VARIABLE 3
+[009]:    8002    40     2    STORE VARIABLE 2
 [00A]:    0000    00 [000]    SKIP INSTRUCTION
 [00B]:    0000    00 [000]    SKIP INSTRUCTION

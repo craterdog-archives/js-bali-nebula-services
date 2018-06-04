@@ -17,47 +17,31 @@ describe('Bali Virtual Machine™', function() {
 
     describe('Test bytecode utilities on instructions', function() {
 
-        it('should construct and compare instructions without operands', function() {
-            for (var i = 0; i < 32; i++) {
-                var instruction = i << 11;  // no operand
-                var opcode = instruction & OPCODE_MASK;
-                var modcode = instruction & MODCODE_MASK;
-                var operand = instruction & OPERAND_MASK;
-                var encoded = opcode | modcode | operand;
-                expect(instruction).to.equal(encoded);
-            }
-        });
-
-        it('should construct and compare instructions with operands', function() {
+        it('should construct and compare instructions with and without operands', function() {
             var bytecode = [];
-
-            // handle the SKIP instruction specifically
-            var instruction = utilities.encodeInstruction('JUMP', '', 0);
             var operand;
             var operation;
             var modifier;
             var encoded;
-            bytecode.push(instruction);
 
-            // handle most of the instructions
-            for (var i = 0; i < 21; i++) {
-                instruction = i << 11 | (i + 1);
+            for (var i = 0; i < 32; i++) {
+                // test with no operand
+                instruction = i << 11;
+                operation = utilities.decodeOperation(instruction);
+                modifier = utilities.decodeModifier(instruction);
+                encoded = utilities.encodeInstruction(operation, modifier);
+                if (utilities.instructionIsValid(instruction)) {
+                    expect(instruction).to.equal(encoded);
+                    bytecode.push(instruction);
+                }
+                // test with operand
                 operand = i + 1;
+                instruction = i << 11 | operand;
                 operation = utilities.decodeOperation(instruction);
                 modifier = utilities.decodeModifier(instruction);
                 encoded = utilities.encodeInstruction(operation, modifier, operand);
-                expect(instruction).to.equal(encoded);
                 if (utilities.instructionIsValid(instruction)) {
-                    bytecode.push(instruction);
-                }
-            }
-            // handle the POP and HANDLE instructions specifically
-            for (var j = 21; j < 32; j++) {
-                instruction = j << 11;
-                operation = utilities.decodeOperation(instruction);
-                modifier = utilities.decodeModifier(instruction);
-                encoded = utilities.encodeInstruction(operation, modifier, 0);
-                if (utilities.instructionIsValid(instruction)) {
+                    expect(instruction).to.equal(encoded);
                     bytecode.push(instruction);
                 }
             }
@@ -71,8 +55,3 @@ describe('Bali Virtual Machine™', function() {
     });
 
 });
-
-// masks
-var OPCODE_MASK = 0xE000;
-var MODCODE_MASK = 0x1800;
-var OPERAND_MASK = 0x07FF;

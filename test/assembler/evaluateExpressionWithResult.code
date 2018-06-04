@@ -1,12 +1,12 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    3801    13     1    LOAD VARIABLE 1
-[002]:    5802    23     2    STORE VARIABLE 2
-[003]:    3803    13     3    LOAD VARIABLE 3
-[004]:    2001    10     1    LOAD LITERAL 1
-[005]:    7001    32     1    INVOKE INTRINSIC 1 WITH 2 PARAMETERS
-[006]:    2002    10     2    LOAD LITERAL 2
-[007]:    7001    32     1    INVOKE INTRINSIC 1 WITH 2 PARAMETERS
-[008]:    2003    10     3    LOAD LITERAL 3
-[009]:    2004    10     4    LOAD LITERAL 4
-[00A]:    7802    33     2    INVOKE INTRINSIC 2 WITH 3 PARAMETERS
+[001]:    6001    30     1    LOAD VARIABLE 1
+[002]:    8002    40     2    STORE VARIABLE 2
+[003]:    6003    30     3    LOAD VARIABLE 3
+[004]:    2801    11     1    PUSH DOCUMENT 1
+[005]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
+[006]:    2802    11     2    PUSH DOCUMENT 2
+[007]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
+[008]:    2803    11     3    PUSH DOCUMENT 3
+[009]:    2804    11     4    PUSH DOCUMENT 4
+[00A]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS

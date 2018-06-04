@@ -183,7 +183,7 @@ CompilerVisitor.prototype.visitBreakClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'BreakStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // retrieve the loop label from the parent context
@@ -220,7 +220,7 @@ CompilerVisitor.prototype.visitCatalog = function(tree) {
 
     // the VM places the size of the catalog on the execution stack
     var size = tree.children.length;
-    this.builder.insertLoadInstruction('LITERAL', size);
+    this.builder.insertPushInstruction('DOCUMENT', size);
 
     // the VM replaces the size value on the execution stack with a new catalog containing the associations
     this.builder.insertInvokeInstruction('$catalog', 1);
@@ -246,7 +246,7 @@ CompilerVisitor.prototype.visitCheckoutClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'CheckoutStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
     var recipient = tree.children[0];
     var location = tree.children[1];
@@ -281,7 +281,7 @@ CompilerVisitor.prototype.visitCommitClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'CommitStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // the VM loads the value of the reference to the location of the persistent
@@ -372,7 +372,7 @@ CompilerVisitor.prototype.visitContinueClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'ContinueStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // retrieve the loop label from the parent context
@@ -446,7 +446,7 @@ CompilerVisitor.prototype.visitDiscardClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'DiscardStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // the VM loads the value of the reference to the location onto the top of the execution stack
@@ -457,7 +457,7 @@ CompilerVisitor.prototype.visitDiscardClause = function(tree) {
     this.builder.insertStoreInstruction('VARIABLE', location);
 
     // the VM stores no document into the remote location
-    this.builder.insertLoadInstruction('LITERAL', 'none');
+    this.builder.insertPushInstruction('DOCUMENT', 'none');
     this.builder.insertStoreInstruction('DRAFT', location);
 };
 
@@ -493,7 +493,7 @@ CompilerVisitor.prototype.visitDocument = function(tree) {
 CompilerVisitor.prototype.visitElement = function(terminal) {
     // the VM loads the element value onto the top of the execution stack
     var literal = terminal.value;
-    this.builder.insertLoadInstruction('LITERAL', literal);
+    this.builder.insertPushInstruction('DOCUMENT', literal);
 
     var parameters = terminal.parameters;
     if (parameters) {
@@ -517,7 +517,7 @@ CompilerVisitor.prototype.visitEvaluateClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'EvaluateStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     if (tree.children.length > 1) {
@@ -592,7 +592,7 @@ CompilerVisitor.prototype.visitFunctionExpression = function(tree) {
     //TODO: fix this
     //var typeReference = this.symbols.procedures[name];
     var typeReference = '<bali:/bali/types/SomeType>';
-    this.builder.insertLoadInstruction('LITERAL', typeReference);
+    this.builder.insertPushInstruction('DOCUMENT', typeReference);
 
     // if there are parameters then compile accordingly
     if (tree.children[1].children[0].children.length > 0) {
@@ -662,7 +662,7 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'IfStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
     var doneLabel = this.currentBlock().doneLabel;
     var children = tree.children;
@@ -805,7 +805,7 @@ CompilerVisitor.prototype.visitList = function(tree) {
 
     // the VM places the size of the list on the execution stack
     var size = tree.children.length;
-    this.builder.insertLoadInstruction('LITERAL', size);
+    this.builder.insertPushInstruction('DOCUMENT', size);
 
     // the VM replaces the size value on the execution stack with a new list containing the items
     this.builder.insertInvokeInstruction('$list', 1);
@@ -960,7 +960,7 @@ CompilerVisitor.prototype.visitPublishClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'PublishStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // the VM places the value of the event expression onto the top of the execution stack
@@ -983,7 +983,7 @@ CompilerVisitor.prototype.visitQueueClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'QueueStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // the VM stores the reference to the queue in a temporary variable
@@ -1045,7 +1045,7 @@ CompilerVisitor.prototype.visitRecipient = function(tree) {
  * This method inserts the instructions that cause the VM to evaluate an
  * optional expression and then set the resulting value that is on top
  * of the execution stack as the result of the current procedure. The VM
- * then jumps to the finish block of the parent block if one exists.
+ * then returns the result to the calling procedure.
  */
 // returnClause: 'return' expression?
 CompilerVisitor.prototype.visitReturnClause = function(tree) {
@@ -1055,7 +1055,7 @@ CompilerVisitor.prototype.visitReturnClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'ReturnStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // the VM stores the result in a temporary variable and sets a flag
@@ -1066,7 +1066,7 @@ CompilerVisitor.prototype.visitReturnClause = function(tree) {
     }
     this.builder.insertLoadInstruction('VARIABLE', '$_result_');
 
-    // the VM jumps to the finish clause of the parent block
+    // the VM returns the result to the calling procedure
     this.builder.insertHandleInstruction('RESULT');
 };
 
@@ -1084,7 +1084,7 @@ CompilerVisitor.prototype.visitSaveClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'SaveStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // the VM stores the value of the reference to the location into a temporary variable
@@ -1112,7 +1112,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'SelectStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
     var doneLabel = this.currentBlock().doneLabel;
     var children = tree.children;
@@ -1242,7 +1242,7 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
 
     if (handleClauses.length > 0) {
         // pop the current exception handlers address off the stack since we made it through
-        this.builder.insertPopInstruction();
+        this.builder.insertPopInstruction('HANDLER');
 
         // jump over the exception handlers
         this.builder.insertJumpInstruction(block.doneLabel);
@@ -1334,7 +1334,7 @@ CompilerVisitor.prototype.visitThrowClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'ThrowStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
 
     // the VM evaluates the exception expression
@@ -1369,7 +1369,7 @@ CompilerVisitor.prototype.visitWaitClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'WaitStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
     var recipient = tree.children[0];
     var queue = tree.children[1];
@@ -1405,7 +1405,7 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     this.builder.insertLabel(statementPrefix + 'WhileStatement');
     var handlerLabel = this.currentBlock().handlerLabel;
     if (handlerLabel) {
-        this.builder.insertPushInstruction(handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', handlerLabel);
     }
     var children = tree.children;
 
@@ -1718,15 +1718,33 @@ InstructionBuilder.prototype.insertJumpInstruction = function(label, context) {
 
 
 /*
+ * This method inserts a 'push' instruction into the assembly source code.
+ */
+InstructionBuilder.prototype.insertPushInstruction = function(type, value) {
+    var instruction = 'PUSH ' + type + ' ';
+    if (type === 'DOCUMENT') {
+        instruction += '`' + value + '`';  // value as a literal
+    } else {
+        instruction += value;  // value as a label
+    }
+    this.insertInstruction(instruction);
+};
+
+
+/*
+ * This method inserts a 'pop' instruction into the assembly source code.
+ */
+InstructionBuilder.prototype.insertPopInstruction = function(type) {
+    var instruction = 'POP ' + type;
+    this.insertInstruction(instruction);
+};
+
+
+/*
  * This method inserts a 'load' instruction into the assembly source code.
  */
-InstructionBuilder.prototype.insertLoadInstruction = function(type, value) {
-    var instruction = 'LOAD ' + type;
-    if (type === 'LITERAL') {
-        instruction += ' `' + value + '`';  // value as a literal
-    } else {
-        instruction += ' ' + value;  // value as a symbol
-    }
+InstructionBuilder.prototype.insertLoadInstruction = function(type, symbol) {
+    var instruction = 'LOAD ' + type + ' ' + symbol;
     this.insertInstruction(instruction);
 };
 
@@ -1744,7 +1762,7 @@ InstructionBuilder.prototype.insertStoreInstruction = function(type, symbol) {
  * This method inserts an 'invoke' instruction into the assembly source code.
  */
 InstructionBuilder.prototype.insertInvokeInstruction = function(intrinsic, numberOfParameters) {
-    var instruction = 'INVOKE INTRINSIC ' + intrinsic;
+    var instruction = 'INVOKE ' + intrinsic;
     switch (numberOfParameters) {
         case undefined:
         case 0:
@@ -1763,26 +1781,8 @@ InstructionBuilder.prototype.insertInvokeInstruction = function(intrinsic, numbe
  * This method inserts an 'execute' instruction into the assembly source code.
  */
 InstructionBuilder.prototype.insertExecuteInstruction = function(method, context) {
-    var instruction = 'EXECUTE PROCEDURE ' + method;
+    var instruction = 'EXECUTE ' + method;
     if (context) instruction += ' ' + context;
-    this.insertInstruction(instruction);
-};
-
-
-/*
- * This method inserts a 'push' instruction into the assembly source code.
- */
-InstructionBuilder.prototype.insertPushInstruction = function(label) {
-    var instruction = 'PUSH HANDLERS ' + label;
-    this.insertInstruction(instruction);
-};
-
-
-/*
- * This method inserts a 'pop' instruction into the assembly source code.
- */
-InstructionBuilder.prototype.insertPopInstruction = function() {
-    var instruction = 'POP HANDLERS';
     this.insertInstruction(instruction);
 };
 

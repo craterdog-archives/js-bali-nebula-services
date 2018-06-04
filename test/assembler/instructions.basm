@@ -1,42 +1,45 @@
 SKIP INSTRUCTION
 
 1.jump:
-JUMP TO 2.load
-JUMP TO 3.store ON NONE
-JUMP TO 4.invoke ON TRUE
-JUMP TO 5.execute ON FALSE
+JUMP TO 2.push
+JUMP TO 3.pop ON NONE
+JUMP TO 4.load ON TRUE
+JUMP TO 5.store ON FALSE
 
-2.load:
-LOAD LITERAL `"This is a literal text string
+2.push:
+PUSH HANDLER 8.handle
+PUSH DOCUMENT `"This is a literal text string
 containing an \` and spanning multiple lines."`
-LOAD DOCUMENT $reference
-LOAD MESSAGE $queue
+
+3.pop:
+POP HANDLER
+POP DOCUMENT
+
+4.load:
 LOAD VARIABLE $variable
+LOAD DOCUMENT $reference
+LOAD DRAFT $reference
+LOAD MESSAGE $queue
 
-3.store:
-STORE DRAFT $reference
-STORE DOCUMENT $reference
-STORE MESSAGE $queue
+5.store:
 STORE VARIABLE $variable
+STORE DOCUMENT $reference
+STORE DRAFT $reference
+STORE MESSAGE $queue
 
-4.invoke:
-INVOKE INTRINSIC $random
-INVOKE INTRINSIC $factorial WITH PARAMETER
-INVOKE INTRINSIC $sum WITH 2 PARAMETERS
-INVOKE INTRINSIC $sort WITH 3 PARAMETERS
+6.invoke:
+INVOKE $random
+INVOKE $factorial WITH PARAMETER
+INVOKE $sum WITH 2 PARAMETERS
+INVOKE $sort WITH 3 PARAMETERS
 
-5.execute:
-EXECUTE PROCEDURE $generateKey
-EXECUTE PROCEDURE $fibonacci WITH PARAMETERS
-EXECUTE PROCEDURE $hasNext ON TARGET
-EXECUTE PROCEDURE $addItem ON TARGET WITH PARAMETERS
-
-6.push:
-PUSH HANDLERS 8.handle
-
-7.pop:
-POP HANDLERS
+7.execute:
+EXECUTE $generateKey
+EXECUTE $fibonacci WITH PARAMETERS
+EXECUTE $hasNext ON TARGET
+EXECUTE $addItem ON TARGET WITH PARAMETERS
 
 8.handle:
 HANDLE EXCEPTION
+HANDLE RESULT
 

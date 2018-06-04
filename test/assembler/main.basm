@@ -1,5 +1,5 @@
 
 1.EvaluateStatement:
-LOAD LITERAL `none`
+PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 

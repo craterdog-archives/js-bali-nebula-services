@@ -3,7 +3,7 @@
 SKIP INSTRUCTION
 
 1.1.ConditionClause:
-LOAD LITERAL `true`
+PUSH DOCUMENT `true`
 JUMP TO 1.2.ElseClause ON FALSE
 
 1.1.1.EvaluateStatement:

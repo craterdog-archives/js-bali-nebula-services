@@ -86,53 +86,72 @@ AnalyzerVisitor.prototype.visitJumpInstruction = function(instruction) {
 };
 
 
-// loadInstruction:
-//     'LOAD' 'LITERAL' LITERAL |
-//     'LOAD' 'DOCUMENT' SYMBOL |
-//     'LOAD' 'MESSAGE' SYMBOL |
-//     'LOAD' 'VARIABLE' SYMBOL
-AnalyzerVisitor.prototype.visitLoadInstruction = function(instruction) {
+// pushInstruction:
+//     'PUSH' 'HANDLER' LABEL |
+//     'PUSH' 'DOCUMENT' LITERAL
+AnalyzerVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.value;
+    if (modifier === 'DOCUMENT' && !this.symbols.literals.includes(value)) {
+        this.symbols.literals.push(value);
+    }
+    this.address++;
+};
+
+
+// popInstruction:
+//     'POP' 'HANDLER' |
+//     'POP' 'DOCUMENT'
+AnalyzerVisitor.prototype.visitPopInstruction = function(instruction) {
+    this.address++;
+};
+
+
+// loadInstruction:
+//     'LOAD' 'VARIABLE' SYMBOL |
+//     'LOAD' 'DOCUMENT' SYMBOL |
+//     'LOAD' 'DRAFT' SYMBOL |
+//     'LOAD' 'MESSAGE' SYMBOL
+AnalyzerVisitor.prototype.visitLoadInstruction = function(instruction) {
+    var modifier = instruction.modifier;
+    var symbol = instruction.symbol;
     var type;
     switch(modifier) {
-        case 'LITERAL':
-            type = 'literals';
-            break;
-        case 'DOCUMENT':
-        case 'MESSAGE':
-            type = 'references';
-            break;
         case 'VARIABLE':
             type = 'variables';
+            break;
+        case 'DOCUMENT':
+        case 'DRAFT':
+        case 'MESSAGE':
+            type = 'references';
             break;
         default:
             throw new Error('ANALYZER: Illegal modifier for the LOAD instruction: ' + modifier);
     }
-    if (!this.symbols[type].includes(value)) {
-        this.symbols[type].push(value);
+    if (!this.symbols[type].includes(symbol)) {
+        this.symbols[type].push(symbol);
     }
     this.address++;
 };
 
 
 // storeInstruction:
-//     'STORE' 'DRAFT' SYMBOL |
+//     'STORE' 'VARIABLE' SYMBOL |
 //     'STORE' 'DOCUMENT' SYMBOL |
-//     'STORE' 'MESSAGE' SYMBOL |
-//     'STORE' 'VARIABLE' SYMBOL
+//     'STORE' 'DRAFT' SYMBOL |
+//     'STORE' 'MESSAGE' SYMBOL
 AnalyzerVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
     var type;
     switch(modifier) {
-        case 'DRAFT':
-        case 'DOCUMENT':
-        case 'MESSAGE':
-            type = 'references';
-            break;
         case 'VARIABLE':
             type = 'variables';
+            break;
+        case 'DOCUMENT':
+        case 'DRAFT':
+        case 'MESSAGE':
+            type = 'references';
             break;
         default:
             throw new Error('ANALYZER: Illegal modifier for the STORE instruction: ' + modifier);
@@ -145,9 +164,9 @@ AnalyzerVisitor.prototype.visitStoreInstruction = function(instruction) {
 
 
 // invokeInstruction:
-//     'INVOKE' 'INTRINSIC' SYMBOL |
-//     'INVOKE' 'INTRINSIC' SYMBOL 'WITH' 'PARAMETER' |
-//     'INVOKE' 'INTRINSIC' SYMBOL 'WITH' NUMBER 'PARAMETERS'
+//     'INVOKE' SYMBOL |
+//     'INVOKE' SYMBOL 'WITH' 'PARAMETER' |
+//     'INVOKE' SYMBOL 'WITH' NUMBER 'PARAMETERS'
 AnalyzerVisitor.prototype.visitInvokeInstruction = function(instruction) {
     var symbol = instruction.symbol;
     if (!this.symbols.intrinsics.includes(symbol)) {
@@ -158,10 +177,10 @@ AnalyzerVisitor.prototype.visitInvokeInstruction = function(instruction) {
 
 
 // executeInstruction:
-//     'EXECUTE' 'PROCEDURE' SYMBOL |
-//     'EXECUTE' 'PROCEDURE' SYMBOL 'WITH' 'PARAMETERS' |
-//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' |
-//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
+//     'EXECUTE' SYMBOL |
+//     'EXECUTE' SYMBOL 'WITH' 'PARAMETERS' |
+//     'EXECUTE' SYMBOL 'ON' 'TARGET' |
+//     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 AnalyzerVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var symbol = instruction.symbol;
     if (!this.symbols.procedures.includes(symbol)) {
@@ -171,22 +190,9 @@ AnalyzerVisitor.prototype.visitExecuteInstruction = function(instruction) {
 };
 
 
-// pushInstruction:
-//     'PUSH' 'HANDLERS' LABEL
-AnalyzerVisitor.prototype.visitPushInstruction = function(instruction) {
-    this.address++;
-};
-
-
-// popInstruction:
-//     'POP' 'HANDLERS'
-AnalyzerVisitor.prototype.visitPopInstruction = function(instruction) {
-    this.address++;
-};
-
-
 // handleInstruction:
-//     'HANDLE' 'EXCEPTION'
+//     'HANDLE' 'EXCEPTION' |
+//     'HANDLE' 'RESULT'
 AnalyzerVisitor.prototype.visitHandleInstruction = function(instruction) {
     this.address++;
 };

@@ -1,4 +1,4 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2001    10     1    LOAD LITERAL 1
-[002]:    5801    23     1    STORE VARIABLE 1
+[001]:    2801    11     1    PUSH DOCUMENT 1
+[002]:    8001    40     1    STORE VARIABLE 1

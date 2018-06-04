@@ -1,24 +1,24 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2001    10     1    LOAD LITERAL 1
-[002]:    6801    31     1    INVOKE INTRINSIC 1 WITH PARAMETER
-[003]:    5801    23     1    STORE VARIABLE 1
-[004]:    3801    13     1    LOAD VARIABLE 1
-[005]:    6802    31     2    INVOKE INTRINSIC 2 WITH PARAMETER
+[001]:    2801    11     1    PUSH DOCUMENT 1
+[002]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[003]:    8001    40     1    STORE VARIABLE 1
+[004]:    6001    30     1    LOAD VARIABLE 1
+[005]:    A802    51     2    INVOKE 2 WITH PARAMETER
 [006]:    1816    03 [016]    JUMP TO [016] ON FALSE
-[007]:    3801    13     1    LOAD VARIABLE 1
-[008]:    6803    31     3    INVOKE INTRINSIC 3 WITH PARAMETER
-[009]:    5802    23     2    STORE VARIABLE 2
-[00A]:    2002    10     2    LOAD LITERAL 2
-[00B]:    5803    23     3    STORE VARIABLE 3
+[007]:    6001    30     1    LOAD VARIABLE 1
+[008]:    A803    51     3    INVOKE 3 WITH PARAMETER
+[009]:    8002    40     2    STORE VARIABLE 2
+[00A]:    2802    11     2    PUSH DOCUMENT 2
+[00B]:    8003    40     3    STORE VARIABLE 3
 [00C]:    0000    00 [000]    SKIP INSTRUCTION
-[00D]:    3803    13     3    LOAD VARIABLE 3
+[00D]:    6003    30     3    LOAD VARIABLE 3
 [00E]:    1812    03 [012]    JUMP TO [012] ON FALSE
-[00F]:    2003    10     3    LOAD LITERAL 3
-[010]:    5804    23     4    STORE VARIABLE 4
+[00F]:    2803    11     3    PUSH DOCUMENT 3
+[010]:    8004    40     4    STORE VARIABLE 4
 [011]:    0016    00 [016]    JUMP TO [016]
 [012]:    0000    00 [000]    SKIP INSTRUCTION
-[013]:    2004    10     4    LOAD LITERAL 4
-[014]:    5805    23     5    STORE VARIABLE 5
+[013]:    2804    11     4    PUSH DOCUMENT 4
+[014]:    8005    40     5    STORE VARIABLE 5
 [015]:    0004    00 [004]    JUMP TO [004]
 [016]:    0000    00 [000]    SKIP INSTRUCTION

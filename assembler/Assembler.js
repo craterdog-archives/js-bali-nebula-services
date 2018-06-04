@@ -96,38 +96,33 @@ function lookupLabel(symbols, address) {
  * to the specified index.
  */
 function lookupSymbol(symbols, operation, modifier, index) {
+    index--;  // zero based indexing
     var key;
     switch (operation) {
-        case 'LOAD':
+        case 'PUSH':
             switch (modifier) {
-                case 'LITERAL':
+                case 'DOCUMENT':
                     key = 'literals';
                     break;
-                case 'DOCUMENT':
-                case 'MESSAGE':
-                    key = 'references';
-                    break;
-                case 'VARIABLE':
-                    key = 'variables';
-                    break;
             }
-            return symbols[key][index - 1];  // zero based indexing
+            return symbols[key][index];
+        case 'LOAD':
         case 'STORE':
             switch (modifier) {
-                case 'DRAFT':
-                case 'DOCUMENT':
-                case 'MESSAGE':
-                    key = 'references';
-                    break;
                 case 'VARIABLE':
                     key = 'variables';
                     break;
+                case 'DOCUMENT':
+                case 'DRAFT':
+                case 'MESSAGE':
+                    key = 'references';
+                    break;
             }
-            return symbols[key][index - 1];  // zero based indexing
+            return symbols[key][index];
         case 'INVOKE':
-            return symbols.intrinsics[index - 1];  // zero based indexing
+            return symbols.intrinsics[index];
         case 'EXECUTE':
-            return symbols.procedures[index - 1];  // zero based indexing
+            return symbols.procedures[index];
         default:
             throw new Error('ASSEMBLER: Invalid operation with an index: ' + operation);
     }
@@ -164,7 +159,7 @@ AssemblerVisitor.prototype.visitStep = function(step) {
 
 // skipInstruction: 'SKIP' 'INSTRUCTION'
 AssemblerVisitor.prototype.visitSkipInstruction = function(instruction) {
-    var bytes = utilities.encodeInstruction('JUMP', '', 0);
+    var bytes = utilities.encodeInstruction('JUMP', '');
     this.bytecode.push(bytes);
 };
 
@@ -183,25 +178,54 @@ AssemblerVisitor.prototype.visitJumpInstruction = function(instruction) {
 };
 
 
-// loadInstruction:
-//     'LOAD' 'LITERAL' LITERAL |
-//     'LOAD' 'DOCUMENT' SYMBOL |
-//     'LOAD' 'MESSAGE' SYMBOL |
-//     'LOAD' 'VARIABLE' SYMBOL
-AssemblerVisitor.prototype.visitLoadInstruction = function(instruction) {
+// pushInstruction:
+//     'PUSH' 'HANDLER' LABEL |
+//     'PUSH' 'DOCUMENT' LITERAL
+AssemblerVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.value;
-    var index;
     switch(modifier) {
-        case 'LITERAL':
-            index = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
+        case 'HANDLER':
+            value = this.symbols.addresses[value];
             break;
         case 'DOCUMENT':
-        case 'MESSAGE':
-            index = this.symbols.references.indexOf(value) + 1;  // unit based indexing
+            value = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
             break;
+        default:
+            throw new Error('ASSEMBLER: Illegal modifier for the LOAD instruction: ' + modifier);
+    }
+    var bytes = utilities.encodeInstruction('PUSH', modifier, value);
+    this.bytecode.push(bytes);
+};
+
+
+// popInstruction:
+//     'POP' 'HANDLER' |
+//     'POP' 'DOCUMENT'
+AssemblerVisitor.prototype.visitPopInstruction = function(instruction) {
+    var modifier = instruction.modifier;
+    var bytes = utilities.encodeInstruction('POP', modifier);
+    this.bytecode.push(bytes);
+};
+
+
+// loadInstruction:
+//     'LOAD' 'VARIABLE' SYMBOL |
+//     'LOAD' 'DOCUMENT' SYMBOL |
+//     'LOAD' 'DRAFT' SYMBOL |
+//     'LOAD' 'MESSAGE' SYMBOL
+AssemblerVisitor.prototype.visitLoadInstruction = function(instruction) {
+    var modifier = instruction.modifier;
+    var symbol = instruction.symbol;
+    var index;
+    switch(modifier) {
         case 'VARIABLE':
-            index = this.symbols.variables.indexOf(value) + 1;  // unit based indexing
+            index = this.symbols.variables.indexOf(symbol) + 1;  // unit based indexing
+            break;
+        case 'DOCUMENT':
+        case 'DRAFT':
+        case 'MESSAGE':
+            index = this.symbols.references.indexOf(symbol) + 1;  // unit based indexing
             break;
         default:
             throw new Error('ASSEMBLER: Illegal modifier for the LOAD instruction: ' + modifier);
@@ -212,22 +236,22 @@ AssemblerVisitor.prototype.visitLoadInstruction = function(instruction) {
 
 
 // storeInstruction:
-//     'STORE' 'DRAFT' SYMBOL |
+//     'STORE' 'VARIABLE' SYMBOL |
 //     'STORE' 'DOCUMENT' SYMBOL |
-//     'STORE' 'MESSAGE' SYMBOL |
-//     'STORE' 'VARIABLE' SYMBOL
+//     'STORE' 'DRAFT' SYMBOL |
+//     'STORE' 'MESSAGE' SYMBOL
 AssemblerVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
     var index;
     switch(modifier) {
-        case 'DRAFT':
-        case 'DOCUMENT':
-        case 'MESSAGE':
-            index = this.symbols.references.indexOf(symbol) + 1;  // unit based indexing
-            break;
         case 'VARIABLE':
             index = this.symbols.variables.indexOf(symbol) + 1;  // unit based indexing
+            break;
+        case 'DOCUMENT':
+        case 'DRAFT':
+        case 'MESSAGE':
+            index = this.symbols.references.indexOf(symbol) + 1;  // unit based indexing
             break;
         default:
             throw new Error('ASSEMBLER: Illegal modifier for the STORE instruction: ' + modifier);
@@ -238,9 +262,9 @@ AssemblerVisitor.prototype.visitStoreInstruction = function(instruction) {
 
 
 // invokeInstruction:
-//     'INVOKE' 'INTRINSIC' SYMBOL |
-//     'INVOKE' 'INTRINSIC' SYMBOL 'WITH' 'PARAMETER' |
-//     'INVOKE' 'INTRINSIC' SYMBOL 'WITH' NUMBER 'PARAMETERS'
+//     'INVOKE' SYMBOL |
+//     'INVOKE' SYMBOL 'WITH' 'PARAMETER' |
+//     'INVOKE' SYMBOL 'WITH' NUMBER 'PARAMETERS'
 AssemblerVisitor.prototype.visitInvokeInstruction = function(instruction) {
     var count = instruction.count;
     var symbol = instruction.symbol;
@@ -251,10 +275,10 @@ AssemblerVisitor.prototype.visitInvokeInstruction = function(instruction) {
 
 
 // executeInstruction:
-//     'EXECUTE' 'PROCEDURE' SYMBOL |
-//     'EXECUTE' 'PROCEDURE' SYMBOL 'WITH' 'PARAMETERS' |
-//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' |
-//     'EXECUTE' 'PROCEDURE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
+//     'EXECUTE' SYMBOL |
+//     'EXECUTE' SYMBOL 'WITH' 'PARAMETERS' |
+//     'EXECUTE' SYMBOL 'ON' 'TARGET' |
+//     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 AssemblerVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
@@ -264,32 +288,11 @@ AssemblerVisitor.prototype.visitExecuteInstruction = function(instruction) {
 };
 
 
-// pushInstruction:
-//     'PUSH' 'HANDLERS' LABEL
-AssemblerVisitor.prototype.visitPushInstruction = function(instruction) {
-    var modifier = 0;
-    var label = instruction.label;
-    var address = this.symbols.addresses[label];
-    var bytes = utilities.encodeInstruction('PUSH', modifier, address);
-    this.bytecode.push(bytes);
-};
-
-
-// popInstruction:
-//     'POP' 'HANDLERS'
-AssemblerVisitor.prototype.visitPopInstruction = function(instruction) {
-    var modifier = 0;
-    var address = 0;
-    var bytes = utilities.encodeInstruction('POP', modifier, address);
-    this.bytecode.push(bytes);
-};
-
-
 // handleInstruction:
-//     'HANDLE' 'EXCEPTION'
+//     'HANDLE' 'EXCEPTION' |
+//     'HANDLE' 'RESULT'
 AssemblerVisitor.prototype.visitHandleInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var address = 0;
-    var bytes = utilities.encodeInstruction('HANDLE', modifier, address);
+    var bytes = utilities.encodeInstruction('HANDLE', modifier);
     this.bytecode.push(bytes);
 };
