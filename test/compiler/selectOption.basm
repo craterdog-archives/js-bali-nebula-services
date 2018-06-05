@@ -13,8 +13,8 @@ JUMP TO 1.2.OptionClause ON FALSE
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.1.OptionDone:
-JUMP TO 1.StatementDone
+1.1.OptionClauseDone:
+JUMP TO 1.SelectStatementDone
 
 1.2.OptionClause:
 LOAD VARIABLE $_selector_1
@@ -26,19 +26,19 @@ JUMP TO 1.3.OptionClause ON FALSE
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.2.OptionDone:
-JUMP TO 1.StatementDone
+1.2.OptionClauseDone:
+JUMP TO 1.SelectStatementDone
 
 1.3.OptionClause:
 LOAD VARIABLE $_selector_1
 PUSH DOCUMENT `'gamma'`
 INVOKE $matches WITH 2 PARAMETERS
-JUMP TO 1.StatementDone ON FALSE
+JUMP TO 1.SelectStatementDone ON FALSE
 
 1.3.1.EvaluateStatement:
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.StatementDone:
+1.SelectStatementDone:
 SKIP INSTRUCTION
 

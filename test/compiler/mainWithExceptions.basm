@@ -6,9 +6,9 @@ STORE VARIABLE $_queue_1
 LOAD VARIABLE $message
 STORE MESSAGE $_queue_1
 
-1.StatementDone:
+1.QueueStatementDone:
 POP HANDLER
-JUMP TO 1.StatementEnd
+JUMP TO 1.QueueStatementEnd
 
 1.1.HandleClause:
 STORE VARIABLE $error
@@ -26,8 +26,8 @@ JUMP TO 1.2.HandleClause ON FALSE
 PUSH DOCUMENT `any`
 STORE VARIABLE $_result_
 
-1.1.HandleDone:
-JUMP TO 1.StatementEnd
+1.1.HandleClauseDone:
+JUMP TO 1.QueueStatementEnd
 
 1.2.HandleClause:
 STORE VARIABLE $error
@@ -45,12 +45,12 @@ JUMP TO 1.UnhandledException ON FALSE
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.2.HandleDone:
-JUMP TO 1.StatementEnd
+1.2.HandleClauseDone:
+JUMP TO 1.QueueStatementEnd
 
 1.UnhandledException:
 HANDLE EXCEPTION
 
-1.StatementEnd:
+1.QueueStatementEnd:
 SKIP INSTRUCTION
 

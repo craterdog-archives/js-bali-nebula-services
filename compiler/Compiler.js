@@ -611,7 +611,7 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
     tree.children[2].accept(this);  // block
 
     // the exception was handled so the VM jumps to the end of the statement
-    this.builder.insertLabel(clausePrefix + 'HandleDone');
+    this.builder.insertLabel(clausePrefix + 'HandleClauseDone');
     this.builder.insertJumpInstruction(block.statement.endLabel);
 };
 
@@ -668,7 +668,7 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
         // completed execution of the block
         if (elseBlock || i < count - 1) {
             // not the last block so the VM jumps to the end of the statement
-            this.builder.insertLabel(clausePrefix + 'ConditionDone');
+            this.builder.insertLabel(clausePrefix + 'ConditionClauseDone');
             this.builder.insertJumpInstruction(doneLabel);
         }
     }
@@ -679,7 +679,7 @@ CompilerVisitor.prototype.visitIfClause = function(tree) {
         var elseLabel = clausePrefix + 'ElseClause';
         this.builder.insertLabel(elseLabel);
         elseBlock.accept(this);
-        this.builder.insertLabel(clausePrefix + 'ElseDone');
+        this.builder.insertLabel(clausePrefix + 'ElseClauseDone');
     }
 };
 
@@ -1098,7 +1098,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
         // completed execution of the block
         if (elseBlock || i < count - 1) {
             // not the last block so the VM jumps to the end of the statement
-            this.builder.insertLabel(clausePrefix + 'OptionDone');
+            this.builder.insertLabel(clausePrefix + 'OptionClauseDone');
             this.builder.insertJumpInstruction(doneLabel);
         }
     }
@@ -1109,7 +1109,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
         var elseLabel = clausePrefix + 'ElseClause';
         this.builder.insertLabel(elseLabel);
         elseBlock.accept(this);
-        this.builder.insertLabel(clausePrefix + 'ElseDone');
+        this.builder.insertLabel(clausePrefix + 'ElseClauseDone');
         this.builder.insertJumpInstruction(doneLabel);
     }
 };
@@ -1517,12 +1517,12 @@ InstructionBuilder.prototype.pushStatementContext = function(tree) {
     var prefix = block.prefix + block.statementNumber + '.';
     statement.startLabel = prefix + type + 'Statement';
     if (statement.clauseCount > 0) {
-        statement.doneLabel = prefix + 'StatementDone';
+        statement.doneLabel = prefix + type + 'StatementDone';
     }
     if (statement.handleClauses.length > 0) {
         statement.handlerLabel = prefix + (statement.subClauses.length + 1) + '.HandleClause';
         statement.unhandledLabel = prefix + 'UnhandledException';
-        statement.endLabel = prefix + 'StatementEnd';
+        statement.endLabel = prefix + type + 'StatementEnd';
     }
 
     return block.statement;

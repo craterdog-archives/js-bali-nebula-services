@@ -10,8 +10,8 @@ JUMP TO 1.2.ConditionClause ON FALSE
 LOAD VARIABLE $yes
 STORE VARIABLE $_result_
 
-1.1.ConditionDone:
-JUMP TO 1.StatementDone
+1.1.ConditionClauseDone:
+JUMP TO 1.IfStatementDone
 
 1.2.ConditionClause:
 PUSH DOCUMENT `false`
@@ -21,8 +21,8 @@ JUMP TO 1.3.ElseClause ON FALSE
 LOAD VARIABLE $no
 STORE VARIABLE $_result_
 
-1.2.ConditionDone:
-JUMP TO 1.StatementDone
+1.2.ConditionClauseDone:
+JUMP TO 1.IfStatementDone
 
 1.3.ElseClause:
 SKIP INSTRUCTION
@@ -31,9 +31,9 @@ SKIP INSTRUCTION
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.3.ElseDone:
+1.3.ElseClauseDone:
 SKIP INSTRUCTION
 
-1.StatementDone:
+1.IfStatementDone:
 SKIP INSTRUCTION
 

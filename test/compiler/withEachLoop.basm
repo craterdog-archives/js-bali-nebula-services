@@ -7,7 +7,7 @@ STORE VARIABLE $_iterator_1
 1.1.ConditionClause:
 LOAD VARIABLE $_iterator_1
 INVOKE $hasNext WITH PARAMETER
-JUMP TO 1.StatementDone ON FALSE
+JUMP TO 1.WithStatementDone ON FALSE
 LOAD VARIABLE $_iterator_1
 INVOKE $getNext WITH PARAMETER
 STORE VARIABLE $symbol
@@ -21,7 +21,7 @@ SKIP INSTRUCTION
 
 1.1.2.1.ConditionClause:
 LOAD VARIABLE $x
-JUMP TO 1.1.2.StatementDone ON FALSE
+JUMP TO 1.1.2.IfStatementDone ON FALSE
 
 1.1.2.1.1.EvaluateStatement:
 PUSH DOCUMENT `none`
@@ -30,7 +30,7 @@ STORE VARIABLE $y
 1.1.2.1.2.ContinueStatement:
 JUMP TO 1.1.ConditionClause
 
-1.1.2.StatementDone:
+1.1.2.IfStatementDone:
 SKIP INSTRUCTION
 
 1.1.3.EvaluateStatement:
@@ -40,6 +40,6 @@ STORE VARIABLE $z
 1.ConditionRepeat:
 JUMP TO 1.1.ConditionClause
 
-1.StatementDone:
+1.WithStatementDone:
 SKIP INSTRUCTION
 

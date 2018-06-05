@@ -20,8 +20,8 @@ STORE VARIABLE $b
 LOAD VARIABLE $exception
 HANDLE EXCEPTION
 
-1.1.ConditionDone:
-JUMP TO 1.StatementDone
+1.1.ConditionClauseDone:
+JUMP TO 1.IfStatementDone
 
 1.2.ConditionClause:
 LOAD VARIABLE $a
@@ -48,8 +48,8 @@ STORE VARIABLE $_result_
 LOAD VARIABLE $_result_
 HANDLE RESULT
 
-1.2.ConditionDone:
-JUMP TO 1.StatementDone
+1.2.ConditionClauseDone:
+JUMP TO 1.IfStatementDone
 
 1.3.ElseClause:
 SKIP INSTRUCTION
@@ -71,12 +71,12 @@ STORE VARIABLE $_result_
 LOAD VARIABLE $_result_
 HANDLE RESULT
 
-1.3.ElseDone:
+1.3.ElseClauseDone:
 SKIP INSTRUCTION
 
-1.StatementDone:
+1.IfStatementDone:
 POP HANDLER
-JUMP TO 1.StatementEnd
+JUMP TO 1.IfStatementEnd
 
 1.4.HandleClause:
 STORE VARIABLE $exception
@@ -107,8 +107,8 @@ LOAD VARIABLE $exception
 INVOKE $setValue WITH 3 PARAMETERS
 STORE VARIABLE $_result_
 
-1.4.HandleDone:
-JUMP TO 1.StatementEnd
+1.4.HandleClauseDone:
+JUMP TO 1.IfStatementEnd
 
 1.5.HandleClause:
 STORE VARIABLE $exception
@@ -137,13 +137,13 @@ STORE VARIABLE $exception
 LOAD VARIABLE $exception
 HANDLE EXCEPTION
 
-1.5.HandleDone:
-JUMP TO 1.StatementEnd
+1.5.HandleClauseDone:
+JUMP TO 1.IfStatementEnd
 
 1.UnhandledException:
 HANDLE EXCEPTION
 
-1.StatementEnd:
+1.IfStatementEnd:
 SKIP INSTRUCTION
 
 2.WhileStatement:
@@ -151,7 +151,7 @@ SKIP INSTRUCTION
 
 2.1.ConditionClause:
 PUSH DOCUMENT `true`
-JUMP TO 2.StatementDone ON FALSE
+JUMP TO 2.WhileStatementDone ON FALSE
 
 2.1.1.EvaluateStatement:
 LOAD VARIABLE $bar
@@ -165,10 +165,10 @@ LOAD VARIABLE $foo
 JUMP TO 2.1.2.2.ElseClause ON FALSE
 
 2.1.2.1.1.BreakStatement:
-JUMP TO 2.StatementDone
+JUMP TO 2.WhileStatementDone
 
-2.1.2.1.ConditionDone:
-JUMP TO 2.1.2.StatementDone
+2.1.2.1.ConditionClauseDone:
+JUMP TO 2.1.2.IfStatementDone
 
 2.1.2.2.ElseClause:
 SKIP INSTRUCTION
@@ -181,7 +181,7 @@ STORE VARIABLE $_iterator_1
 2.1.2.2.1.1.ConditionClause:
 LOAD VARIABLE $_iterator_1
 INVOKE $hasNext WITH PARAMETER
-JUMP TO 2.1.2.2.1.StatementDone ON FALSE
+JUMP TO 2.1.2.2.1.WithStatementDone ON FALSE
 LOAD VARIABLE $_iterator_1
 INVOKE $getNext WITH PARAMETER
 STORE VARIABLE $item
@@ -200,8 +200,8 @@ JUMP TO 2.1.2.2.1.1.1.2.OptionClause ON FALSE
 PUSH DOCUMENT `true`
 STORE VARIABLE $_result_
 
-2.1.2.2.1.1.1.1.OptionDone:
-JUMP TO 2.1.2.2.1.1.1.StatementDone
+2.1.2.2.1.1.1.1.OptionClauseDone:
+JUMP TO 2.1.2.2.1.1.1.SelectStatementDone
 
 2.1.2.2.1.1.1.2.OptionClause:
 LOAD VARIABLE $_selector_2
@@ -213,8 +213,8 @@ JUMP TO 2.1.2.2.1.1.1.3.ElseClause ON FALSE
 PUSH DOCUMENT `false`
 STORE VARIABLE $_result_
 
-2.1.2.2.1.1.1.2.OptionDone:
-JUMP TO 2.1.2.2.1.1.1.StatementDone
+2.1.2.2.1.1.1.2.OptionClauseDone:
+JUMP TO 2.1.2.2.1.1.1.SelectStatementDone
 
 2.1.2.2.1.1.1.3.ElseClause:
 SKIP INSTRUCTION
@@ -222,27 +222,27 @@ SKIP INSTRUCTION
 2.1.2.2.1.1.1.3.1.ContinueStatement:
 JUMP TO 2.1.2.2.1.1.ConditionClause
 
-2.1.2.2.1.1.1.3.ElseDone:
-JUMP TO 2.1.2.2.1.1.1.StatementDone
+2.1.2.2.1.1.1.3.ElseClauseDone:
+JUMP TO 2.1.2.2.1.1.1.SelectStatementDone
 
-2.1.2.2.1.1.1.StatementDone:
+2.1.2.2.1.1.1.SelectStatementDone:
 SKIP INSTRUCTION
 
 2.1.2.2.1.ConditionRepeat:
 JUMP TO 2.1.2.2.1.1.ConditionClause
 
-2.1.2.2.1.StatementDone:
+2.1.2.2.1.WithStatementDone:
 SKIP INSTRUCTION
 
-2.1.2.2.ElseDone:
+2.1.2.2.ElseClauseDone:
 SKIP INSTRUCTION
 
-2.1.2.StatementDone:
+2.1.2.IfStatementDone:
 SKIP INSTRUCTION
 
 2.ConditionRepeat:
 JUMP TO 2.1.ConditionClause
 
-2.StatementDone:
+2.WhileStatementDone:
 SKIP INSTRUCTION
 
