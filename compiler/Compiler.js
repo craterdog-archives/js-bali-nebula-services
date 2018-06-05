@@ -646,7 +646,7 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
 
     // the exception was handled so the VM jumps to the end of the statement
     this.builder.insertLabel(clausePrefix + 'HandleDone');
-    this.builder.insertJumpInstruction(block.doneLabel);
+    this.builder.insertJumpInstruction(block.endLabel);
 };
 
 
@@ -1219,16 +1219,19 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
     var handleClauses = children.slice(1);
     var clauseCount = subClauses.length + handleClauses.length;
     var statementPrefix = this.builder.getStatementPrefix();
-    var block = this.currentBlock();
 
+    // initialize the block configuration for this statement
+    var block = this.currentBlock();
+    block.loopLabel = undefined;
     if (clauseCount > 0) {
         block.clauseCount = clauseCount;
         block.doneLabel = statementPrefix + 'StatementDone';
+        block.endLabel = statementPrefix + 'StatementEnd';
     } else {
         block.clauseCount = undefined;
         block.doneLabel = undefined;
+        block.endLabel = undefined;
     }
-
     if (handleClauses.length > 0) {
         block.handlerLabel = statementPrefix + (subClauses.length + 1) + '.HandleClause';
         block.unhandledLabel = statementPrefix + 'UnhandledException';
@@ -1240,27 +1243,30 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
     // the VM attempts to execute the main clause
     mainClause.accept(this);
 
-    if (handleClauses.length > 0) {
-        // pop the current exception handlers address off the stack since we made it through
-        this.builder.insertPopInstruction('HANDLER');
-
-        // jump over the exception handlers
-        this.builder.insertJumpInstruction(block.doneLabel);
-
-        // the VM will direct any exceptions from the main clause here to be handled
-        for (var i = 0; i < handleClauses.length; i++) {
-            // each handler inserts its own label
-            handleClauses[i].accept(this);
-        }
-
-        // none of the exception handlers matched so the VM must try the parent handlers
-        this.builder.insertLabel(block.unhandledLabel);
-        this.builder.insertHandleInstruction('EXCEPTION');
-    }
-
-    // we've done all we can for this statement
     if (clauseCount > 0) {
+        // the VM  made it through the main clause without any exceptions
         this.builder.insertLabel(block.doneLabel);
+
+        if (handleClauses.length > 0) {
+            // the exception handlers are no longer needed
+            this.builder.insertPopInstruction('HANDLER');
+
+            // jump over the exception handlers
+            this.builder.insertJumpInstruction(block.endLabel);
+
+            // the VM will direct any exceptions from the main clause here to be handled
+            for (var i = 0; i < handleClauses.length; i++) {
+                // each handler inserts its own label
+                handleClauses[i].accept(this);
+            }
+
+            // none of the exception handlers matched so the VM must try the parent handlers
+            this.builder.insertLabel(block.unhandledLabel);
+            this.builder.insertHandleInstruction('EXCEPTION');
+
+            // the VM encountered no exceptions or was able to handle them
+            this.builder.insertLabel(block.endLabel);
+        }
     }
 
     // the VM moves on to the next statement
