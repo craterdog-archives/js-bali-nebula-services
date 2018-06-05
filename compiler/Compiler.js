@@ -37,6 +37,13 @@ exports.compileProcedure = function(procedure, context) {
 // PRIVATE FUNCTIONS
 
 /*
+ * This function defines a missing conversion function for the standard String class.
+ */
+String.prototype.toTitleCase = function () {
+    return this.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+};
+
+/*
  * This function defines a missing stack function for the standard Array class.
  * The push(item) and pop() methods are already defined.
  */
@@ -179,10 +186,6 @@ CompilerVisitor.prototype.visitBlock = function(tree) {
 CompilerVisitor.prototype.visitBreakClause = function(tree) {
     // TODO: throw an exception if this is not the last statement in the parent block!!!
 
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'BreakStatement');
-    this.builder.pushHandlerContext();
-
     // retrieve the loop label from the parent context
     var blocks = this.builder.blocks;
     var block;
@@ -239,9 +242,6 @@ CompilerVisitor.prototype.visitCatalog = function(tree) {
  */
 // checkoutClause: 'checkout' recipient 'from' expression
 CompilerVisitor.prototype.visitCheckoutClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'CheckoutStatement');
-    this.builder.pushHandlerContext();
     var recipient = tree.children[0];
     var location = tree.children[1];
 
@@ -271,10 +271,6 @@ CompilerVisitor.prototype.visitCheckoutClause = function(tree) {
  */
 // commitClause: 'commit' expression 'to' expression
 CompilerVisitor.prototype.visitCommitClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'CommitStatement');
-    this.builder.pushHandlerContext();
-
     // the VM loads the value of the reference to the location of the persistent
     // document onto the top of the execution stack
     tree.children[1].accept(this);  // reference expression
@@ -359,10 +355,6 @@ CompilerVisitor.prototype.visitComplementExpression = function(tree) {
 CompilerVisitor.prototype.visitContinueClause = function(tree) {
     // TODO: throw an exception if this is not the last statement in the parent block!!!
 
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'ContinueStatement');
-    this.builder.pushHandlerContext();
-
     // retrieve the loop label from the parent context
     var blocks = this.builder.blocks;
     var block;
@@ -430,10 +422,6 @@ CompilerVisitor.prototype.visitDereferenceExpression = function(tree) {
  */
 // discardClause: 'discard' expression
 CompilerVisitor.prototype.visitDiscardClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'DiscardStatement');
-    this.builder.pushHandlerContext();
-
     // the VM loads the value of the reference to the location onto the top of the execution stack
     tree.children[0].accept(this);  // reference expression
 
@@ -498,10 +486,6 @@ CompilerVisitor.prototype.visitElement = function(terminal) {
  */
 // evaluateClause: (recipient ':=')? expression
 CompilerVisitor.prototype.visitEvaluateClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'EvaluateStatement');
-    this.builder.pushHandlerContext();
-
     if (tree.children.length > 1) {
         var recipient = tree.children[0];
         var expression = tree.children[1];
@@ -640,9 +624,6 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
  */
 // ifClause: 'if' expression 'then' block ('else' 'if' expression 'then' block)* ('else' block)?
 CompilerVisitor.prototype.visitIfClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'IfStatement');
-    this.builder.pushHandlerContext();
     var doneLabel = this.currentBlock().statement.doneLabel;
     var children = tree.children;
     var count = children.length;
@@ -935,10 +916,6 @@ CompilerVisitor.prototype.visitProcedure = function(tree) {
  */
 // publishClause: 'publish' expression
 CompilerVisitor.prototype.visitPublishClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'PublishStatement');
-    this.builder.pushHandlerContext();
-
     // the VM places the value of the event expression onto the top of the execution stack
     tree.children[0].accept(this);  // event expression
 
@@ -955,10 +932,6 @@ CompilerVisitor.prototype.visitPublishClause = function(tree) {
  */
 // queueClause: 'queue' expression 'on' expression
 CompilerVisitor.prototype.visitQueueClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'QueueStatement');
-    this.builder.pushHandlerContext();
-
     // the VM stores the reference to the queue in a temporary variable
     tree.children[1].accept(this);  // queue
     var queue = this.createTemporaryVariable('queue');
@@ -1024,10 +997,6 @@ CompilerVisitor.prototype.visitRecipient = function(tree) {
 CompilerVisitor.prototype.visitReturnClause = function(tree) {
     // TODO: throw an exception if this is not the last statement in the parent block!!!
 
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'ReturnStatement');
-    this.builder.pushHandlerContext();
-
     // the VM stores the result in a temporary variable and sets a flag
     if (tree.children.length > 0) {
         // the VM stores the value of the result expression in a temporary variable
@@ -1050,10 +1019,6 @@ CompilerVisitor.prototype.visitReturnClause = function(tree) {
  */
 // saveClause: 'save' expression 'to' expression
 CompilerVisitor.prototype.visitSaveClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'SaveStatement');
-    this.builder.pushHandlerContext();
-
     // the VM stores the value of the reference to the location into a temporary variable
     tree.children[1].accept(this);  // location expression
     var location = this.createTemporaryVariable('location');
@@ -1075,9 +1040,6 @@ CompilerVisitor.prototype.visitSaveClause = function(tree) {
  */
 // selectClause: 'select' expression 'from' (expression 'do' block)+ ('else' block)?
 CompilerVisitor.prototype.visitSelectClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'SelectStatement');
-    this.builder.pushHandlerContext();
     var doneLabel = this.currentBlock().statement.doneLabel;
     var children = tree.children;
     var count = children.length;
@@ -1177,27 +1139,23 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
 //     throwClause
 // ) handleClause*
 CompilerVisitor.prototype.visitStatement = function(tree) {
+    // initialize the context for this statement
     var statement = this.builder.pushStatementContext(tree);
-    var statementPrefix = this.builder.getStatementPrefix();
+    this.builder.insertLabel(statement.startLabel);
 
-    // initialize the block configuration for this statement
-    if (statement.clauseCount > 0) {
-        statement.doneLabel = statementPrefix + 'StatementDone';
-        statement.endLabel = statementPrefix + 'StatementEnd';
-    }
-    if (statement.handleClauses.length > 0) {
-        statement.handlerLabel = statementPrefix + (statement.subClauses.length + 1) + '.HandleClause';
-        statement.unhandledLabel = statementPrefix + 'UnhandledException';
+    // the VM pushes any exception handlers onto the exception handler stack
+    if (this.builder.hasHandlers()) {
+        this.builder.insertPushInstruction('HANDLER', statement.handlerLabel);
     }
 
     // the VM attempts to execute the main clause
     statement.mainClause.accept(this);
 
-    if (statement.clauseCount > 0) {
-        // the VM  made it through the main clause without any exceptions
+    // the VM made it through the main clause without any exceptions
+    if (this.builder.hasClauses()) {
         this.builder.insertLabel(statement.doneLabel);
 
-        if (statement.handleClauses.length > 0) {
+        if (this.builder.hasHandlers()) {
             // the exception handlers are no longer needed
             this.builder.insertPopInstruction('HANDLER');
 
@@ -1205,9 +1163,10 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
             this.builder.insertJumpInstruction(statement.endLabel);
 
             // the VM will direct any exceptions from the main clause here to be handled
-            for (var i = 0; i < statement.handleClauses.length; i++) {
+            var handlers = statement.handleClauses;
+            for (var i = 0; i < handlers.length; i++) {
                 // each handler inserts its own label
-                statement.handleClauses[i].accept(this);
+                handlers[i].accept(this);
             }
 
             // none of the exception handlers matched so the VM must try the parent handlers
@@ -1286,10 +1245,6 @@ CompilerVisitor.prototype.visitTask = function(tree) {
 CompilerVisitor.prototype.visitThrowClause = function(tree) {
     // TODO: throw an exception if this is not the last statement in the parent block!!!
 
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'ThrowStatement');
-    this.builder.pushHandlerContext();
-
     // the VM evaluates the exception expression
     tree.children[0].accept(this);  // exception expression
 
@@ -1318,9 +1273,6 @@ CompilerVisitor.prototype.visitVariable = function(terminal) {
  */
 // waitClause: 'wait' 'for' recipient 'from' expression
 CompilerVisitor.prototype.visitWaitClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
-    this.builder.insertLabel(statementPrefix + 'WaitStatement');
-    this.builder.pushHandlerContext();
     var recipient = tree.children[0];
     var queue = tree.children[1];
 
@@ -1350,10 +1302,7 @@ CompilerVisitor.prototype.visitWaitClause = function(tree) {
  */
 // whileClause: 'while' expression 'do' block
 CompilerVisitor.prototype.visitWhileClause = function(tree) {
-    var statementPrefix = this.builder.getStatementPrefix();
     var clausePrefix = this.builder.getClausePrefix();
-    this.builder.insertLabel(statementPrefix + 'WhileStatement');
-    this.builder.pushHandlerContext();
     var children = tree.children;
 
     // construct the loop and done labels
@@ -1373,6 +1322,7 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     children[1].accept(this);  // block
 
     // the VM jumps to the top of the loop for the next iteration
+    var statementPrefix = this.builder.getStatementPrefix();
     var repeatLabel = statementPrefix + 'ConditionRepeat';
     this.builder.insertLabel(repeatLabel);
     this.builder.insertJumpInstruction(loopLabel);
@@ -1387,10 +1337,7 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
 CompilerVisitor.prototype.visitWithClause = function(tree) {
     // TODO: check for 'type' parameter and use methods instead of functions if there is one
 
-    var statementPrefix = this.builder.getStatementPrefix();
     var clausePrefix = this.builder.getClausePrefix();
-    this.builder.insertLabel(statementPrefix + 'WithStatement');
-    this.builder.pushHandlerContext();
     var children = tree.children;
     var length = children.length;
 
@@ -1439,6 +1386,7 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     children[length - 1].accept(this);  // block
 
     // the VM jumps to the top of the loop for the next iteration
+    var statementPrefix = this.builder.getStatementPrefix();
     var repeatLabel = statementPrefix + 'ConditionRepeat';
     this.builder.insertLabel(repeatLabel);
     this.builder.insertJumpInstruction(loopLabel);
@@ -1548,8 +1496,8 @@ InstructionBuilder.prototype.popBlockContext = function() {
  * This method pushes a new statement context onto the block stack and initializes
  * it.
  */
-InstructionBuilder.prototype.pushStatementContext = function(statement) {
-    var children = statement.children;
+InstructionBuilder.prototype.pushStatementContext = function(tree) {
+    var children = tree.children;
     var mainClause = children[0];
     var subClauses = getSubClauses(mainClause);
     var handleClauses = children.slice(1);
@@ -1562,6 +1510,21 @@ InstructionBuilder.prototype.pushStatementContext = function(statement) {
         clauseCount: clauseCount,
         clauseNumber: 1
     };
+
+    // initialize the block configuration for this statement
+    var statement = block.statement;
+    var type = types.TREE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
+    var prefix = block.prefix + block.statementNumber + '.';
+    statement.startLabel = prefix + type + 'Statement';
+    if (statement.clauseCount > 0) {
+        statement.doneLabel = prefix + 'StatementDone';
+    }
+    if (statement.handleClauses.length > 0) {
+        statement.handlerLabel = prefix + (statement.subClauses.length + 1) + '.HandleClause';
+        statement.unhandledLabel = prefix + 'UnhandledException';
+        statement.endLabel = prefix + 'StatementEnd';
+    }
+
     return block.statement;
 };
 
@@ -1576,31 +1539,23 @@ InstructionBuilder.prototype.popStatementContext = function() {
 
 
 /*
- * This method tells the VM to push a new handler context onto the handler stack
- * if handlers exist for this statement.
+ * This method determines whether or not the current statement contains clauses.
  */
-InstructionBuilder.prototype.pushHandlerContext = function() {
-    var handlerLabel = this.blocks.peek().statement.handlerLabel;
-    if (handlerLabel) {
-        this.insertPushInstruction('HANDLER', handlerLabel);
-    }
+InstructionBuilder.prototype.hasClauses = function() {
+    var statement = this.blocks.peek().statement;
+    return statement.clauseCount > 0;
 };
 
 
 /*
- * This method tells the VM to pop off the current handler context from the handler
- * stack.
+ * This method determines whether or not the current statement contains handlers.
  */
-InstructionBuilder.prototype.popHandlerContext = function() {
-    var handlerLabel = this.blocks.peek().statement.handlerLabel;
-    if (handlerLabel) {
-        this.insertPopInstruction('HANDLER');
-    }
+InstructionBuilder.prototype.hasHandlers = function() {
+    var statement = this.blocks.peek().statement;
+    return statement.handleClauses.length > 0;
 };
 
 
-/*
- * This method tells the VM to push a new handler context onto the handler stack
 /*
  * This method returns the number of the current clause within its block context. For
  * example a 'then' clause within an 'if then else' statement would be the first clause
@@ -1642,6 +1597,16 @@ InstructionBuilder.prototype.getStatementPrefix = function() {
     var block = this.blocks.peek();
     var prefix = block.prefix + block.statementNumber + '.';
     return prefix;
+};
+
+
+/*
+ * This method returns the type of the current statement.
+ */
+InstructionBuilder.prototype.getStatementType = function() {
+    var statement = this.blocks.peek().statement;
+    var type = types.TREE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
+    return type;
 };
 
 
