@@ -585,7 +585,7 @@ CompilerVisitor.prototype.visitFunctionExpression = function(tree) {
 // handleClause: 'handle' symbol 'matching' expression 'with' block
 CompilerVisitor.prototype.visitHandleClause = function(tree) {
     // setup the labels
-    var block = this.currentBlock();
+    var statement = this.builder.getStatementContext();
     var clausePrefix = this.builder.getClausePrefix();
     var handleLabel = clausePrefix + 'HandleClause';
     this.builder.insertLabel(handleLabel);
@@ -602,17 +602,17 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
 
     // if the template and exception did not match the VM jumps past this exception handler
     var nextLabel = this.builder.getNextClausePrefix() + 'HandleClause';
-    if (block.statement.clauseNumber === block.statement.clauseCount) {
-        nextLabel = block.statement.unhandledLabel;
+    if (statement.clauseNumber === statement.clauseCount) {
+        nextLabel = statement.unhandledLabel;
     }
     this.builder.insertJumpInstruction(nextLabel, 'ON FALSE');
 
-    // the VM executes the handler block
+    // the VM executes the handler clause
     tree.children[2].accept(this);  // block
 
     // the exception was handled so the VM jumps to the end of the statement
     this.builder.insertLabel(clausePrefix + 'HandleClauseDone');
-    this.builder.insertJumpInstruction(block.statement.endLabel);
+    this.builder.insertJumpInstruction(statement.endLabel);
 };
 
 
@@ -624,7 +624,8 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
  */
 // ifClause: 'if' expression 'then' block ('else' 'if' expression 'then' block)* ('else' block)?
 CompilerVisitor.prototype.visitIfClause = function(tree) {
-    var doneLabel = this.currentBlock().statement.doneLabel;
+    var statement = this.builder.getStatementContext();
+    var doneLabel = statement.doneLabel;
     var children = tree.children;
     var count = children.length;
     var elseBlock;
@@ -1040,7 +1041,7 @@ CompilerVisitor.prototype.visitSaveClause = function(tree) {
  */
 // selectClause: 'select' expression 'from' (expression 'do' block)+ ('else' block)?
 CompilerVisitor.prototype.visitSelectClause = function(tree) {
-    var doneLabel = this.currentBlock().statement.doneLabel;
+    var doneLabel = this.builder.getStatementContext().doneLabel;
     var children = tree.children;
     var count = children.length;
     var elseBlock;
@@ -1153,6 +1154,7 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
 
     // the VM made it through the main clause without any exceptions
     if (this.builder.hasClauses()) {
+        // need a label for subclauses to jump to when done
         this.builder.insertLabel(statement.doneLabel);
 
         if (this.builder.hasHandlers()) {
@@ -1179,6 +1181,7 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
     }
 
     // the VM moves on to the next statement
+    this.builder.popStatementContext();
 };
 
 
@@ -1306,17 +1309,15 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     var children = tree.children;
 
     // construct the loop and done labels
-    var block = this.currentBlock();
-    block.statement.loopLabel = clausePrefix + 'ConditionClause';
-    var loopLabel = block.statement.loopLabel;
-    var doneLabel = block.statement.doneLabel;
+    var statement = this.builder.getStatementContext();
+    statement.loopLabel = clausePrefix + 'ConditionClause';
 
     // label the start of the loop
-    this.builder.insertLabel(loopLabel);
+    this.builder.insertLabel(statement.loopLabel);
 
     // the VM jumps past the end of the loop if the condition expression evaluates to false
     children[0].accept(this);  // condition expression
-    this.builder.insertJumpInstruction(doneLabel, 'ON FALSE');
+    this.builder.insertJumpInstruction(statement.doneLabel, 'ON FALSE');
 
     // if the condition is true, then the VM enters the block
     children[1].accept(this);  // block
@@ -1325,7 +1326,7 @@ CompilerVisitor.prototype.visitWhileClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     var repeatLabel = statementPrefix + 'ConditionRepeat';
     this.builder.insertLabel(repeatLabel);
-    this.builder.insertJumpInstruction(loopLabel);
+    this.builder.insertJumpInstruction(statement.loopLabel);
 };
 
 
@@ -1342,10 +1343,8 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     var length = children.length;
 
     // construct the loop and done labels
-    var block = this.currentBlock();
-    block.statement.loopLabel = clausePrefix + 'ConditionClause';
-    var loopLabel = block.statement.loopLabel;
-    var doneLabel = block.statement.doneLabel;
+    var statement = this.builder.getStatementContext();
+    statement.loopLabel = clausePrefix + 'ConditionClause';
 
     // construct the item symbol
     var item;
@@ -1366,12 +1365,12 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     this.builder.insertStoreInstruction('VARIABLE', iterator);
 
     // label the start of the loop
-    this.builder.insertLabel(loopLabel);
+    this.builder.insertLabel(statement.loopLabel);
 
     // the VM jumps past the end of the loop if the iterator has no more items
     this.builder.insertLoadInstruction('VARIABLE', iterator);
     this.builder.insertInvokeInstruction('$hasNext', 1);
-    this.builder.insertJumpInstruction(doneLabel, 'ON FALSE');
+    this.builder.insertJumpInstruction(statement.doneLabel, 'ON FALSE');
 
     // the VM places the iterator back onto the execution stack
     this.builder.insertLoadInstruction('VARIABLE', iterator);
@@ -1389,7 +1388,7 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     var statementPrefix = this.builder.getStatementPrefix();
     var repeatLabel = statementPrefix + 'ConditionRepeat';
     this.builder.insertLabel(repeatLabel);
-    this.builder.insertJumpInstruction(loopLabel);
+    this.builder.insertJumpInstruction(statement.loopLabel);
 };
 
 
@@ -1420,12 +1419,6 @@ CompilerVisitor.prototype.setRecipient = function(recipient) {
  */
 CompilerVisitor.prototype.createTemporaryVariable = function(name) {
     return '$_' + name + '_' + this.temporaryVariableCount++;
-};
-
-
-CompilerVisitor.prototype.currentBlock = function() {
-    var block = this.builder.blocks.peek();
-    return block;
 };
 
 
@@ -1607,6 +1600,15 @@ InstructionBuilder.prototype.getStatementType = function() {
     var statement = this.blocks.peek().statement;
     var type = types.TREE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
     return type;
+};
+
+
+/*
+ * This method returns the context for the current statement.
+ */
+InstructionBuilder.prototype.getStatementContext = function() {
+    var statement = this.blocks.peek().statement;
+    return statement;
 };
 
 
