@@ -14,6 +14,8 @@
  * Bali Cloud Operating System™. For more information about the Bali Cloud
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
+var language = require('bali-language/BaliLanguage');
+var instructions = require('bali-instruction-set/BaliInstructionSet');
 var analyzer = require('./compiler/Analyzer');
 var compiler = require('./compiler/Compiler');
 var scanner = require('./assembler/Scanner');
@@ -32,17 +34,33 @@ var cloud = {
 /**
  * This function compiles a Bali Document Language™ type.
  * 
- * @param {DocumentContext} baliType The Bali document context for the type to be compiled.
+ * @param {string} baliType The Bali document for the type to be compiled.
+ * @returns {TreeNode} The full parse tree for the Bali type.
  */
 exports.compileType = function(baliType) {
-    var context = analyzer.analyzeType(baliType);
-    var procedures = analyzer.extractProcedures(baliType);
+    var tree = language.parseDocument(baliType);
+    analyzer.analyzeType(tree);
+    var procedures = extractProcedures(tree);
     for (var i = 0; i < procedures.length; i++) {
         var procedure = procedures[i];
-        procedure.instructions = compiler.compileProcedure(procedure, context);
-        procedure.symbols = scanner.extractSymbols(procedure.instructions);
-        procedure.bytecode = assembler.assembleBytecode(procedure.instructions, procedure.symbols);
+        procedure.instructions = compiler.compileProcedure(procedure, baliType);
+        var list = instructions.parseProcedure(procedure.instructions);
+        procedure.symbols = scanner.extractSymbols(list);
+        procedure.bytecode = assembler.assembleBytecode(list, procedure.symbols);
     }
+    return tree;
+};
+
+
+/**
+ * This function formats a parse tree generated from a Bali Document Language™ type.
+ * 
+ * @param {TreeNode} tree The parse tree for the Bali type.
+ * @returns {string} The The formatted Bali document for the type.
+ */
+exports.formatType = function(tree) {
+    var baliType = language.formatDocument(tree);
+    return baliType;
 };
 
 
@@ -75,3 +93,9 @@ exports.continueProcessing = function(taskReference) {
     virtualMachine.processProcedure();
 };
 
+
+// PRIVATE FUNCTIONS
+
+function extractProcedures(typeTree) {
+    return [];
+}

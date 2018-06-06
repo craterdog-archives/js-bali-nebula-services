@@ -75,8 +75,8 @@ function getSubClauses(statement) {
  * to construct the corresponding Bali Virtual Machine™ instructions for the
  * syntax tree is it traversing.
  */
-function CompilerVisitor(symbols) {
-    this.symbols = symbols;
+function CompilerVisitor(context) {
+    this.context = context;
     this.builder = new InstructionBuilder();
     this.temporaryVariableCount = 1;
     return this;
@@ -556,9 +556,9 @@ CompilerVisitor.prototype.visitFunctionExpression = function(tree) {
     // the VM places a reference to the type that defines the function on top of the execution stack
     var name = '$' + tree.children[0].value;
     //TODO: fix this
-    //var typeReference = this.symbols.procedures[name];
+    //var typeReference = this.context.procedures[name];
     var typeReference = '<bali:/bali/types/SomeType>';
-    this.builder.insertPushInstruction('DOCUMENT', typeReference);
+    this.builder.insertPushInstruction('DOCUMENT', typeReference);  // use PUSH instead of LOAD since VM may cache types
 
     // if there are parameters then compile accordingly
     if (tree.children[1].children[0].children.length > 0) {

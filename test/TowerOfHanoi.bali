@@ -79,11 +79,11 @@ The output should be:
     $procedures: [
         $play: {
             $pegs := [
-                "peg A": [ ]
-                "peg B": [ ]
-                "peg C": [ ]
+                "peg A": []
+                "peg B": []
+                "peg C": []
             ]
-            $steps := [ ]
+            $steps := []
             with each $n in [disks..1] do {
                 pegs["peg A"].push(n)
             }

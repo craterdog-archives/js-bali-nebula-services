@@ -19,36 +19,12 @@
 
 /**
  * This function traverses a parse tree structure containing a Bali type
- * analyzing it for correctness and returning context information needed
- * by the compiler.
+ * analyzing it for correctness and filling in missing type information.
  * 
  * @param {object} baliType The parse tree structure for the Bali type.
- * @returns {object} The context information.
+ * @returns {object} The updated Bali type.
  */
 exports.analyzeType = function(baliType) {
-    var context = {
-        '$types': {},
-        '$literals': {},
-        '$variables': {},
-        '$references': {},
-        '$intrinsics': {},
-        '$procedures': {},
-        '$addresses': {}
-    };
     //TODO: do the actual analysis
-    return context;
-};
-
-/**
- * This function traverses a parse tree structure containing a Bali type
- * analyzing it for correctness and returning context information needed
- * by the compiler.
- * 
- * @param {object} baliType The parse tree structure for the Bali type.
- * @returns {object} The context information.
- */
-exports.extractProcedures = function(baliType) {
-    var procedures = [];
-    //TODO: do the actual extraction
-    return procedures;
+    return baliType;
 };

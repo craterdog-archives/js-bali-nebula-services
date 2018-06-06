@@ -8,9 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var parser = require('bali-language/BaliLanguage');
-var analyzer = require('../..//compiler/Analyzer');
-var compiler = require('../..//compiler/Compiler');
+var vm = require('../BaliVM');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
@@ -18,10 +16,10 @@ var expect = require('chai').expect;
 
 describe('Bali Virtual Machine™', function() {
 
-    describe('Test the compiler.', function() {
+    describe('Test the compiler and assembler', function() {
 
         it('should compile source documents into assembly instructions.', function() {
-            var testFolder = 'test/compiler/';
+            var testFolder = 'test/';
             var files = fs.readdirSync(testFolder);
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
@@ -29,18 +27,15 @@ describe('Bali Virtual Machine™', function() {
                 //console.log('      ' + file);
                 var prefix = file.split('.').slice(0, 1);
                 var baliFile = testFolder + prefix + '.bali';
-                var basmFile = testFolder + prefix + '.basm';
-                var source = fs.readFileSync(baliFile, 'utf8');
-                expect(source).to.exist;  // jshint ignore:line
-                var tree = parser.parseDocument(source);
-                expect(tree).to.exist;  // jshint ignore:line
-                analyzer.analyzeType(tree);  // called just to create the context
-                var instructions = compiler.compileProcedure(tree, {});
-                expect(instructions).to.exist;  // jshint ignore:line
-                //fs.writeFileSync(basmFile, instructions, 'utf8');
-                var expected = fs.readFileSync(basmFile, 'utf8');
+                var type = fs.readFileSync(baliFile, 'utf8');
+                expect(type).to.exist;  // jshint ignore:line
+                var tree = vm.compileType(type);
+                expect(type).to.exist;  // jshint ignore:line
+                var formatted = vm.formatType(tree);
+                //fs.writeFileSync(baliFile, formatted, 'utf8');
+                var expected = fs.readFileSync(baliFile, 'utf8');
                 expect(expected).to.exist;  // jshint ignore:line
-                expect(instructions).to.equal(expected);
+                expect(formatted).to.equal(expected);
             }
         });
 
