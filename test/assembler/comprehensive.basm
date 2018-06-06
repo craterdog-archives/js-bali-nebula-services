@@ -79,11 +79,11 @@ POP HANDLERS
 JUMP TO 1.IfStatementSucceeded
 
 1.IfStatementHandlers:
-SKIP INSTRUCTION
+STORE VARIABLE $_exception_
 
 1.4.HandleClause:
+LOAD VARIABLE $_exception_
 STORE VARIABLE $exception
-LOAD VARIABLE $exception
 LOAD VARIABLE $exception
 PUSH DOCUMENT `1`
 INVOKE $catalog WITH PARAMETER
@@ -111,11 +111,13 @@ INVOKE $setValue WITH 3 PARAMETERS
 STORE VARIABLE $_result_
 
 1.4.HandleClauseDone:
+PUSH DOCUMENT `none`
+STORE VARIABLE $_exception_
 JUMP TO 1.IfStatementSucceeded
 
 1.5.HandleClause:
+LOAD VARIABLE $_exception_
 STORE VARIABLE $exception
-LOAD VARIABLE $exception
 LOAD VARIABLE $exception
 PUSH DOCUMENT `1`
 INVOKE $catalog WITH PARAMETER
@@ -141,6 +143,8 @@ LOAD VARIABLE $exception
 HANDLE EXCEPTION
 
 1.5.HandleClauseDone:
+PUSH DOCUMENT `none`
+STORE VARIABLE $_exception_
 JUMP TO 1.IfStatementSucceeded
 
 1.IfStatementFailed:

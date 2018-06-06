@@ -590,13 +590,15 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
     var handleLabel = clausePrefix + 'HandleClause';
     this.builder.insertLabel(handleLabel);
 
+    // the VM loads the exception onto the top of the execution stack
+    this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
+
     // the VM stores the exception that is on top of the execution stack in the variable
     var exception = tree.children[0].value;
     this.builder.insertStoreInstruction('VARIABLE', exception);
 
     // the VM compares the template expression with the actual exception
-    this.builder.insertLoadInstruction('VARIABLE', exception);  // for handler
-    this.builder.insertLoadInstruction('VARIABLE', exception);  // for matching check
+    this.builder.insertLoadInstruction('VARIABLE', exception);
     tree.children[1].accept(this);  // expression
     this.builder.insertInvokeInstruction('$matches', 2);
 
@@ -610,8 +612,10 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
     // the VM executes the handler clause
     tree.children[2].accept(this);  // block
 
-    // the exception was handled so the VM jumps to the end of the statement
+    // the exception was handled successfully
     this.builder.insertLabel(clausePrefix + 'HandleClauseDone');
+    this.builder.insertPushInstruction('DOCUMENT', 'none');
+    this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
     this.builder.insertJumpInstruction(statement.successLabel);
 };
 
@@ -1166,9 +1170,13 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
 
             // the VM will direct any exceptions from the main clause here to be handled
             this.builder.insertLabel(statement.handlerLabel);
+
+            // the VM stores the exception that is on top of the execution stack in a temporary variable
+            this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
+
+            // the VM tries each handler for the exception
             var handlers = statement.handleClauses;
             for (var i = 0; i < handlers.length; i++) {
-                // each handler inserts its own label
                 handlers[i].accept(this);
             }
 

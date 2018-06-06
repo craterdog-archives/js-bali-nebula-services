@@ -11,11 +11,11 @@ POP HANDLERS
 JUMP TO 1.QueueStatementSucceeded
 
 1.QueueStatementHandlers:
-SKIP INSTRUCTION
+STORE VARIABLE $_exception_
 
 1.1.HandleClause:
+LOAD VARIABLE $_exception_
 STORE VARIABLE $error
-LOAD VARIABLE $error
 LOAD VARIABLE $error
 PUSH DOCUMENT `1`
 INVOKE $catalog WITH PARAMETER
@@ -30,11 +30,13 @@ PUSH DOCUMENT `any`
 STORE VARIABLE $_result_
 
 1.1.HandleClauseDone:
+PUSH DOCUMENT `none`
+STORE VARIABLE $_exception_
 JUMP TO 1.QueueStatementSucceeded
 
 1.2.HandleClause:
+LOAD VARIABLE $_exception_
 STORE VARIABLE $error
-LOAD VARIABLE $error
 LOAD VARIABLE $error
 PUSH DOCUMENT `1`
 INVOKE $catalog WITH PARAMETER
@@ -49,6 +51,8 @@ PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
 1.2.HandleClauseDone:
+PUSH DOCUMENT `none`
+STORE VARIABLE $_exception_
 JUMP TO 1.QueueStatementSucceeded
 
 1.QueueStatementFailed:
