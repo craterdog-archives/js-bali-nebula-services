@@ -7,12 +7,12 @@ JUMP TO 4.load ON TRUE
 JUMP TO 5.store ON FALSE
 
 2.push:
-PUSH HANDLER 8.handle
+PUSH HANDLERS 8.handle
 PUSH DOCUMENT `"This is a literal text string
 containing an \` and spanning multiple lines."`
 
 3.pop:
-POP HANDLER
+POP HANDLERS
 POP DOCUMENT
 
 4.load:

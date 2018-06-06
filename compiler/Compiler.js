@@ -1146,7 +1146,7 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
 
     // the VM pushes any exception handlers onto the exception handler stack
     if (this.builder.hasHandlers()) {
-        this.builder.insertPushInstruction('HANDLER', statement.handlerLabel);
+        this.builder.insertPushInstruction('HANDLERS', statement.handlerLabel);
     }
 
     // the VM attempts to execute the main clause
@@ -1159,7 +1159,7 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
 
         if (this.builder.hasHandlers()) {
             // the exception handlers are no longer needed
-            this.builder.insertPopInstruction('HANDLER');
+            this.builder.insertPopInstruction('HANDLERS');
 
             // jump over the exception handlers
             this.builder.insertJumpInstruction(statement.successLabel);

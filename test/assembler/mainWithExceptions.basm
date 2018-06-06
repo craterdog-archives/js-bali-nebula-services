@@ -1,13 +1,13 @@
 
 1.QueueStatement:
-PUSH HANDLER 1.QueueStatementHandlers
+PUSH HANDLERS 1.QueueStatementHandlers
 PUSH DOCUMENT `<bali:/queues/myqueue>`
 STORE VARIABLE $_queue_1
 LOAD VARIABLE $message
 STORE MESSAGE $_queue_1
 
 1.QueueStatementDone:
-POP HANDLER
+POP HANDLERS
 JUMP TO 1.QueueStatementSucceeded
 
 1.QueueStatementHandlers:

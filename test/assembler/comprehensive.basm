@@ -1,6 +1,6 @@
 
 1.IfStatement:
-PUSH HANDLER 1.IfStatementHandlers
+PUSH HANDLERS 1.IfStatementHandlers
 
 1.1.ConditionClause:
 LOAD VARIABLE $a
@@ -75,7 +75,7 @@ HANDLE RESULT
 SKIP INSTRUCTION
 
 1.IfStatementDone:
-POP HANDLER
+POP HANDLERS
 JUMP TO 1.IfStatementSucceeded
 
 1.IfStatementHandlers:

@@ -5,9 +5,9 @@
 [003]:    0802    01 [002]    JUMP TO [002] ON NONE
 [004]:    1003    02 [003]    JUMP TO [003] ON TRUE
 [005]:    1804    03 [004]    JUMP TO [004] ON FALSE
-[006]:    2005    10 [005]    PUSH HANDLER [005]
+[006]:    2005    10 [005]    PUSH HANDLERS [005]
 [007]:    2806    11     6    PUSH DOCUMENT 6
-[008]:    4000    20     0    POP HANDLER
+[008]:    4000    20     0    POP HANDLERS
 [009]:    4800    21     0    POP DOCUMENT
 [00A]:    600D    30    13    LOAD VARIABLE 13
 [00B]:    680E    31    14    LOAD DOCUMENT 14

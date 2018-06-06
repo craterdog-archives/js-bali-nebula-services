@@ -87,7 +87,7 @@ AnalyzerVisitor.prototype.visitJumpInstruction = function(instruction) {
 
 
 // pushInstruction:
-//     'PUSH' 'HANDLER' LABEL |
+//     'PUSH' 'HANDLERS' LABEL |
 //     'PUSH' 'DOCUMENT' LITERAL
 AnalyzerVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
@@ -100,7 +100,7 @@ AnalyzerVisitor.prototype.visitPushInstruction = function(instruction) {
 
 
 // popInstruction:
-//     'POP' 'HANDLER' |
+//     'POP' 'HANDLERS' |
 //     'POP' 'DOCUMENT'
 AnalyzerVisitor.prototype.visitPopInstruction = function(instruction) {
     this.address++;

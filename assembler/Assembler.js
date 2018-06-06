@@ -179,13 +179,13 @@ AssemblerVisitor.prototype.visitJumpInstruction = function(instruction) {
 
 
 // pushInstruction:
-//     'PUSH' 'HANDLER' LABEL |
+//     'PUSH' 'HANDLERS' LABEL |
 //     'PUSH' 'DOCUMENT' LITERAL
 AssemblerVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.value;
     switch(modifier) {
-        case 'HANDLER':
+        case 'HANDLERS':
             value = this.symbols.addresses[value];
             break;
         case 'DOCUMENT':
@@ -200,7 +200,7 @@ AssemblerVisitor.prototype.visitPushInstruction = function(instruction) {
 
 
 // popInstruction:
-//     'POP' 'HANDLER' |
+//     'POP' 'HANDLERS' |
 //     'POP' 'DOCUMENT'
 AssemblerVisitor.prototype.visitPopInstruction = function(instruction) {
     var modifier = instruction.modifier;

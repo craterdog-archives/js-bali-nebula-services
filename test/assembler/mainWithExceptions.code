@@ -1,11 +1,11 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2008    10 [008]    PUSH HANDLER [008]
+[001]:    2008    10 [008]    PUSH HANDLERS [008]
 [002]:    2801    11     1    PUSH DOCUMENT 1
 [003]:    8001    40     1    STORE VARIABLE 1
 [004]:    6002    30     2    LOAD VARIABLE 2
 [005]:    9801    43     1    STORE MESSAGE 1
-[006]:    4000    20     0    POP HANDLER
+[006]:    4000    20     0    POP HANDLERS
 [007]:    0024    00 [024]    JUMP TO [024]
 [008]:    0000    00 [000]    SKIP INSTRUCTION
 [009]:    8003    40     3    STORE VARIABLE 3

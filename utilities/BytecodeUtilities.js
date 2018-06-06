@@ -161,7 +161,7 @@ exports.instructionIsValid = function(instruction) {
             return operand !== 0 || modcode === 0;
         case PUSH:
             switch (modcode) {
-                case HANDLER:
+                case HANDLERS:
                 case DOCUMENT:
                     return operand !== 0;
                 default:
@@ -170,7 +170,7 @@ exports.instructionIsValid = function(instruction) {
             break;
         case POP:
             switch (modcode) {
-                case HANDLER:
+                case HANDLERS:
                 case DOCUMENT:
                     return operand === 0;
                 default:
@@ -394,7 +394,7 @@ var ON_FALSE = 0x1800;
 
 
 // types
-var HANDLER = 0x0000;
+var HANDLERS = 0x0000;
 var VARIABLE = 0x0000;
 var DOCUMENT = 0x0800;
 var DRAFT = 0x1000;
@@ -424,7 +424,7 @@ var MODCODES = {
     'DOCUMENT': DOCUMENT,
     'DRAFT': DRAFT,
     'MESSAGE': MESSAGE,
-    'HANDLER': HANDLER,
+    'HANDLERS': HANDLERS,
     'WITH PARAMETERS': WITH_PARAMETERS,
     'ON TARGET': ON_TARGET,
     'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS,
@@ -440,7 +440,7 @@ var CONDITIONS = [
 ];
 
 var STACKS = [
-    'HANDLER',
+    'HANDLERS',
     'DOCUMENT'
 ];
 
