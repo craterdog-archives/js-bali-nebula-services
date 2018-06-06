@@ -1,14 +1,17 @@
 
 1.QueueStatement:
-PUSH HANDLER 1.1.HandleClause
+PUSH HANDLER 1.QueueStatementHandlers
 PUSH DOCUMENT `<bali:/queues/myqueue>`
 STORE VARIABLE $_queue_1
 LOAD VARIABLE $message
 STORE MESSAGE $_queue_1
 
-1.StatementDone:
+1.QueueStatementDone:
 POP HANDLER
-JUMP TO 1.StatementEnd
+JUMP TO 1.QueueStatementSucceeded
+
+1.QueueStatementHandlers:
+SKIP INSTRUCTION
 
 1.1.HandleClause:
 STORE VARIABLE $error
@@ -26,8 +29,8 @@ JUMP TO 1.2.HandleClause ON FALSE
 PUSH DOCUMENT `any`
 STORE VARIABLE $_result_
 
-1.1.HandleDone:
-JUMP TO 1.StatementEnd
+1.1.HandleClauseDone:
+JUMP TO 1.QueueStatementSucceeded
 
 1.2.HandleClause:
 STORE VARIABLE $error
@@ -39,18 +42,18 @@ PUSH DOCUMENT `$type`
 PUSH DOCUMENT `'horrid'`
 INVOKE $setValue WITH 3 PARAMETERS
 INVOKE $matches WITH 2 PARAMETERS
-JUMP TO 1.UnhandledException ON FALSE
+JUMP TO 1.QueueStatementFailed ON FALSE
 
 1.2.1.EvaluateStatement:
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.2.HandleDone:
-JUMP TO 1.StatementEnd
+1.2.HandleClauseDone:
+JUMP TO 1.QueueStatementSucceeded
 
-1.UnhandledException:
+1.QueueStatementFailed:
 HANDLE EXCEPTION
 
-1.StatementEnd:
+1.QueueStatementSucceeded:
 SKIP INSTRUCTION
 

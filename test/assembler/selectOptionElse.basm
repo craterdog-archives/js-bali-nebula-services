@@ -13,8 +13,8 @@ JUMP TO 1.2.OptionClause ON FALSE
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.1.OptionDone:
-JUMP TO 1.StatementDone
+1.1.OptionClauseDone:
+JUMP TO 1.SelectStatementDone
 
 1.2.OptionClause:
 LOAD VARIABLE $_selector_1
@@ -26,8 +26,8 @@ JUMP TO 1.3.OptionClause ON FALSE
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.2.OptionDone:
-JUMP TO 1.StatementDone
+1.2.OptionClauseDone:
+JUMP TO 1.SelectStatementDone
 
 1.3.OptionClause:
 LOAD VARIABLE $_selector_1
@@ -39,8 +39,8 @@ JUMP TO 1.4.ElseClause ON FALSE
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.3.OptionDone:
-JUMP TO 1.StatementDone
+1.3.OptionClauseDone:
+JUMP TO 1.SelectStatementDone
 
 1.4.ElseClause:
 SKIP INSTRUCTION
@@ -49,9 +49,9 @@ SKIP INSTRUCTION
 PUSH DOCUMENT `none`
 STORE VARIABLE $_result_
 
-1.4.ElseDone:
-JUMP TO 1.StatementDone
+1.4.ElseClauseDone:
+JUMP TO 1.SelectStatementDone
 
-1.StatementDone:
+1.SelectStatementDone:
 SKIP INSTRUCTION
 

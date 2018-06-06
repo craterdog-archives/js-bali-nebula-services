@@ -4,12 +4,12 @@ SKIP INSTRUCTION
 
 1.1.ConditionClause:
 PUSH DOCUMENT `true`
-JUMP TO 1.StatementDone ON FALSE
+JUMP TO 1.IfStatementDone ON FALSE
 
 1.1.1.EvaluateStatement:
 LOAD VARIABLE $yes
 STORE VARIABLE $_result_
 
-1.StatementDone:
+1.IfStatementDone:
 SKIP INSTRUCTION
 

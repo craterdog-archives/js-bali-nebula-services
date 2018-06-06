@@ -1,6 +1,6 @@
 
 1.IfStatement:
-PUSH HANDLER 1.4.HandleClause
+PUSH HANDLER 1.IfStatementHandlers
 
 1.1.ConditionClause:
 LOAD VARIABLE $a
@@ -76,7 +76,10 @@ SKIP INSTRUCTION
 
 1.IfStatementDone:
 POP HANDLER
-JUMP TO 1.IfStatementEnd
+JUMP TO 1.IfStatementSucceeded
+
+1.IfStatementHandlers:
+SKIP INSTRUCTION
 
 1.4.HandleClause:
 STORE VARIABLE $exception
@@ -108,7 +111,7 @@ INVOKE $setValue WITH 3 PARAMETERS
 STORE VARIABLE $_result_
 
 1.4.HandleClauseDone:
-JUMP TO 1.IfStatementEnd
+JUMP TO 1.IfStatementSucceeded
 
 1.5.HandleClause:
 STORE VARIABLE $exception
@@ -120,7 +123,7 @@ PUSH DOCUMENT `$type`
 PUSH DOCUMENT `$moderate`
 INVOKE $setValue WITH 3 PARAMETERS
 INVOKE $matches WITH 2 PARAMETERS
-JUMP TO 1.UnhandledException ON FALSE
+JUMP TO 1.IfStatementFailed ON FALSE
 
 1.5.1.EvaluateStatement:
 PUSH DOCUMENT `2`
@@ -138,12 +141,12 @@ LOAD VARIABLE $exception
 HANDLE EXCEPTION
 
 1.5.HandleClauseDone:
-JUMP TO 1.IfStatementEnd
+JUMP TO 1.IfStatementSucceeded
 
-1.UnhandledException:
+1.IfStatementFailed:
 HANDLE EXCEPTION
 
-1.IfStatementEnd:
+1.IfStatementSucceeded:
 SKIP INSTRUCTION
 
 2.WhileStatement:

@@ -603,7 +603,7 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
     // if the template and exception did not match the VM jumps past this exception handler
     var nextLabel = this.builder.getNextClausePrefix() + 'HandleClause';
     if (statement.clauseNumber === statement.clauseCount) {
-        nextLabel = statement.unhandledLabel;
+        nextLabel = statement.failureLabel;
     }
     this.builder.insertJumpInstruction(nextLabel, 'ON FALSE');
 
@@ -612,7 +612,7 @@ CompilerVisitor.prototype.visitHandleClause = function(tree) {
 
     // the exception was handled so the VM jumps to the end of the statement
     this.builder.insertLabel(clausePrefix + 'HandleClauseDone');
-    this.builder.insertJumpInstruction(statement.endLabel);
+    this.builder.insertJumpInstruction(statement.successLabel);
 };
 
 
@@ -1162,9 +1162,10 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
             this.builder.insertPopInstruction('HANDLER');
 
             // jump over the exception handlers
-            this.builder.insertJumpInstruction(statement.endLabel);
+            this.builder.insertJumpInstruction(statement.successLabel);
 
             // the VM will direct any exceptions from the main clause here to be handled
+            this.builder.insertLabel(statement.handlerLabel);
             var handlers = statement.handleClauses;
             for (var i = 0; i < handlers.length; i++) {
                 // each handler inserts its own label
@@ -1172,11 +1173,11 @@ CompilerVisitor.prototype.visitStatement = function(tree) {
             }
 
             // none of the exception handlers matched so the VM must try the parent handlers
-            this.builder.insertLabel(statement.unhandledLabel);
+            this.builder.insertLabel(statement.failureLabel);
             this.builder.insertHandleInstruction('EXCEPTION');
 
             // the VM encountered no exceptions or was able to handle them
-            this.builder.insertLabel(statement.endLabel);
+            this.builder.insertLabel(statement.successLabel);
         }
     }
 
@@ -1513,9 +1514,9 @@ InstructionBuilder.prototype.pushStatementContext = function(tree) {
         statement.doneLabel = prefix + type + 'StatementDone';
     }
     if (statement.handleClauses.length > 0) {
-        statement.handlerLabel = prefix + (statement.subClauses.length + 1) + '.HandleClause';
-        statement.unhandledLabel = prefix + 'UnhandledException';
-        statement.endLabel = prefix + type + 'StatementEnd';
+        statement.handlerLabel = prefix + type + 'StatementHandlers';
+        statement.failureLabel = prefix + type + 'StatementFailed';
+        statement.successLabel = prefix + type + 'StatementSucceeded';
     }
 
     return block.statement;
