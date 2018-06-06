@@ -21,8 +21,8 @@
  * This function traverses a parse tree structure containing a Bali type
  * analyzing it for correctness and filling in missing type information.
  * 
- * @param {object} baliType The parse tree structure for the Bali type.
- * @returns {object} The updated Bali type.
+ * @param {TreeNode} baliType The parse tree structure for the Bali type.
+ * @returns {TreeNode} The updated Bali type.
  */
 exports.analyzeType = function(baliType) {
     //TODO: do the actual analysis
