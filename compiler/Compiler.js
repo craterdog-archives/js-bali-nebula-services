@@ -1431,13 +1431,6 @@ CompilerVisitor.prototype.createTemporaryVariable = function(name) {
 };
 
 
-CompilerVisitor.prototype.parentBlock = function() {
-    var blocks = this.builder.blocks;
-    var parent = blocks[blocks.length - 2];
-    return parent;
-};
-
-
 CompilerVisitor.prototype.getResult = function() {
     this.builder.finalize();
     return this.builder.asmcode;
