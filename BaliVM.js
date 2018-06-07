@@ -15,12 +15,14 @@
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
 var language = require('bali-language/BaliLanguage');
+var syntax = require('bali-language/syntax');
 var types = require('bali-language/syntax/NodeTypes');
-var instructions = require('bali-instruction-set/BaliInstructionSet');
+var instructionSet = require('bali-instruction-set/BaliInstructionSet');
 var analyzer = require('./compiler/Analyzer');
 var compiler = require('./compiler/Compiler');
 var scanner = require('./assembler/Scanner');
 var assembler = require('./assembler/Assembler');
+var utilities = require('./utilities/EncodingUtilities');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
 
@@ -39,18 +41,19 @@ var cloud = {
  * @returns {TreeNode} The full parse tree for the Bali type.
  */
 exports.compileType = function(document) {
-    var type = language.parseDocument(document);
-    analyzer.analyzeType(type);
-    var blocks = extractBlocks(type);
-    for (var i = 0; i < blocks.length; i++) {
-        var block = blocks[i];
-        var instructions = compiler.compileBlock(block, type);
-        var list = instructions.parseProcedure(instructions);
+    var tree = language.parseDocument(document);
+    var context = analyzer.analyzeType(tree);
+    var procedures = extractProcedures(tree);
+    for (var i = 0; i < procedures.length; i++) {
+        var procedure = procedures[i];
+        var block = extractBlock(procedure);
+        var instructions = compiler.compileBlock(block, context);
+        var list = instructionSet.parseProcedure(instructions);
         var symbols = scanner.extractSymbols(list);
         var bytecode = assembler.assembleBytecode(list, symbols);
-        updateBlock(block, instructions, symbols, bytecode);
+        updateProcedure(procedure, instructions, bytecode);
     }
-    return type;
+    return tree;
 };
 
 
@@ -98,14 +101,70 @@ exports.continueProcessing = function(taskReference) {
 
 // PRIVATE FUNCTIONS
 
-function extractBlocks(type) {
-    var blocks = [];
-    return blocks;
+function extractProcedures(type) {
+    var procedures = [];
+    var catalog = type.children[0].children[0];
+    for (var i = 0; i < catalog.children.length; i++) {
+        var association = catalog.children[i];
+        var key = association.children[0];
+        var value = association.children[1];
+        if (key.type === types.SYMBOL && key.value === '$procedures') {
+            procedures = value.children[0].children;
+            break;
+        }
+    }
+    return procedures;
 }
 
 
-function updateBlock(block, instructions, symbols, bytecode) {
+/*
+ * This function extracts a block tree node from an association tree node whose symbol is
+ * the procedure name and the value is a structure tree node containing the source, instructions,
+ * and bytecode for the procedure.
+ */
+function extractBlock(procedure) {
+    var block;
+    var catalog = procedure.children[1].children[0];
+    for (var i = 0; i < catalog.children.length; i++) {
+        var association = catalog.children[i];
+        var key = association.children[0];
+        var value = association.children[1];
+        if (key.type === types.SYMBOL && key.value === '$source') {
+            block = value;
+            break;
+        }
+    }
     return block;
+}
+
+
+function updateProcedure(procedure, instructions, bytecode) {
+    // remove existing instructions and bytecode from procedure catalog
+    var catalog = procedure.children[1].children[0];
+    procedure.children[1].children[0].children = catalog.children.slice(0, 1);
+
+    // add instructions to procedure catalog
+    var association = new syntax.TreeNode(types.ASSOCIATION);
+    var key = new syntax.TerminalNode(types.SYMBOL, '$instructions');
+    var value = new syntax.TerminalNode(types.TEXT, '"' + instructions + '"');
+    association.addChild(key);
+    association.addChild(value);
+    catalog.addChild(association);
+
+    // add bytecode to procedure catalog
+    var structure = new syntax.TreeNode(types.STRUCTURE);
+    var list = new syntax.TreeNode(types.LIST);
+    structure.addChild(list);
+    for (var i = 0; i < bytecode.length; i++) {
+        var bytes = utilities.shortToBytes(bytecode[i]);
+        var binary = new syntax.TerminalNode(types.BINARY, "'" + utilities.base16Encode(bytes) + "'");
+        list.addChild(binary);
+    }
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    key = new syntax.TerminalNode(types.SYMBOL, '$bytecode');
+    association.addChild(key);
+    association.addChild(structure);
+    catalog.addChild(association);
 }
 
 

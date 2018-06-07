@@ -18,13 +18,16 @@
 // PUBLIC FUNCTIONS
 
 /**
- * This function traverses a parse tree structure containing a Bali type
+ * This function traverses a parse tree structure for a Bali type
  * analyzing it for correctness and filling in missing type information.
+ * The function returns the context information that will be needed
+ * by the compiler.
  * 
- * @param {TreeNode} baliType The parse tree structure for the Bali type.
- * @returns {TreeNode} The updated Bali type.
+ * @param {TreeNode} tree The parse tree structure for the Bali type.
+ * @returns {object} An object containing the type context information.
  */
-exports.analyzeType = function(baliType) {
+exports.analyzeType = function(tree) {
+    var context = {};
     //TODO: do the actual analysis
-    return baliType;
+    return context;
 };

@@ -24,11 +24,11 @@ var types = require('bali-language/syntax/NodeTypes');
  * Machine™.
  * 
  * @param {TreeNode} tree The parse tree structure for the procedure block.
- * @param {object} type The type context needed for compilation.
+ * @param {object} context The context needed for compilation.
  * @returns {string} The assembly instructions.
  */
-exports.compileBlock = function(tree, type) {
-    var visitor = new CompilerVisitor(type);
+exports.compileBlock = function(tree, context) {
+    var visitor = new CompilerVisitor(context);
     tree.accept(visitor);
     return visitor.getResult();
 };
@@ -75,8 +75,8 @@ function getSubClauses(statement) {
  * to construct the corresponding Bali Virtual Machine™ instructions for the
  * syntax tree is it traversing.
  */
-function CompilerVisitor(type) {
-    this.type = type;
+function CompilerVisitor(context) {
+    this.context = context;
     this.builder = new InstructionBuilder();
     this.temporaryVariableCount = 1;
     return this;

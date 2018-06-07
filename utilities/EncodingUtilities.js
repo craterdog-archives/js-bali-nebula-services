@@ -337,6 +337,40 @@ exports.base64Decode = function(base64) {
 
 
 /**
+ * This private function converts an short into its corresponding bytes
+ * in a binary string in 'big endian' order.
+ *
+ * @param {number} short The short to be converted.
+ * @return {string} The corresponding binary string.
+ */
+exports.shortToBytes = function(short) {
+    var bytes = '';
+    for (var i = 1; i >= 0; i--) {
+        var byte = short >> (i * 8) & 0xFF;
+        bytes += String.fromCharCode(byte);
+    }
+    return bytes;
+};
+
+
+/**
+ * This private function converts the bytes in a binary string in 'big endian'
+ * order to its corresponding short value.
+ *
+ * @param {string} bytes The binary string containing the short.
+ * @return {number} The corresponding short value.
+ */
+exports.bytesToShort = function(bytes) {
+    var short = 0;
+    for (var i = 0; i < 2; i++) {
+        var byte = bytes.charCodeAt(1 - i);
+        short |= byte << (i * 8);
+    }
+    return short;
+};
+
+
+/**
  * This private function converts an integer into its corresponding bytes
  * in a binary string in 'big endian' order.
  *
