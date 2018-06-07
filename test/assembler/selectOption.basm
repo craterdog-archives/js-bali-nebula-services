@@ -1,10 +1,10 @@
 
 1.SelectStatement:
 PUSH DOCUMENT `$selection`
-STORE VARIABLE $_selector_1
+STORE VARIABLE $_selector_1_
 
 1.1.OptionClause:
-LOAD VARIABLE $_selector_1
+LOAD VARIABLE $_selector_1_
 PUSH DOCUMENT `'alpha'`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.2.OptionClause ON FALSE
@@ -17,7 +17,7 @@ STORE VARIABLE $_result_
 JUMP TO 1.SelectStatementDone
 
 1.2.OptionClause:
-LOAD VARIABLE $_selector_1
+LOAD VARIABLE $_selector_1_
 PUSH DOCUMENT `'beta'`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.3.OptionClause ON FALSE
@@ -30,7 +30,7 @@ STORE VARIABLE $_result_
 JUMP TO 1.SelectStatementDone
 
 1.3.OptionClause:
-LOAD VARIABLE $_selector_1
+LOAD VARIABLE $_selector_1_
 PUSH DOCUMENT `'gamma'`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.SelectStatementDone ON FALSE

@@ -139,14 +139,27 @@ function extractBlock(procedure) {
 
 
 function updateProcedure(procedure, instructions, bytecode) {
+    // construct the mediatype parameter catalog
+    var key = new syntax.TerminalNode(types.SYMBOL, '$mediatype');
+    var value = new syntax.TerminalNode(types.TEXT, '"application/basm"');
+    var association = new syntax.TreeNode(types.ASSOCIATION);
+    association.addChild(key);
+    association.addChild(value);
+    var catalog = new syntax.TreeNode(types.CATALOG);
+    catalog.addChild(association);
+    catalog.isSimple = true;
+    var parameters = new syntax.TreeNode(types.PARAMETERS);
+    parameters.addChild(catalog);
+
     // remove existing instructions and bytecode from procedure catalog
-    var catalog = procedure.children[1].children[0];
+    catalog = procedure.children[1].children[0];
     procedure.children[1].children[0].children = catalog.children.slice(0, 1);
 
     // add instructions to procedure catalog
-    var association = new syntax.TreeNode(types.ASSOCIATION);
-    var key = new syntax.TerminalNode(types.SYMBOL, '$instructions');
-    var value = new syntax.TerminalNode(types.TEXT, '"' + instructions + '"');
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    key = new syntax.TerminalNode(types.SYMBOL, '$instructions');
+    value = new syntax.TerminalNode(types.TEXT, '"' + instructions + '"');
+    value.parameters = parameters;
     association.addChild(key);
     association.addChild(value);
     catalog.addChild(association);

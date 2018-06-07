@@ -182,23 +182,23 @@ SKIP INSTRUCTION
 
 2.1.2.2.1.WithStatement:
 LOAD VARIABLE $sequence
-INVOKE $createIterator WITH PARAMETER
-STORE VARIABLE $_iterator_1
+INVOKE $iterator WITH PARAMETER
+STORE VARIABLE $_iterator_1_
 
 2.1.2.2.1.1.ConditionClause:
-LOAD VARIABLE $_iterator_1
+LOAD VARIABLE $_iterator_1_
 INVOKE $hasNext WITH PARAMETER
 JUMP TO 2.1.2.2.1.WithStatementDone ON FALSE
-LOAD VARIABLE $_iterator_1
+LOAD VARIABLE $_iterator_1_
 INVOKE $getNext WITH PARAMETER
 STORE VARIABLE $item
 
 2.1.2.2.1.1.1.SelectStatement:
 LOAD VARIABLE $selection
-STORE VARIABLE $_selector_2
+STORE VARIABLE $_selector_2_
 
 2.1.2.2.1.1.1.1.OptionClause:
-LOAD VARIABLE $_selector_2
+LOAD VARIABLE $_selector_2_
 PUSH DOCUMENT `$first`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 2.1.2.2.1.1.1.2.OptionClause ON FALSE
@@ -211,7 +211,7 @@ STORE VARIABLE $_result_
 JUMP TO 2.1.2.2.1.1.1.SelectStatementDone
 
 2.1.2.2.1.1.1.2.OptionClause:
-LOAD VARIABLE $_selector_2
+LOAD VARIABLE $_selector_2_
 PUSH DOCUMENT `$second`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 2.1.2.2.1.1.1.3.ElseClause ON FALSE

@@ -464,6 +464,8 @@ CompilerVisitor.prototype.visitDocument = function(tree) {
 //     text |
 //     version
 CompilerVisitor.prototype.visitElement = function(terminal) {
+    // TODO: add instructions to process blocks embedded within text
+
     // the VM loads the element value onto the top of the execution stack
     var literal = terminal.value;
     this.builder.insertPushInstruction('DOCUMENT', literal);
@@ -1367,7 +1369,7 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
     children[length - 2].accept(this);  // sequence expression
 
     // the VM replaces the sequence on the execution stack with an iterator to it
-    this.builder.insertInvokeInstruction('$createIterator', 1);
+    this.builder.insertInvokeInstruction('$iterator', 1);
 
     // The VM stores the iterater in a temporary variable
     var iterator = this.createTemporaryVariable('iterator');
@@ -1427,7 +1429,7 @@ CompilerVisitor.prototype.setRecipient = function(recipient) {
  * used to append a unique number to the end of each temporary variable.
  */
 CompilerVisitor.prototype.createTemporaryVariable = function(name) {
-    return '$_' + name + '_' + this.temporaryVariableCount++;
+    return '$_' + name + '_' + this.temporaryVariableCount++ + '_';
 };
 
 

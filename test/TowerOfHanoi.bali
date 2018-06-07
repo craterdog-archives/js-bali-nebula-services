@@ -17,7 +17,7 @@ The output should be:
  6. Move top disk on peg B to peg C
  7. Move top disk on peg A to peg C
 `
-"
+"($mediatype: "application/bsmd")
     $parameters: [
         $disks: [
             $description: "The number of disks."
@@ -80,9 +80,9 @@ The output should be:
         $play: [
             $source: {
                 $pegs := [
-                    "peg A": []
-                    "peg B": []
-                    "peg C": []
+                    "peg A": []($type: Stack)
+                    "peg B": []($type: Stack)
+                    "peg C": []($type: Stack)
                 ]
                 $steps := []
                 with each $n in [disks..1] do {
@@ -98,14 +98,32 @@ INVOKE $catalog WITH PARAMETER
 PUSH DOCUMENT `"peg A"`
 PUSH DOCUMENT `0`
 INVOKE $list WITH PARAMETER
+PUSH DOCUMENT `1`
+INVOKE $catalog WITH PARAMETER
+PUSH DOCUMENT `$type`
+LOAD VARIABLE $Stack
+INVOKE $setValue WITH 3 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
 PUSH DOCUMENT `"peg B"`
 PUSH DOCUMENT `0`
 INVOKE $list WITH PARAMETER
+PUSH DOCUMENT `1`
+INVOKE $catalog WITH PARAMETER
+PUSH DOCUMENT `$type`
+LOAD VARIABLE $Stack
+INVOKE $setValue WITH 3 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
 PUSH DOCUMENT `"peg C"`
 PUSH DOCUMENT `0`
 INVOKE $list WITH PARAMETER
+PUSH DOCUMENT `1`
+INVOKE $catalog WITH PARAMETER
+PUSH DOCUMENT `$type`
+LOAD VARIABLE $Stack
+INVOKE $setValue WITH 3 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
 STORE VARIABLE $pegs
 
@@ -118,14 +136,14 @@ STORE VARIABLE $steps
 LOAD VARIABLE $disks
 PUSH DOCUMENT `1`
 INVOKE $range WITH 2 PARAMETERS
-INVOKE $createIterator WITH PARAMETER
-STORE VARIABLE $_iterator_1
+INVOKE $iterator WITH PARAMETER
+STORE VARIABLE $_iterator_1_
 
 3.1.ConditionClause:
-LOAD VARIABLE $_iterator_1
+LOAD VARIABLE $_iterator_1_
 INVOKE $hasNext WITH PARAMETER
 JUMP TO 3.WithStatementDone ON FALSE
-LOAD VARIABLE $_iterator_1
+LOAD VARIABLE $_iterator_1_
 INVOKE $getNext WITH PARAMETER
 STORE VARIABLE $n
 
@@ -168,65 +186,83 @@ STORE VARIABLE $_result_
 LOAD VARIABLE $_result_
 HANDLE RESULT
 
-"
+"($mediatype: "application/basm")
             $bytecode: [
                 '2801'
                 'A801'
                 '2802'
                 '2803'
                 'A802'
-                'B803'
                 '2804'
-                '2803'
-                'A802'
-                'B803'
+                'A801'
                 '2805'
-                '2803'
-                'A802'
-                'B803'
-                '8001'
-                '2803'
-                'A802'
-                '8002'
-                '6003'
-                '2806'
-                'B004'
-                'A805'
-                '8004'
-                '6004'
-                'A806'
-                '1828'
-                '6004'
-                'A807'
-                '8005'
                 '6001'
-                '2802'
-                'B008'
+                'B803'
+                'B004'
+                'B803'
                 '2806'
+                '2803'
                 'A802'
-                '6005'
-                'B009'
-                'D801'
-                '8006'
-                '0018'
-                '0000'
-                '6007'
-                '2807'
-                'A802'
-                '6003'
-                'B009'
-                '2802'
-                'B009'
-                '2805'
-                'B009'
                 '2804'
-                'B009'
-                'D802'
+                'A801'
+                '2805'
+                '6001'
+                'B803'
+                'B004'
+                'B803'
+                '2807'
+                '2803'
+                'A802'
+                '2804'
+                'A801'
+                '2805'
+                '6001'
+                'B803'
+                'B004'
+                'B803'
+                '8002'
+                '2803'
+                'A802'
+                '8003'
+                '6004'
+                '2804'
+                'B005'
+                'A806'
+                '8005'
+                '6005'
+                'A807'
+                '183A'
+                '6005'
+                'A808'
                 '8006'
                 '6002'
-                'D003'
-                '8006'
+                '2802'
+                'B009'
+                '2804'
+                'A802'
                 '6006'
+                'B00A'
+                'D801'
+                '8007'
+                '002A'
+                '0000'
+                '6008'
+                '2808'
+                'A802'
+                '6004'
+                'B00A'
+                '2802'
+                'B00A'
+                '2807'
+                'B00A'
+                '2806'
+                'B00A'
+                'D802'
+                '8007'
+                '6003'
+                'D003'
+                '8007'
+                '6007'
                 'E800'
             ]
         ]
@@ -306,7 +342,7 @@ STORE VARIABLE $_result_
 LOAD VARIABLE $_result_
 HANDLE RESULT
 
-"
+"($mediatype: "application/basm")
             $bytecode: [
                 '2801'
                 '8001'
@@ -393,7 +429,7 @@ INVOKE $addItem WITH 2 PARAMETERS
 EXECUTE $append ON TARGET WITH PARAMETERS
 STORE VARIABLE $_result_
 
-"
+"($mediatype: "application/basm")
             $bytecode: [
                 '6001'
                 '6002'

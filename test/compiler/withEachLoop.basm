@@ -1,14 +1,14 @@
 
 1.WithStatement:
 PUSH DOCUMENT `$sequence`
-INVOKE $createIterator WITH PARAMETER
-STORE VARIABLE $_iterator_1
+INVOKE $iterator WITH PARAMETER
+STORE VARIABLE $_iterator_1_
 
 1.1.ConditionClause:
-LOAD VARIABLE $_iterator_1
+LOAD VARIABLE $_iterator_1_
 INVOKE $hasNext WITH PARAMETER
 JUMP TO 1.WithStatementDone ON FALSE
-LOAD VARIABLE $_iterator_1
+LOAD VARIABLE $_iterator_1_
 INVOKE $getNext WITH PARAMETER
 STORE VARIABLE $symbol
 
