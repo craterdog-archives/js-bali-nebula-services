@@ -159,18 +159,6 @@ CompilerVisitor.prototype.visitBlock = function(tree) {
     // create a new compiler block context in the instruction builder
     this.builder.pushBlockContext();
 
-    // the VM adds any parameters to the current VM block context
-    var parameters = tree.parameters;
-    if (parameters) {
-        for (var i = 0; i < parameters.length; i++) {
-            // TODO: need to handle ranges, lists, and catalogs differently
-
-            // the VM stores the value of the parameter in its associated variable
-            parameters[i].accept(this);
-            this.builder.insertStoreInstruction('VARIABLE', '$_parameter' + i + '_');
-        }
-    }
-
     // the VM executes the procedure
     tree.children[0].accept(this);
 
@@ -348,6 +336,22 @@ CompilerVisitor.prototype.visitComplementExpression = function(tree) {
 };
 
 
+// component: item parameters?
+CompilerVisitor.prototype.visitComponent = function(tree) {
+    var item = tree.children[0];
+    item.accept(this);
+
+    if (tree.children.length > 1) {
+        // the VM loads any parameters associated with the element onto the top of the execution stack
+        var parameters = tree.children[1];
+        parameters.accept(this);
+
+        // the VM sets the parameters for the item
+        this.builder.insertInvokeInstruction('$setParameters', 2);
+    }
+};
+
+
 // continueClause: 'continue' 'loop'
 /*
  *  This method is causes the VM to jump to the beginning of the enclosing loop block.
@@ -469,15 +473,6 @@ CompilerVisitor.prototype.visitElement = function(terminal) {
     // the VM loads the element value onto the top of the execution stack
     var literal = terminal.value;
     this.builder.insertPushInstruction('DOCUMENT', literal);
-
-    var parameters = terminal.parameters;
-    if (parameters) {
-        // the VM loads any parameters associated with the element onto the top of the execution stack
-        parameters.accept(this);
-
-        // the VM sets the parameters for the element
-        this.builder.insertInvokeInstruction('$setParameters', 2);
-    }
 };
 
 
@@ -1207,15 +1202,6 @@ CompilerVisitor.prototype.visitStructure = function(tree) {
 
     // the VM places the value of the composite on top of the execution stack
     tree.children[0].accept(this);  // composite
-
-    var parameters = tree.parameters;
-    if (parameters) {
-        // the VM places the value of the parameters on top of the execution stack
-        parameters.accept(this);  // parameters
-
-        // the VM sets the parameters for the structure
-        this.builder.insertInvokeInstruction('$setParameters', 2);
-    }
 };
 
 
