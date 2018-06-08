@@ -1122,24 +1122,7 @@ CompilerVisitor.prototype.visitSelectClause = function(tree) {
  * a main clause and then if any exceptions are thrown attempts to handle
  * them using a sequence of handle clauses.
  */
-// statement: (
-//     evaluateClause |
-//     checkoutClause |
-//     saveClause |
-//     discardClause |
-//     commitClause |
-//     publishClause |
-//     queueClause |
-//     waitClause |
-//     ifClause |
-//     selectClause |
-//     whileClause |
-//     withClause |
-//     continueClause |
-//     breakClause |
-//     returnClause |
-//     throwClause
-// ) handleClause*
+// statement: mainClause handleClause*
 CompilerVisitor.prototype.visitStatement = function(tree) {
     // initialize the context for this statement
     var statement = this.builder.pushStatementContext(tree);
