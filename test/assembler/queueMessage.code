@@ -1,10 +1,11 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
 [001]:    2801    11     1    PUSH DOCUMENT 1
-[002]:    8001    40     1    STORE VARIABLE 1
-[003]:    2802    11     2    PUSH DOCUMENT 2
-[004]:    A801    51     1    INVOKE 1 WITH PARAMETER
-[005]:    2803    11     3    PUSH DOCUMENT 3
-[006]:    6002    30     2    LOAD VARIABLE 2
-[007]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
-[008]:    9801    43     1    STORE MESSAGE 1
+[002]:    D001    62     1    EXECUTE 1 ON TARGET
+[003]:    8001    40     1    STORE VARIABLE 1
+[004]:    2802    11     2    PUSH DOCUMENT 2
+[005]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[006]:    2803    11     3    PUSH DOCUMENT 3
+[007]:    6002    30     2    LOAD VARIABLE 2
+[008]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[009]:    9801    43     1    STORE MESSAGE 1

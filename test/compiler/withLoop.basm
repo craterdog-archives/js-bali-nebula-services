@@ -1,6 +1,7 @@
 
 1.WithStatement:
 PUSH DOCUMENT `$sequence`
+EXECUTE $asComposite ON TARGET
 INVOKE $iterator WITH PARAMETER
 STORE VARIABLE $_iterator_2_
 
@@ -21,6 +22,7 @@ SKIP INSTRUCTION
 
 1.1.2.1.ConditionClause:
 LOAD VARIABLE $x
+EXECUTE $asProbability ON TARGET
 JUMP TO 1.1.2.IfStatementDone ON FALSE
 
 1.1.2.1.1.EvaluateStatement:

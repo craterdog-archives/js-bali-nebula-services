@@ -1,36 +1,45 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
 [001]:    2801    11     1    PUSH DOCUMENT 1
-[002]:    8001    40     1    STORE VARIABLE 1
-[003]:    6801    31     1    LOAD DOCUMENT 1
-[004]:    8002    40     2    STORE VARIABLE 2
-[005]:    2801    11     1    PUSH DOCUMENT 1
-[006]:    8003    40     3    STORE VARIABLE 3
-[007]:    6002    30     2    LOAD VARIABLE 2
-[008]:    9002    42     2    STORE DRAFT 2
-[009]:    2801    11     1    PUSH DOCUMENT 1
-[00A]:    8004    40     4    STORE VARIABLE 4
-[00B]:    6002    30     2    LOAD VARIABLE 2
-[00C]:    8803    41     3    STORE DOCUMENT 3
-[00D]:    6005    30     5    LOAD VARIABLE 5
-[00E]:    2802    11     2    PUSH DOCUMENT 2
-[00F]:    2801    11     1    PUSH DOCUMENT 1
-[010]:    8006    40     6    STORE VARIABLE 6
-[011]:    6804    31     4    LOAD DOCUMENT 4
-[012]:    B801    53     1    INVOKE 1 WITH 3 PARAMETERS
-[013]:    2801    11     1    PUSH DOCUMENT 1
-[014]:    8007    40     7    STORE VARIABLE 7
-[015]:    6005    30     5    LOAD VARIABLE 5
-[016]:    2802    11     2    PUSH DOCUMENT 2
-[017]:    B002    52     2    INVOKE 2 WITH 2 PARAMETERS
-[018]:    9005    42     5    STORE DRAFT 5
-[019]:    2801    11     1    PUSH DOCUMENT 1
-[01A]:    8008    40     8    STORE VARIABLE 8
-[01B]:    6005    30     5    LOAD VARIABLE 5
+[002]:    D001    62     1    EXECUTE 1 ON TARGET
+[003]:    8001    40     1    STORE VARIABLE 1
+[004]:    6801    31     1    LOAD DOCUMENT 1
+[005]:    8002    40     2    STORE VARIABLE 2
+[006]:    2801    11     1    PUSH DOCUMENT 1
+[007]:    D001    62     1    EXECUTE 1 ON TARGET
+[008]:    8003    40     3    STORE VARIABLE 3
+[009]:    6002    30     2    LOAD VARIABLE 2
+[00A]:    9002    42     2    STORE DRAFT 2
+[00B]:    2801    11     1    PUSH DOCUMENT 1
+[00C]:    D001    62     1    EXECUTE 1 ON TARGET
+[00D]:    8004    40     4    STORE VARIABLE 4
+[00E]:    6002    30     2    LOAD VARIABLE 2
+[00F]:    8803    41     3    STORE DOCUMENT 3
+[010]:    6005    30     5    LOAD VARIABLE 5
+[011]:    2802    11     2    PUSH DOCUMENT 2
+[012]:    2801    11     1    PUSH DOCUMENT 1
+[013]:    D001    62     1    EXECUTE 1 ON TARGET
+[014]:    8006    40     6    STORE VARIABLE 6
+[015]:    6804    31     4    LOAD DOCUMENT 4
+[016]:    B801    53     1    INVOKE 1 WITH 3 PARAMETERS
+[017]:    2801    11     1    PUSH DOCUMENT 1
+[018]:    D001    62     1    EXECUTE 1 ON TARGET
+[019]:    8007    40     7    STORE VARIABLE 7
+[01A]:    6005    30     5    LOAD VARIABLE 5
+[01B]:    D002    62     2    EXECUTE 2 ON TARGET
 [01C]:    2802    11     2    PUSH DOCUMENT 2
 [01D]:    B002    52     2    INVOKE 2 WITH 2 PARAMETERS
-[01E]:    8806    41     6    STORE DOCUMENT 6
+[01E]:    9005    42     5    STORE DRAFT 5
 [01F]:    2801    11     1    PUSH DOCUMENT 1
-[020]:    8009    40     9    STORE VARIABLE 9
-[021]:    2803    11     3    PUSH DOCUMENT 3
-[022]:    9007    42     7    STORE DRAFT 7
+[020]:    D001    62     1    EXECUTE 1 ON TARGET
+[021]:    8008    40     8    STORE VARIABLE 8
+[022]:    6005    30     5    LOAD VARIABLE 5
+[023]:    D002    62     2    EXECUTE 2 ON TARGET
+[024]:    2802    11     2    PUSH DOCUMENT 2
+[025]:    B002    52     2    INVOKE 2 WITH 2 PARAMETERS
+[026]:    8806    41     6    STORE DOCUMENT 6
+[027]:    2801    11     1    PUSH DOCUMENT 1
+[028]:    D001    62     1    EXECUTE 1 ON TARGET
+[029]:    8009    40     9    STORE VARIABLE 9
+[02A]:    2803    11     3    PUSH DOCUMENT 3
+[02B]:    9007    42     7    STORE DRAFT 7

@@ -2,6 +2,7 @@
 1.QueueStatement:
 PUSH HANDLERS 1.QueueStatementHandlers
 PUSH DOCUMENT `<bali:/queues/myqueue>`
+EXECUTE $asReference ON TARGET
 STORE VARIABLE $_queue_1_
 LOAD VARIABLE $message
 STORE MESSAGE $_queue_1_
