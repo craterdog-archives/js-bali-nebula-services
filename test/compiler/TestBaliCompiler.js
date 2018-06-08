@@ -35,7 +35,7 @@ describe('Bali Virtual Machine™', function() {
                 var tree = parser.parseDocument(source);
                 expect(tree).to.exist;  // jshint ignore:line
                 analyzer.analyzeType(tree);  // called just to create the context
-                var instructions = compiler.compileBlock(tree, {});
+                var instructions = compiler.compileProcedure(tree, {});
                 expect(instructions).to.exist;  // jshint ignore:line
                 //fs.writeFileSync(basmFile, instructions, 'utf8');
                 var expected = fs.readFileSync(basmFile, 'utf8');

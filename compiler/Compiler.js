@@ -20,14 +20,14 @@ var types = require('bali-language/syntax/NodeTypes');
 
 /**
  * This function traverses a parse tree structure containing a Bali procedure
- * block generating the corresponding assembly instructions for the Bali Virtual
+ * generating the corresponding assembly instructions for the Bali Virtual
  * Machine™.
  * 
- * @param {TreeNode} tree The parse tree structure for the procedure block.
+ * @param {TreeNode} tree The parse tree structure for the procedure.
  * @param {object} context The context needed for compilation.
  * @returns {string} The assembly instructions.
  */
-exports.compileBlock = function(tree, context) {
+exports.compileProcedure = function(tree, context) {
     var visitor = new CompilerVisitor(context);
     tree.accept(visitor);
     return visitor.getResult();
@@ -147,43 +147,30 @@ CompilerVisitor.prototype.visitAssociation = function(tree) {
 
 
 /*
- * This method compiles a procedure block. Since procedure blocks can be nested
- * within statement clauses each block needs its own compilation context. When
- * entering a block a new context is pushed onto the compilation stack and when
- * the block is done being compiled, that context is popped back off the stack.
- * NOTE: This stack is different than the runtime execution stack that is
- * maintained by the Bali Virtual Machine™.
+ * This method compiles a procedure block.
  */
 // block: '{' procedure '}'
 CompilerVisitor.prototype.visitBlock = function(tree) {
-    // create a new compiler block context in the instruction builder
-    this.builder.pushBlockContext();
-
     // the VM executes the procedure
     tree.children[0].accept(this);
-
-    // throw away the current compiler block context in the instruction builder
-    this.builder.popBlockContext();
 };
 
 
 /*
- *  This method is causes the VM to jump out of the enclosing loop block.
+ *  This method is causes the VM to jump out of the enclosing loop procedure block.
  */
 // breakClause: 'break' 'loop'
 CompilerVisitor.prototype.visitBreakClause = function(tree) {
-    // TODO: throw an exception if this is not the last statement in the parent block!!!
-
     // retrieve the loop label from the parent context
-    var blocks = this.builder.blocks;
-    var block;
+    var procedures = this.builder.procedures;
+    var procedure;
     var loopLabel;
-    var numberOfBlocks = blocks.length;
-    for (var i = 0; i < numberOfBlocks; i++) {
-        block = blocks[numberOfBlocks - i - 1];  // work backwards
-        loopLabel = block.statement.loopLabel;
+    var numberOfProcedures = procedures.length;
+    for (var i = 0; i < numberOfProcedures; i++) {
+        procedure = procedures[numberOfProcedures - i - 1];  // work backwards
+        loopLabel = procedure.statement.loopLabel;
         if (loopLabel) {
-            var doneLabel = block.statement.doneLabel;
+            var doneLabel = procedure.statement.doneLabel;
             // the VM jumps out of the enclosing loop
             this.builder.insertJumpInstruction(doneLabel);
             return;
@@ -354,19 +341,17 @@ CompilerVisitor.prototype.visitComponent = function(tree) {
 
 // continueClause: 'continue' 'loop'
 /*
- *  This method is causes the VM to jump to the beginning of the enclosing loop block.
+ *  This method is causes the VM to jump to the beginning of the enclosing loop procedure block.
  */
 CompilerVisitor.prototype.visitContinueClause = function(tree) {
-    // TODO: throw an exception if this is not the last statement in the parent block!!!
-
     // retrieve the loop label from the parent context
-    var blocks = this.builder.blocks;
-    var block;
+    var procedures = this.builder.procedures;
+    var procedure;
     var loopLabel;
-    var numberOfBlocks = blocks.length;
-    for (var i = 0; i < numberOfBlocks; i++) {
-        block = blocks[numberOfBlocks - i - 1];  // work backwards
-        loopLabel = block.statement.loopLabel;
+    var numberOfProcedures = procedures.length;
+    for (var i = 0; i < numberOfProcedures; i++) {
+        procedure = procedures[numberOfProcedures - i - 1];  // work backwards
+        loopLabel = procedure.statement.loopLabel;
         if (loopLabel) {
             // the VM jumps to the beginning of the enclosing loop
             this.builder.insertJumpInstruction(loopLabel);
@@ -468,7 +453,7 @@ CompilerVisitor.prototype.visitDocument = function(tree) {
 //     text |
 //     version
 CompilerVisitor.prototype.visitElement = function(terminal) {
-    // TODO: add instructions to process blocks embedded within text
+    // TODO: add instructions to process procedure blocks embedded within text
 
     // the VM loads the element value onto the top of the execution stack
     var literal = terminal.value;
@@ -894,20 +879,30 @@ CompilerVisitor.prototype.visitPrecedenceExpression = function(tree) {
 
 /*
  * This method compiles a sequence of statements by inserting instructions for
- * the VM to follow for each statement.
+ * the VM to follow for each statement. Since procedure blocks can be nested
+ * within statement clauses each procedure needs its own compilation context. When
+ * entering a procedure a new context is pushed onto the compilation stack and when
+ * the procedure is done being compiled, that context is popped back off the stack.
+ * NOTE: This stack is different than the runtime execution stack that is
+ * maintained by the Bali Virtual Machine™.
  */
 // procedure:
 //     statement (';' statement)*   |
 //     NEWLINE (statement NEWLINE)* |
 //     /*empty statements*/
 CompilerVisitor.prototype.visitProcedure = function(tree) {
-    var statements = tree.children;
+    // create a new compiler procedure context in the instruction builder
+    this.builder.pushProcedureContext(tree);
 
-    // compile the statements
+    // the VM executes each statement
+    var statements = tree.children;
     for (var i = 0; i < statements.length; i++) {
         statements[i].accept(this);
         this.builder.incrementStatementCount();
     }
+
+    // throw away the current compiler procedure context in the instruction builder
+    this.builder.popProcedureContext();
 };
 
 
@@ -997,8 +992,6 @@ CompilerVisitor.prototype.visitRecipient = function(tree) {
  */
 // returnClause: 'return' expression?
 CompilerVisitor.prototype.visitReturnClause = function(tree) {
-    // TODO: throw an exception if this is not the last statement in the parent block!!!
-
     // the VM stores the result in a temporary variable and sets a flag
     if (tree.children.length > 0) {
         // the VM stores the value of the result expression in a temporary variable
@@ -1222,12 +1215,10 @@ CompilerVisitor.prototype.visitTask = function(tree) {
 /*
  * This method inserts the instructions that cause the VM to evaluate an
  * exception expression and then jumps to the the handle clauses for the
- * current block context.
+ * current handler context.
  */
 // throwClause: 'throw' expression
 CompilerVisitor.prototype.visitThrowClause = function(tree) {
-    // TODO: throw an exception if this is not the last statement in the parent block!!!
-
     // the VM evaluates the exception expression
     tree.children[0].accept(this);  // exception expression
 
@@ -1373,6 +1364,16 @@ CompilerVisitor.prototype.visitWithClause = function(tree) {
 
 
 /*
+ * This method creates a new temporary variable name. Since each variable name must
+ * be unique within the scope of the procedure block being compiled, a counter is
+ * used to append a unique number to the end of each temporary variable.
+ */
+CompilerVisitor.prototype.createTemporaryVariable = function(name) {
+    return '$_' + name + '_' + this.temporaryVariableCount++ + '_';
+};
+
+
+/*
  * This method inserts instructions that cause the VM to either set
  * the value of a variable or a subcomponent to the value on the top of the
  * execution stack.
@@ -1392,16 +1393,6 @@ CompilerVisitor.prototype.setRecipient = function(recipient) {
 };
 
 
-/*
- * This method creates a new temporary variable name. Since each variable name must
- * be unique within the scope of the procedure block being compiled, a counter is
- * used to append a unique number to the end of each temporary variable.
- */
-CompilerVisitor.prototype.createTemporaryVariable = function(name) {
-    return '$_' + name + '_' + this.temporaryVariableCount++ + '_';
-};
-
-
 CompilerVisitor.prototype.getResult = function() {
     this.builder.finalize();
     return this.builder.asmcode;
@@ -1412,16 +1403,15 @@ CompilerVisitor.prototype.getResult = function() {
 
 /*
  * This helper class is used to construct the Bali assembly source code. It
- * maintains a stack of block context objects that track the current statement
- * number and clause number within each block as well as the label prefixes for
- * each level.  A prefix is a dot separated sequence of positive numbers defining
- * alternately the statement number and clause number.  For example, a prefix of
- * '2.3.4.' would correspond to the fourth statement in the third clause of the
- * second statement in the main block.
+ * maintains a stack of procedure context objects that track the current statement
+ * number and clause number within each procedure.  A prefix is a dot separated
+ * sequence of positive numbers defining alternately the statement number and
+ * clause number.  For example, a prefix of '2.3.4.' would correspond to the
+ * fourth statement in the third clause of the second statement in the main procedure.
  */
 function InstructionBuilder() {
     this.asmcode = '';
-    this.blocks = [];  // stack of block contexts
+    this.procedures = [];  // stack of procedure contexts
     this.nextLabel = null;
     return this;
 }
@@ -1429,20 +1419,23 @@ InstructionBuilder.prototype.constructor = InstructionBuilder;
 
 
 /*
- * This method pushes a new block context onto the block stack and initializes
- * it based on the parent block context if one exists.
+ * This method pushes a new procedure context onto the procedure stack and initializes
+ * it based on the parent procedure context if one exists.
  */
-InstructionBuilder.prototype.pushBlockContext = function() {
-    if (this.blocks.length > 0) {
-        var parent = this.blocks.peek();
-        this.blocks.push({
+InstructionBuilder.prototype.pushProcedureContext = function(tree) {
+    var statementCount = tree.children[0].children.length;
+    if (this.procedures.length > 0) {
+        var parent = this.procedures.peek();
+        this.procedures.push({
             statementNumber: 1,
+            statementCount: statementCount,
             prefix: parent.prefix + parent.statementNumber + '.' + parent.statement.clauseNumber + '.'
         });
         parent.statement.clauseNumber++;
     } else {
-        this.blocks.push({
+        this.procedures.push({
             statementNumber: 1,
+            statementCount: statementCount,
             prefix: ''
         });
     }
@@ -1450,16 +1443,16 @@ InstructionBuilder.prototype.pushBlockContext = function() {
 
 
 /*
- * This method pops off the current block context when the compiler is done processing
- * that block.
+ * This method pops off the current procedure context when the compiler is done processing
+ * that procedure.
  */
-InstructionBuilder.prototype.popBlockContext = function() {
-    this.blocks.pop();
+InstructionBuilder.prototype.popProcedureContext = function() {
+    this.procedures.pop();
 };
 
 
 /*
- * This method pushes a new statement context onto the block stack and initializes
+ * This method pushes a new statement context onto the procedure stack and initializes
  * it.
  */
 InstructionBuilder.prototype.pushStatementContext = function(tree) {
@@ -1468,8 +1461,8 @@ InstructionBuilder.prototype.pushStatementContext = function(tree) {
     var subClauses = getSubClauses(mainClause);
     var handleClauses = children.slice(1);
     var clauseCount = subClauses.length + handleClauses.length;
-    var block = this.blocks.peek();
-    block.statement = {
+    var procedure = this.procedures.peek();
+    procedure.statement = {
         mainClause: mainClause,
         subClauses: subClauses,
         handleClauses: handleClauses,
@@ -1477,10 +1470,10 @@ InstructionBuilder.prototype.pushStatementContext = function(tree) {
         clauseNumber: 1
     };
 
-    // initialize the block configuration for this statement
-    var statement = block.statement;
+    // initialize the procedure configuration for this statement
+    var statement = procedure.statement;
     var type = types.TREE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
-    var prefix = block.prefix + block.statementNumber + '.';
+    var prefix = procedure.prefix + procedure.statementNumber + '.';
     statement.startLabel = prefix + type + 'Statement';
     if (statement.clauseCount > 0) {
         statement.doneLabel = prefix + type + 'StatementDone';
@@ -1491,7 +1484,7 @@ InstructionBuilder.prototype.pushStatementContext = function(tree) {
         statement.successLabel = prefix + type + 'StatementSucceeded';
     }
 
-    return block.statement;
+    return procedure.statement;
 };
 
 
@@ -1500,7 +1493,7 @@ InstructionBuilder.prototype.pushStatementContext = function(tree) {
  * that statement.
  */
 InstructionBuilder.prototype.popStatementContext = function() {
-    this.blocks.peek().statement = undefined;
+    this.procedures.peek().statement = undefined;
 };
 
 
@@ -1508,7 +1501,7 @@ InstructionBuilder.prototype.popStatementContext = function() {
  * This method determines whether or not the current statement contains clauses.
  */
 InstructionBuilder.prototype.hasClauses = function() {
-    var statement = this.blocks.peek().statement;
+    var statement = this.procedures.peek().statement;
     return statement.clauseCount > 0;
 };
 
@@ -1517,51 +1510,51 @@ InstructionBuilder.prototype.hasClauses = function() {
  * This method determines whether or not the current statement contains handlers.
  */
 InstructionBuilder.prototype.hasHandlers = function() {
-    var statement = this.blocks.peek().statement;
+    var statement = this.procedures.peek().statement;
     return statement.handleClauses.length > 0;
 };
 
 
 /*
- * This method returns the number of the current clause within its block context. For
+ * This method returns the number of the current clause within its procedure context. For
  * example a 'then' clause within an 'if then else' statement would be the first clause
  * and the 'else' clause would be the second clause. Exception clauses and final clauses
  * are also included in the numbering.
  */
 InstructionBuilder.prototype.getClauseNumber = function() {
-    var block = this.blocks.peek();
-    var number = block.statement.clauseNumber;
+    var procedure = this.procedures.peek();
+    var number = procedure.statement.clauseNumber;
     return number;
 };
 
 
 /*
- * This method returns the number of the current statement within its block context. The
+ * This method returns the number of the current statement within its procedure context. The
  * statements are numbered sequentially starting with the number 1.
  */
 InstructionBuilder.prototype.getStatementNumber = function() {
-    var block = this.blocks.peek();
-    var number = block.statementNumber;
+    var procedure = this.procedures.peek();
+    var number = procedure.statementNumber;
     return number;
 };
 
 
 /*
- * This method increments by one the statement counter within the current block context.
+ * This method increments by one the statement counter within the current procedure context.
  */
 InstructionBuilder.prototype.incrementStatementCount = function() {
-    var block = this.blocks.peek();
-    block.statementNumber++;
+    var procedure = this.procedures.peek();
+    procedure.statementNumber++;
 };
 
 
 /*
  * This method returns the label prefix for the current instruction within the current
- * block context.
+ * procedure context.
  */
 InstructionBuilder.prototype.getStatementPrefix = function() {
-    var block = this.blocks.peek();
-    var prefix = block.prefix + block.statementNumber + '.';
+    var procedure = this.procedures.peek();
+    var prefix = procedure.prefix + procedure.statementNumber + '.';
     return prefix;
 };
 
@@ -1570,7 +1563,7 @@ InstructionBuilder.prototype.getStatementPrefix = function() {
  * This method returns the type of the current statement.
  */
 InstructionBuilder.prototype.getStatementType = function() {
-    var statement = this.blocks.peek().statement;
+    var statement = this.procedures.peek().statement;
     var type = types.TREE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
     return type;
 };
@@ -1580,29 +1573,29 @@ InstructionBuilder.prototype.getStatementType = function() {
  * This method returns the context for the current statement.
  */
 InstructionBuilder.prototype.getStatementContext = function() {
-    var statement = this.blocks.peek().statement;
+    var statement = this.procedures.peek().statement;
     return statement;
 };
 
 
 /*
  * This method returns the label prefix for the current clause within the current
- * block context.
+ * procedure context.
  */
 InstructionBuilder.prototype.getClausePrefix = function() {
-    var block = this.blocks.peek();
-    var prefix = block.prefix + block.statementNumber + '.' + block.statement.clauseNumber + '.';
+    var procedure = this.procedures.peek();
+    var prefix = procedure.prefix + procedure.statementNumber + '.' + procedure.statement.clauseNumber + '.';
     return prefix;
 };
 
 
 /*
  * This method returns the label prefix for the next clause within the current
- * block context.
+ * procedure context.
  */
 InstructionBuilder.prototype.getNextClausePrefix = function() {
-    var block = this.blocks.peek();
-    var prefix = block.prefix + block.statementNumber + '.' + (block.statement.clauseNumber + 1) + '.';
+    var procedure = this.procedures.peek();
+    var prefix = procedure.prefix + procedure.statementNumber + '.' + (procedure.statement.clauseNumber + 1) + '.';
     return prefix;
 };
 
