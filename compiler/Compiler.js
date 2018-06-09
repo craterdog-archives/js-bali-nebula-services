@@ -14,6 +14,7 @@
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
 var types = require('bali-language/syntax/NodeTypes');
+var language = require('bali-language/BaliLanguage');
 
 
 // PUBLIC FUNCTIONS
@@ -23,13 +24,13 @@ var types = require('bali-language/syntax/NodeTypes');
  * generating the corresponding assembly instructions for the Bali Virtual
  * Machine™.
  * 
- * @param {TreeNode} tree The parse tree structure for the procedure.
+ * @param {TreeNode} procedure The parse tree structure for the procedure.
  * @param {object} context The context needed for compilation.
  * @returns {string} The assembly instructions.
  */
-exports.compileProcedure = function(tree, context) {
+exports.compileProcedure = function(procedure, context) {
     var visitor = new CompilerVisitor(context);
-    tree.accept(visitor);
+    procedure.accept(visitor);
     return visitor.getResult();
 };
 
@@ -134,7 +135,7 @@ CompilerVisitor.prototype.visitArithmeticExpression = function(tree) {
  * pair for an association on the execution stack so that they can be added to
  * the parent catalog.
  */
-// association: element ':' expression
+// association: component ':' expression
 CompilerVisitor.prototype.visitAssociation = function(tree) {
     // the VM places the element key on the execution stack
     tree.children[0].accept(this);

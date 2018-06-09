@@ -15,8 +15,9 @@
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
 var language = require('bali-language/BaliLanguage');
-var syntax = require('bali-language/syntax');
-var types = require('bali-language/syntax/NodeTypes');
+var TerminalNode = require('bali-language/syntax/TerminalNode');
+var TreeNode = require('bali-language/syntax/TreeNode');
+var Types = require('bali-language/syntax/NodeTypes');
 var instructionSet = require('bali-instruction-set/BaliInstructionSet');
 var analyzer = require('./compiler/Analyzer');
 var compiler = require('./compiler/Compiler');
@@ -43,15 +44,29 @@ var cloud = {
 exports.compileType = function(document) {
     var tree = language.parseDocument(document);
     var context = analyzer.analyzeType(tree);
-    var procedures = extractProcedures(tree);
-    for (var i = 0; i < procedures.length; i++) {
-        var procedure = procedures[i];
-        var block = extractBlock(procedure);
-        var instructions = compiler.compileBlock(block, context);
+    var procedures = language.getValueForKey(tree, '$procedures');
+    var iterator = language.iterator(procedures);
+    while (iterator.hasNext()) {
+        var procedure = iterator.getNext();
+        var block = language.getValueForKey(tree, '$source');
+        var instructions = compiler.compileProcedure(block, context);
         var list = instructionSet.parseProcedure(instructions);
         var symbols = scanner.extractSymbols(list);
         var bytecode = assembler.assembleBytecode(list, symbols);
-        updateProcedure(procedure, instructions, bytecode);
+
+        // add instructions to procedure catalog
+        var catalog = procedure.children[1];
+        var value = language.parseExpression('"' + instructions + '"' + '($mediatype: "application/basm")');
+        language.setValueForKey(catalog, '$instructions', value);
+    
+        // add bytecode to procedure catalog
+        var bytes = "";
+        for (var i = 0; i < bytecode.length; i++) {
+            bytes += utilities.shortToBytes(bytecode[i]);
+        }
+        var binary = utilities.base16Encode(bytes, '                ');
+        value = language.parseExpression("'" + binary + "'" + '($mediatype: "application/bcod")');
+        language.setValueForKey(catalog, '$bytecode', value);
     }
     return tree;
 };
@@ -99,88 +114,6 @@ exports.continueProcessing = function(taskReference) {
 };
 
 
-// PRIVATE FUNCTIONS
-
-function extractProcedures(type) {
-    var procedures = [];
-    var catalog = type.children[0].children[0];
-    for (var i = 0; i < catalog.children.length; i++) {
-        var association = catalog.children[i];
-        var key = association.children[0];
-        var value = association.children[1];
-        if (key.type === types.SYMBOL && key.value === '$procedures') {
-            procedures = value.children[0].children;
-            break;
-        }
-    }
-    return procedures;
-}
-
-
-/*
- * This function extracts a block tree node from an association tree node whose symbol is
- * the procedure name and the value is a structure tree node containing the source, instructions,
- * and bytecode for the procedure.
- */
-function extractBlock(procedure) {
-    var block;
-    var catalog = procedure.children[1].children[0];
-    for (var i = 0; i < catalog.children.length; i++) {
-        var association = catalog.children[i];
-        var key = association.children[0];
-        var value = association.children[1];
-        if (key.type === types.SYMBOL && key.value === '$source') {
-            block = value;
-            break;
-        }
-    }
-    return block;
-}
-
-
-function updateProcedure(procedure, instructions, bytecode) {
-    // construct the mediatype parameter catalog
-    var key = new syntax.TerminalNode(types.SYMBOL, '$mediatype');
-    var value = new syntax.TerminalNode(types.TEXT, '"application/basm"');
-    var association = new syntax.TreeNode(types.ASSOCIATION);
-    association.addChild(key);
-    association.addChild(value);
-    var catalog = new syntax.TreeNode(types.CATALOG);
-    catalog.addChild(association);
-    catalog.isSimple = true;
-    var parameters = new syntax.TreeNode(types.PARAMETERS);
-    parameters.addChild(catalog);
-
-    // remove existing instructions and bytecode from procedure catalog
-    catalog = procedure.children[1].children[0];
-    procedure.children[1].children[0].children = catalog.children.slice(0, 1);
-
-    // add instructions to procedure catalog
-    association = new syntax.TreeNode(types.ASSOCIATION);
-    key = new syntax.TerminalNode(types.SYMBOL, '$instructions');
-    value = new syntax.TerminalNode(types.TEXT, '"' + instructions + '"');
-    value.parameters = parameters;
-    association.addChild(key);
-    association.addChild(value);
-    catalog.addChild(association);
-
-    // add bytecode to procedure catalog
-    var structure = new syntax.TreeNode(types.STRUCTURE);
-    var list = new syntax.TreeNode(types.LIST);
-    structure.addChild(list);
-    for (var i = 0; i < bytecode.length; i++) {
-        var bytes = utilities.shortToBytes(bytecode[i]);
-        var binary = new syntax.TerminalNode(types.BINARY, "'" + utilities.base16Encode(bytes) + "'");
-        list.addChild(binary);
-    }
-    association = new syntax.TreeNode(types.ASSOCIATION);
-    key = new syntax.TerminalNode(types.SYMBOL, '$bytecode');
-    association.addChild(key);
-    association.addChild(structure);
-    catalog.addChild(association);
-}
-
-
 // PRIVATE CLASSES
 
 function ExtractingVisitor() {
@@ -195,10 +128,10 @@ ExtractingVisitor.prototype.visitArithmeticExpression = function(tree) {
 };
 
 
-// association: element ':' expression
+// association: component ':' expression
 ExtractingVisitor.prototype.visitAssociation = function(tree) {
     var element = tree.children[0];
-    if (element.type === types.SYMBOL && element.value === '$procedures') {
+    if (element.type === Types.SYMBOL && element.value === '$procedures') {
         tree.children[1].accept(this);
     }
 };
