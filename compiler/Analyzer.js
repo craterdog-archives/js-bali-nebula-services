@@ -27,9 +27,8 @@
  * @returns {object} An object containing the type context information.
  */
 exports.analyzeType = function(tree) {
-    var context = {};
-    //TODO: do the actual analysis
-    return context;
+    var visitor = new AnalyzingVisitor();
+    tree.accept(visitor);
 };
 
 

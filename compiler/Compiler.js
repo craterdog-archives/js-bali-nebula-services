@@ -25,11 +25,11 @@ var language = require('bali-language/BaliLanguage');
  * Machine™.
  * 
  * @param {TreeNode} procedure The parse tree structure for the procedure.
- * @param {object} context The context needed for compilation.
+ * @param {object} type The type defining the procedure.
  * @returns {string} The assembly instructions.
  */
-exports.compileProcedure = function(procedure, context) {
-    var visitor = new CompilingVisitor(context);
+exports.compileProcedure = function(procedure, type) {
+    var visitor = new CompilingVisitor(type);
     procedure.accept(visitor);
     return visitor.getResult();
 };
@@ -76,8 +76,8 @@ function getSubClauses(statement) {
  * to construct the corresponding Bali Virtual Machine™ instructions for the
  * syntax tree is it traversing.
  */
-function CompilingVisitor(context) {
-    this.context = context;
+function CompilingVisitor(type) {
+    this.type = type;
     this.builder = new InstructionBuilder();
     this.temporaryVariableCount = 1;
     return this;

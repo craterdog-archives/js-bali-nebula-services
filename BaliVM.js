@@ -39,14 +39,14 @@ var cloud = {
  * @returns {TreeNode} The full parse tree for the Bali type.
  */
 exports.compileType = function(document) {
-    var tree = language.parseDocument(document);
-    var context = analyzer.analyzeType(tree);
-    var procedures = language.getValueForKey(tree, '$procedures');
+    var type = language.parseDocument(document);
+    analyzer.analyzeType(type);
+    var procedures = language.getValueForKey(type, '$procedures');
     var iterator = language.iterator(procedures);
     while (iterator.hasNext()) {
         var procedure = iterator.getNext();
-        var block = language.getValueForKey(tree, '$source');
-        var instructions = compiler.compileProcedure(block, context);
+        var block = language.getValueForKey(type, '$source');
+        var instructions = compiler.compileProcedure(block, type);
         var list = instructionSet.parseProcedure(instructions);
         var symbols = scanner.extractSymbols(list);
         var bytecode = assembler.assembleBytecode(list, symbols);
@@ -65,7 +65,7 @@ exports.compileType = function(document) {
         value = language.parseExpression("'" + binary + "'" + '($mediatype: "application/bcod")');
         language.setValueForKey(catalog, '$bytecode', value);
     }
-    return tree;
+    return type;
 };
 
 
