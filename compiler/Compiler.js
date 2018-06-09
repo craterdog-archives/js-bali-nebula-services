@@ -14,7 +14,6 @@
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
 var types = require('bali-language/syntax/NodeTypes');
-var language = require('bali-language/BaliLanguage');
 
 
 // PUBLIC FUNCTIONS
@@ -1179,8 +1178,6 @@ CompilingVisitor.prototype.visitStatement = function(tree) {
  */
 // structure: '[' composite ']'
 CompilingVisitor.prototype.visitStructure = function(tree) {
-    // TODO: check for 'type' parameter and use methods instead of functions if there is one
-
     // the VM places the value of the composite on top of the execution stack
     tree.children[0].accept(this);  // composite
 };
@@ -1193,8 +1190,6 @@ CompilingVisitor.prototype.visitStructure = function(tree) {
  */
 // subcomponentExpression: expression indices
 CompilingVisitor.prototype.visitSubcomponentExpression = function(tree) {
-    // TODO: check for 'type' parameter and use methods instead of functions if there is one
-
     // the VM places the value of the expression on top of the execution stack
     tree.children[0].accept(this);  // expression
     this.builder.insertExecuteInstruction('$asComposite', 'ON TARGET');
@@ -1305,8 +1300,6 @@ CompilingVisitor.prototype.visitWhileClause = function(tree) {
  */
 // withClause: 'with' ('each' symbol 'in')? expression 'do' block
 CompilingVisitor.prototype.visitWithClause = function(tree) {
-    // TODO: check for 'type' parameter and use methods instead of functions if there is one
-
     var clausePrefix = this.builder.getClausePrefix();
     var children = tree.children;
     var length = children.length;
@@ -1328,7 +1321,7 @@ CompilingVisitor.prototype.visitWithClause = function(tree) {
     this.builder.insertExecuteInstruction('$asComposite', 'ON TARGET');
 
     // the VM replaces the sequence on the execution stack with an iterator to it
-    this.builder.insertInvokeInstruction('$iterator', 1);
+    this.builder.insertExecuteInstruction('$iterator', 'ON TARGET');
 
     // The VM stores the iterater in a temporary variable
     var iterator = this.createTemporaryVariable('iterator');
@@ -1339,14 +1332,14 @@ CompilingVisitor.prototype.visitWithClause = function(tree) {
 
     // the VM jumps past the end of the loop if the iterator has no more items
     this.builder.insertLoadInstruction('VARIABLE', iterator);
-    this.builder.insertInvokeInstruction('$hasNext', 1);
+    this.builder.insertExecuteInstruction('$hasNext', 'ON TARGET');
     this.builder.insertJumpInstruction(statement.doneLabel, 'ON FALSE');
 
     // the VM places the iterator back onto the execution stack
     this.builder.insertLoadInstruction('VARIABLE', iterator);
 
     // the VM replaces the iterator on the execution stack with the next item from the sequence
-    this.builder.insertInvokeInstruction('$getNext', 1);
+    this.builder.insertExecuteInstruction('$getNext', 'ON TARGET');
 
     // the VM stores the item that is on top of the execution stack in the variable
     this.builder.insertStoreInstruction('VARIABLE', item);
