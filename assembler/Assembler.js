@@ -27,7 +27,7 @@ var utilities = require('../utilities/BytecodeUtilities');
  * @returns {array} The corresponding bytecode array.
  */
 exports.assembleBytecode = function(procedure, symbols) {
-    var visitor = new AssemblerVisitor(symbols);
+    var visitor = new AssemblingVisitor(symbols);
     procedure.accept(visitor);
     return visitor.bytecode;
 };
@@ -132,16 +132,16 @@ function lookupSymbol(symbols, operation, modifier, index) {
 
 // PRIVATE CLASSES
 
-function AssemblerVisitor(symbols) {
+function AssemblingVisitor(symbols) {
     this.symbols = symbols;
     this.bytecode = [];  // array of bytecode instructions
     return this;
 }
-AssemblerVisitor.prototype.constructor = AssemblerVisitor;
+AssemblingVisitor.prototype.constructor = AssemblingVisitor;
 
 
 // procedure: NEWLINE* step* NEWLINE* EOF;
-AssemblerVisitor.prototype.visitProcedure = function(procedure) {
+AssemblingVisitor.prototype.visitProcedure = function(procedure) {
     var steps = procedure.steps;
     for (var i = 0; i < steps.length; i++) {
         var step = steps[i];
@@ -151,14 +151,14 @@ AssemblerVisitor.prototype.visitProcedure = function(procedure) {
 
 
 // step: label? instruction NEWLINE
-AssemblerVisitor.prototype.visitStep = function(step) {
+AssemblingVisitor.prototype.visitStep = function(step) {
     // can ignore the label at this stage since they don't show up in the bytecode
     step.instruction.accept(this);
 };
 
 
 // skipInstruction: 'SKIP' 'INSTRUCTION'
-AssemblerVisitor.prototype.visitSkipInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitSkipInstruction = function(instruction) {
     var bytes = utilities.encodeInstruction('JUMP', '');
     this.bytecode.push(bytes);
 };
@@ -169,7 +169,7 @@ AssemblerVisitor.prototype.visitSkipInstruction = function(instruction) {
 //     'JUMP' 'TO' LABEL 'ON' 'NONE' |
 //     'JUMP' 'TO' LABEL 'ON' 'TRUE' |
 //     'JUMP' 'TO' LABEL 'ON' 'FALSE'
-AssemblerVisitor.prototype.visitJumpInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitJumpInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var label = instruction.label;
     var address = this.symbols.addresses[label];
@@ -181,7 +181,7 @@ AssemblerVisitor.prototype.visitJumpInstruction = function(instruction) {
 // pushInstruction:
 //     'PUSH' 'HANDLERS' LABEL |
 //     'PUSH' 'DOCUMENT' LITERAL
-AssemblerVisitor.prototype.visitPushInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.value;
     switch(modifier) {
@@ -202,7 +202,7 @@ AssemblerVisitor.prototype.visitPushInstruction = function(instruction) {
 // popInstruction:
 //     'POP' 'HANDLERS' |
 //     'POP' 'DOCUMENT'
-AssemblerVisitor.prototype.visitPopInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitPopInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var bytes = utilities.encodeInstruction('POP', modifier);
     this.bytecode.push(bytes);
@@ -214,7 +214,7 @@ AssemblerVisitor.prototype.visitPopInstruction = function(instruction) {
 //     'LOAD' 'DOCUMENT' SYMBOL |
 //     'LOAD' 'DRAFT' SYMBOL |
 //     'LOAD' 'MESSAGE' SYMBOL
-AssemblerVisitor.prototype.visitLoadInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
     var index;
@@ -240,7 +240,7 @@ AssemblerVisitor.prototype.visitLoadInstruction = function(instruction) {
 //     'STORE' 'DOCUMENT' SYMBOL |
 //     'STORE' 'DRAFT' SYMBOL |
 //     'STORE' 'MESSAGE' SYMBOL
-AssemblerVisitor.prototype.visitStoreInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
     var index;
@@ -265,7 +265,7 @@ AssemblerVisitor.prototype.visitStoreInstruction = function(instruction) {
 //     'INVOKE' SYMBOL |
 //     'INVOKE' SYMBOL 'WITH' 'PARAMETER' |
 //     'INVOKE' SYMBOL 'WITH' NUMBER 'PARAMETERS'
-AssemblerVisitor.prototype.visitInvokeInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitInvokeInstruction = function(instruction) {
     var count = instruction.count;
     var symbol = instruction.symbol;
     var index = this.symbols.intrinsics.indexOf(symbol) + 1;  // bali VM unit based indexing
@@ -279,7 +279,7 @@ AssemblerVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' SYMBOL 'WITH' 'PARAMETERS' |
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' |
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
-AssemblerVisitor.prototype.visitExecuteInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
     var index = this.symbols.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
@@ -291,7 +291,7 @@ AssemblerVisitor.prototype.visitExecuteInstruction = function(instruction) {
 // handleInstruction:
 //     'HANDLE' 'EXCEPTION' |
 //     'HANDLE' 'RESULT'
-AssemblerVisitor.prototype.visitHandleInstruction = function(instruction) {
+AssemblingVisitor.prototype.visitHandleInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var bytes = utilities.encodeInstruction('HANDLE', modifier);
     this.bytecode.push(bytes);
