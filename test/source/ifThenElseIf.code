@@ -13,3 +13,4 @@
 [00B]:    6003    30     3    LOAD VARIABLE 3
 [00C]:    8002    40     2    STORE VARIABLE 2
 [00D]:    0000    00 [000]    SKIP INSTRUCTION
+

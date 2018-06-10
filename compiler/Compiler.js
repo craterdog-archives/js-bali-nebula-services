@@ -240,6 +240,17 @@ CompilingVisitor.prototype.visitCheckoutClause = function(tree) {
 
 
 /*
+ * This method compiles a code block.
+ */
+// code: '{' procedure '}'
+CompilingVisitor.prototype.visitCode = function(tree) {
+    var procedure = tree.children[0];
+    var source = language.formatParseTree(procedure);
+    this.builder.insertPushInstruction('DOCUMENT', '"' + source + '"($mediatype: "application/bali")');
+};
+
+
+/*
  * This method inserts the instructions needed to commit to the Bali Cloud
  * Environment™ a document that is on top of the execution stack. A reference to
  * the location of the persistent document is evaluated by the VM.
@@ -332,14 +343,6 @@ CompilingVisitor.prototype.visitComponent = function(tree) {
     //     on the stack (as a literal string?)
     var item = tree.children[0];
     item.accept(this);
-    /*
-    if (item.type === types.BLOCK) {
-        var source = language.formatDocument(item);
-        this.builder.insertPushInstruction('DOCUMENT', '"\n' + source + '\n"($mediatype: "application/bali")');
-    } else {
-        item.accept(this);
-    }
-    */
 
     if (tree.children.length > 1) {
         // the VM loads any parameters associated with the element onto the top of the execution stack

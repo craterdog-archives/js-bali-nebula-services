@@ -4,3 +4,4 @@ queue message on <bali:/queues/myqueue> handle $error matching [$type: 'bad'] wi
 } handle $error matching [$type: 'horrid'] with {
     none
 }
+

@@ -84,6 +84,12 @@ AnalyzingVisitor.prototype.visitCheckoutClause = function(tree) {
 };
 
 
+// code: '{' procedure '}'
+AnalyzingVisitor.prototype.visitCode = function(tree) {
+    tree.children[0].accept(this);
+};
+
+
 // commitClause: 'commit' expression 'to' expression
 AnalyzingVisitor.prototype.visitCommitClause = function(tree) {
     tree.children[0].accept(this);

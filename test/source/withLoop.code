@@ -24,3 +24,4 @@
 [016]:    8005    40     5    STORE VARIABLE 5
 [017]:    0005    00 [005]    JUMP TO [005]
 [018]:    0000    00 [000]    SKIP INSTRUCTION
+

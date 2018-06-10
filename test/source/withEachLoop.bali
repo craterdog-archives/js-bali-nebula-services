@@ -7,3 +7,4 @@ with each $symbol in $sequence do {
     }
     $z := any
 }
+

@@ -35,27 +35,27 @@ var cloud = {
 /**
  * This function compiles a Bali Document Language™ type.
  * 
- * @param {string} document The Bali document for the type to be compiled.
+ * @param {string} source The Bali source code for the type to be compiled.
  * @returns {TreeNode} The full parse tree for the Bali type.
  */
-exports.compileType = function(document) {
-    var type = language.parseDocument(document);
+exports.compileType = function(source) {
+    var type = language.parseDocument(source);
     analyzer.analyzeType(type);
     var procedures = language.getValueForKey(type, '$procedures');
     var iterator = language.iterator(procedures);
     while (iterator.hasNext()) {
         var component = iterator.getNext();
-        var source = language.getValueForKey(component, '$source');
+        source = language.getValueForKey(component, '$source');
         var block = source.children[0];
         var procedure = block.children[0];
-        var instructions = compiler.compileProcedure(procedure, type);
-        var list = instructionSet.parseProcedure(instructions);
-        var symbols = scanner.extractSymbols(list);
-        var bytecode = assembler.assembleBytecode(list, symbols);
+        source = compiler.compileProcedure(procedure, type);
+        var instructions = instructionSet.parseProcedure(source);
+        var symbols = scanner.extractSymbols(instructions);
+        var bytecode = assembler.assembleBytecode(instructions, symbols);
 
         // add instructions to procedure catalog
         var catalog = component.children[1];
-        var value = language.parseExpression('"' + instructions + '"' + '($mediatype: "application/basm")');
+        var value = language.parseExpression('"' + source + '"' + '($mediatype: "application/basm")');
         language.setValueForKey(catalog, '$instructions', value);
     
         // add bytecode to procedure catalog
@@ -78,7 +78,7 @@ exports.compileType = function(document) {
  * @returns {string} The The formatted Bali document for the type.
  */
 exports.formatType = function(type) {
-    var document = language.formatDocument(type);
+    var document = language.formatParseTree(type);
     return document;
 };
 

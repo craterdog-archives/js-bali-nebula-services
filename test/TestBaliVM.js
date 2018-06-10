@@ -27,13 +27,15 @@ describe('Bali Virtual Machine™', function() {
                 console.log('      ' + file);
                 var prefix = file.split('.').slice(0, 1);
                 var baliFile = testFolder + prefix + '.bali';
-                var type = fs.readFileSync(baliFile, 'utf8');
+                // strip off the POSIX newline terminator so that the round-trip comparison will work
+                var type = fs.readFileSync(baliFile, 'utf8').slice(0, -1);
                 expect(type).to.exist;  // jshint ignore:line
                 var tree = vm.compileType(type);
                 expect(type).to.exist;  // jshint ignore:line
                 var formatted = vm.formatType(tree);
-                //fs.writeFileSync(baliFile, formatted, 'utf8');
-                var expected = fs.readFileSync(baliFile, 'utf8');
+                //fs.writeFileSync(baliFile, formatted + '\n', 'utf8');  // add POSIX terminator
+                // strip off the POSIX newline terminator so that the round-trip comparison will work
+                var expected = fs.readFileSync(baliFile, 'utf8').slice(0, -1);
                 expect(expected).to.exist;  // jshint ignore:line
                 expect(formatted).to.equal(expected);
             }

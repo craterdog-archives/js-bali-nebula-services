@@ -16,7 +16,7 @@ LOAD VARIABLE $b
 STORE VARIABLE $a
 
 1.1.2.EvaluateStatement:
-LOAD VARIABLE $c
+PUSH DOCUMENT `"$foo := bar; $bar := baz"($mediatype: "application/bali")`
 STORE VARIABLE $b
 
 1.1.3.ThrowStatement:
@@ -263,4 +263,5 @@ JUMP TO 2.1.ConditionClause
 
 2.WhileStatementDone:
 SKIP INSTRUCTION
+
 

@@ -16,3 +16,4 @@
 [00E]:    8003    40     3    STORE VARIABLE 3
 [00F]:    0002    00 [002]    JUMP TO [002]
 [010]:    0000    00 [000]    SKIP INSTRUCTION
+
