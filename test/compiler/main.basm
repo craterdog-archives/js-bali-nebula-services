@@ -1,5 +1,0 @@
-
-1.EvaluateStatement:
-PUSH DOCUMENT `none`
-STORE VARIABLE $_result_
-

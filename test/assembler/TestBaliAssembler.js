@@ -22,7 +22,7 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the assember and disassembler.', function() {
 
         it('should assemble procedures and disassemble bytecode', function() {
-            var testFolder = 'test/assembler/';
+            var testFolder = 'test/source/';
             var files = fs.readdirSync(testFolder);
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];

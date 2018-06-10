@@ -1,0 +1,9 @@
+
+with $sequence do {
+    $x := true
+    if x then {
+        $y := none
+        break loop
+    }
+    $z := any
+}

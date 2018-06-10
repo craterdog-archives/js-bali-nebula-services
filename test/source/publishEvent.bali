@@ -1,0 +1,2 @@
+
+publish [$type: $changeEvent, $key: $foo, $value: 5]

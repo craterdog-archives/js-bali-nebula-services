@@ -1,0 +1,8 @@
+
+checkout $document from <bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>
+save document to <bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>
+commit document to <bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>
+checkout documents[i] from <bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>
+save documents[i] to <bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>
+commit documents[i] to <bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>
+discard <bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>

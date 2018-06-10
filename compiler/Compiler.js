@@ -1431,7 +1431,7 @@ InstructionBuilder.prototype.constructor = InstructionBuilder;
  * it based on the parent procedure context if one exists.
  */
 InstructionBuilder.prototype.pushProcedureContext = function(tree) {
-    var statementCount = tree.children[0].children.length;
+    var statementCount = tree.children.length;
     if (this.procedures.length > 0) {
         var parent = this.procedures.peek();
         this.procedures.push({
