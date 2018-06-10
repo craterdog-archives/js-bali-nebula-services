@@ -44,15 +44,17 @@ exports.compileType = function(document) {
     var procedures = language.getValueForKey(type, '$procedures');
     var iterator = language.iterator(procedures);
     while (iterator.hasNext()) {
-        var procedure = iterator.getNext();
-        var block = language.getValueForKey(type, '$source');
-        var instructions = compiler.compileProcedure(block, type);
+        var component = iterator.getNext();
+        var source = language.getValueForKey(component, '$source');
+        var block = source.children[0];
+        var procedure = block.children[0];
+        var instructions = compiler.compileProcedure(procedure, type);
         var list = instructionSet.parseProcedure(instructions);
         var symbols = scanner.extractSymbols(list);
         var bytecode = assembler.assembleBytecode(list, symbols);
 
         // add instructions to procedure catalog
-        var catalog = procedure.children[1];
+        var catalog = component.children[1];
         var value = language.parseExpression('"' + instructions + '"' + '($mediatype: "application/basm")');
         language.setValueForKey(catalog, '$instructions', value);
     

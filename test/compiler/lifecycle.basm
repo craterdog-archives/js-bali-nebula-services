@@ -1,5 +1,6 @@
 
 1.CheckoutStatement:
+PUSH DOCUMENT `$document`
 PUSH DOCUMENT `<bali:/#MJ0YKAX450LD84TCFJ7CNJ5CX8ZAPZ1Qv3.1>`
 EXECUTE $asReference ON TARGET
 STORE VARIABLE $_location_1_

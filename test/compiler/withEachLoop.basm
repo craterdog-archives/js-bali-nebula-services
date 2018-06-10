@@ -2,15 +2,15 @@
 1.WithStatement:
 PUSH DOCUMENT `$sequence`
 EXECUTE $asComposite ON TARGET
-INVOKE $iterator WITH PARAMETER
+EXECUTE $iterator ON TARGET
 STORE VARIABLE $_iterator_1_
 
 1.1.ConditionClause:
 LOAD VARIABLE $_iterator_1_
-INVOKE $hasNext WITH PARAMETER
+EXECUTE $hasNext ON TARGET
 JUMP TO 1.WithStatementDone ON FALSE
 LOAD VARIABLE $_iterator_1_
-INVOKE $getNext WITH PARAMETER
+EXECUTE $getNext ON TARGET
 STORE VARIABLE $symbol
 
 1.1.1.EvaluateStatement:
@@ -22,7 +22,7 @@ SKIP INSTRUCTION
 
 1.1.2.1.ConditionClause:
 LOAD VARIABLE $x
-EXECUTE $asProbability ON TARGET
+EXECUTE $asLogical ON TARGET
 JUMP TO 1.1.2.IfStatementDone ON FALSE
 
 1.1.2.1.1.EvaluateStatement:

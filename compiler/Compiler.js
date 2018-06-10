@@ -13,6 +13,7 @@
  * This library provides functions that compile a Bali Procedure into the
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
+var language = require('bali-language/BaliLanguage');
 var types = require('bali-language/syntax/NodeTypes');
 
 
@@ -93,11 +94,11 @@ CompilingVisitor.prototype.constructor = CompilingVisitor;
 CompilingVisitor.prototype.visitArithmeticExpression = function(tree) {
     // the VM places the result of the first operand expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM places the result of the second operand expression on top of the execution stack
     tree.children[1].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     var operator = tree.operator;
     switch (operator) {
@@ -191,8 +192,6 @@ CompilingVisitor.prototype.visitBreakClause = function(tree) {
 //     NEWLINE (association NEWLINE)* |
 //     ':' /*empty catalog*/
 CompilingVisitor.prototype.visitCatalog = function(tree) {
-    // TODO: check for 'type' parameter and use methods instead of functions if there is one
-
     // the VM places the size of the catalog on the execution stack
     var size = tree.children.length;
     this.builder.insertPushInstruction('DOCUMENT', size);
@@ -273,11 +272,11 @@ CompilingVisitor.prototype.visitCommitClause = function(tree) {
 CompilingVisitor.prototype.visitComparisonExpression = function(tree) {
     // the VM places the result of the first operand expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM places the result of the second operand expression on top of the execution stack
     tree.children[1].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM performs the comparison operation
     var operator = tree.operator;
@@ -317,7 +316,7 @@ CompilingVisitor.prototype.visitComparisonExpression = function(tree) {
 CompilingVisitor.prototype.visitComplementExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asProbability', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
 
     // the VM finds the logical complement of the top value on the execution stack
     this.builder.insertInvokeInstruction('$complement', 1);
@@ -326,8 +325,21 @@ CompilingVisitor.prototype.visitComplementExpression = function(tree) {
 
 // component: item parameters?
 CompilingVisitor.prototype.visitComponent = function(tree) {
+    // TODO: need to handle three cases:
+    //  1) item is an element in which case it gets pushed onto the stack as a literal
+    //  2) item is a structure in which case a type specific instance must be created on the stack
+    //  3) item is a block in which case the source code (or bytecode?) for the block must be placed
+    //     on the stack (as a literal string?)
     var item = tree.children[0];
     item.accept(this);
+    /*
+    if (item.type === types.BLOCK) {
+        var source = language.formatDocument(item);
+        this.builder.insertPushInstruction('DOCUMENT', '"\n' + source + '\n"($mediatype: "application/bali")');
+    } else {
+        item.accept(this);
+    }
+    */
 
     if (tree.children.length > 1) {
         // the VM loads any parameters associated with the element onto the top of the execution stack
@@ -336,6 +348,10 @@ CompilingVisitor.prototype.visitComponent = function(tree) {
 
         // the VM sets the parameters for the item
         this.builder.insertInvokeInstruction('$setParameters', 2);
+
+        // the VM uses the parameterized item on the execution stack to initialize a component of
+        // the right type on the execution stack, the new component replaces the item on the stack
+        this.builder.insertInvokeInstruction('$instantiate', 1);
     }
 };
 
@@ -365,7 +381,7 @@ CompilingVisitor.prototype.visitContinueClause = function(tree) {
 
 
 /*
- * This method evaluates the first expression and if its 'asProbability()' value is
+ * This method evaluates the first expression and if its 'asLogical()' value is
  * 'false', replaces it on top of the execution stack with the value of the
  * second expression.
  */
@@ -373,7 +389,7 @@ CompilingVisitor.prototype.visitContinueClause = function(tree) {
 CompilingVisitor.prototype.visitDefaultExpression = function(tree) {
     // the VM places the result of the first operand expression on top of the execution stack
     tree.children[0].accept(this);  // value to be tested
-    this.builder.insertExecuteInstruction('$asProbability', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
 
     // the VM places the result of the second operand expression on top of the execution stack
     tree.children[1].accept(this);  // default value
@@ -474,8 +490,11 @@ CompilingVisitor.prototype.visitEvaluateClause = function(tree) {
         var recipient = tree.children[0];
         var expression = tree.children[1];
 
+        // TODO: revisit this as it is currently awkward, it shouldn't require a check
         // the VM processes the recipient as needed
-        recipient.accept(this);
+        if (recipient.type === types.SUBCOMPONENT_EXPRESSION) {
+            recipient.accept(this);
+        }
 
         // the VM places the value of the expression on top of the execution stack
         expression.accept(this);
@@ -501,11 +520,11 @@ CompilingVisitor.prototype.visitEvaluateClause = function(tree) {
 CompilingVisitor.prototype.visitExponentialExpression = function(tree) {
     // the VM places the result of the base expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM places the result of the exponent expression on top of the execution stack
     tree.children[1].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM leaves the result of raising the base to the exponent on top of the execution stack
     this.builder.insertInvokeInstruction('$exponential', 2);
@@ -521,7 +540,7 @@ CompilingVisitor.prototype.visitExponentialExpression = function(tree) {
 CompilingVisitor.prototype.visitFactorialExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM leaves the result of the factorial of the value on top of the execution stack
     this.builder.insertInvokeInstruction('$factorial', 1);
@@ -633,7 +652,7 @@ CompilingVisitor.prototype.visitIfClause = function(tree) {
 
         // the VM places the condition value on top of the execution stack
         children[i++].accept(this);  // condition
-        this.builder.insertExecuteInstruction('$asProbability', 'ON TARGET');
+        this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
 
         // determine what the next label will be
         var nextLabel = this.builder.getNextClausePrefix();
@@ -684,8 +703,6 @@ CompilingVisitor.prototype.visitIfClause = function(tree) {
  */
 // indices: '[' list ']'
 CompilingVisitor.prototype.visitIndices = function(tree) {
-    // TODO: check for 'type' parameter and use methods instead of functions if there is one
-
     // the VM has the component to be indexed on top of the execution stack
     var indices = tree.children[0].children;
 
@@ -716,7 +733,7 @@ CompilingVisitor.prototype.visitIndices = function(tree) {
 CompilingVisitor.prototype.visitInversionExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM leaves the result of the inversion of the value on top of the execution stack
     var operator = tree.operator;
@@ -749,8 +766,6 @@ CompilingVisitor.prototype.visitInversionExpression = function(tree) {
 //     NEWLINE (expression NEWLINE)* |
 //     /*empty list*/
 CompilingVisitor.prototype.visitList = function(tree) {
-    // TODO: check for 'type' parameter and use methods instead of functions if there is one
-
     // the VM places the size of the list on the execution stack
     var size = tree.children.length;
     this.builder.insertPushInstruction('DOCUMENT', size);
@@ -775,11 +790,11 @@ CompilingVisitor.prototype.visitList = function(tree) {
 CompilingVisitor.prototype.visitLogicalExpression = function(tree) {
     // the VM places the value of the first expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asProbability', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
 
     // the VM places the value of the second expression on top of the execution stack
     tree.children[1].accept(this);
-    this.builder.insertExecuteInstruction('$asProbability', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
 
     // the VM leaves the result of the logical operation on the values on top of the execution stack
     var operator = tree.operator;
@@ -815,7 +830,7 @@ CompilingVisitor.prototype.visitLogicalExpression = function(tree) {
 CompilingVisitor.prototype.visitMagnitudeExpression = function(tree) {
     // the VM places the value of the expression on top of the execution stack
     tree.children[0].accept(this);
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM leaves the result of the magnitude of the value on top of the execution stack
     this.builder.insertInvokeInstruction('$magnitude', 1);
@@ -949,13 +964,16 @@ CompilingVisitor.prototype.visitQueueClause = function(tree) {
  */
 // range: expression '..' expression
 CompilingVisitor.prototype.visitRange = function(tree) {
+    //TODO: check for type and call execute instead of invoke if not a type of Range
+    //      don't call asNumeric if custom type
+
     // the VM places the value of the starting expression on the execution stack
     tree.children[0].accept(this);  // first value in the range
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM places the value of the ending expression on the execution stack
     tree.children[1].accept(this);  // last value in the range
-    this.builder.insertExecuteInstruction('$asNumber', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asNumeric', 'ON TARGET');
 
     // the VM replaces the two range values on the execution stack with a new range component
     this.builder.insertInvokeInstruction('$range', 2);
@@ -973,17 +991,13 @@ CompilingVisitor.prototype.visitRange = function(tree) {
  * to the value of an expression that will be placed on the top of the execution
  * stack prior to the call.
  */
-// recipient: symbol | variable indices
-CompilingVisitor.prototype.visitRecipient = function(tree) {
-    var children = tree.children;
-    var length = children.length;
-    if (length > 1) {
-        // the VM places the value of the component variable onto the top of the execution stack
-        children[0].accept(this);  // variable
+// subcomponent: variable indices
+CompilingVisitor.prototype.visitSubcomponent = function(tree) {
+    // the VM places the value of the variable onto the top of the execution stack
+    tree.children[0].accept(this);
 
-        // the VM replaces the component on the execution stack with the parent and index of the subcomponent
-        children[1].accept(this);  // indices
-    }
+    // the VM replaces the value of the variable on the execution stack with the parent and index of the subcomponent
+    tree.children[1].accept(this);
 };
 
 
@@ -1190,6 +1204,8 @@ CompilingVisitor.prototype.visitStructure = function(tree) {
  */
 // subcomponentExpression: expression indices
 CompilingVisitor.prototype.visitSubcomponentExpression = function(tree) {
+    // TODO: replace invoke with execute no matter what
+
     // the VM places the value of the expression on top of the execution stack
     tree.children[0].accept(this);  // expression
     this.builder.insertExecuteInstruction('$asComposite', 'ON TARGET');
@@ -1280,7 +1296,7 @@ CompilingVisitor.prototype.visitWhileClause = function(tree) {
 
     // the VM jumps past the end of the loop if the condition expression evaluates to false
     children[0].accept(this);  // condition expression
-    this.builder.insertExecuteInstruction('$asProbability', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
     this.builder.insertJumpInstruction(statement.doneLabel, 'ON FALSE');
 
     // if the condition is true, then the VM enters the block
@@ -1371,16 +1387,16 @@ CompilingVisitor.prototype.createTemporaryVariable = function(name) {
  * execution stack.
  */
 CompilingVisitor.prototype.setRecipient = function(recipient) {
-    // TODO: check for 'type' parameter and use methods instead of functions if there is one
+    // TODO: change invoke to execute for a subcomponent
 
-    if (recipient.children.length > 1) {
+    if (recipient.type === types.SYMBOL) {
+        // the VM stores the value that is on top of the execution stack in the variable
+        var symbol = recipient.value;
+        this.builder.insertStoreInstruction('VARIABLE', symbol);
+    } else {
         // the VM sets the value of the subcomponent at the given index of the parent component
         // to the value that is on top of the execution stack
         this.builder.insertInvokeInstruction('$setValue', 3);
-    } else {
-        // the VM stores the value that is on top of the execution stack in the variable
-        var symbol = recipient.children[0].value;
-        this.builder.insertStoreInstruction('VARIABLE', symbol);
     }
 };
 

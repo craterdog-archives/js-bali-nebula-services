@@ -2,19 +2,19 @@
 ----------------------------------------------------------------------
 [001]:    2801    11     1    PUSH DOCUMENT 1
 [002]:    D001    62     1    EXECUTE 1 ON TARGET
-[003]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[003]:    D002    62     2    EXECUTE 2 ON TARGET
 [004]:    8001    40     1    STORE VARIABLE 1
 [005]:    6001    30     1    LOAD VARIABLE 1
-[006]:    A802    51     2    INVOKE 2 WITH PARAMETER
+[006]:    D003    62     3    EXECUTE 3 ON TARGET
 [007]:    1818    03 [018]    JUMP TO [018] ON FALSE
 [008]:    6001    30     1    LOAD VARIABLE 1
-[009]:    A803    51     3    INVOKE 3 WITH PARAMETER
+[009]:    D004    62     4    EXECUTE 4 ON TARGET
 [00A]:    8002    40     2    STORE VARIABLE 2
 [00B]:    2802    11     2    PUSH DOCUMENT 2
 [00C]:    8003    40     3    STORE VARIABLE 3
 [00D]:    0000    00 [000]    SKIP INSTRUCTION
 [00E]:    6003    30     3    LOAD VARIABLE 3
-[00F]:    D002    62     2    EXECUTE 2 ON TARGET
+[00F]:    D005    62     5    EXECUTE 5 ON TARGET
 [010]:    1814    03 [014]    JUMP TO [014] ON FALSE
 [011]:    2803    11     3    PUSH DOCUMENT 3
 [012]:    8004    40     4    STORE VARIABLE 4

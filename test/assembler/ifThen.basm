@@ -4,7 +4,7 @@ SKIP INSTRUCTION
 
 1.1.ConditionClause:
 PUSH DOCUMENT `true`
-EXECUTE $asProbability ON TARGET
+EXECUTE $asLogical ON TARGET
 JUMP TO 1.IfStatementDone ON FALSE
 
 1.1.1.EvaluateStatement:

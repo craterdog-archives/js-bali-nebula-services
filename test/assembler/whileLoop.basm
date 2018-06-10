@@ -4,7 +4,7 @@ SKIP INSTRUCTION
 
 1.1.ConditionClause:
 LOAD VARIABLE $condition
-EXECUTE $asProbability ON TARGET
+EXECUTE $asLogical ON TARGET
 JUMP TO 1.WhileStatementDone ON FALSE
 
 1.1.1.EvaluateStatement:
@@ -16,7 +16,7 @@ SKIP INSTRUCTION
 
 1.1.2.1.ConditionClause:
 LOAD VARIABLE $a
-EXECUTE $asProbability ON TARGET
+EXECUTE $asLogical ON TARGET
 JUMP TO 1.1.2.IfStatementDone ON FALSE
 
 1.1.2.1.1.BreakStatement:

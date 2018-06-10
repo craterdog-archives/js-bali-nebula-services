@@ -27,7 +27,7 @@ describe('Bali Virtual Machine™', function() {
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
                 if (!file.endsWith('.basm')) continue;
-                //console.log('      ' + file);
+                console.log('      ' + file);
                 var prefix = file.split('.').slice(0, 1);
                 var basmFile = testFolder + prefix + '.basm';
                 var codeFile = testFolder + prefix + '.code';

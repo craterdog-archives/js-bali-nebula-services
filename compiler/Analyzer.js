@@ -317,15 +317,6 @@ AnalyzingVisitor.prototype.visitRange = function(tree) {
 };
 
 
-// recipient: symbol | variable indices
-AnalyzingVisitor.prototype.visitRecipient = function(tree) {
-    var children = tree.children;
-    for (var i = 0; i < children.length; i++) {
-        children[i].accept(this);
-    }
-};
-
-
 // returnClause: 'return' expression?
 AnalyzingVisitor.prototype.visitReturnClause = function(tree) {
     if (tree.children.length > 0) {
@@ -374,6 +365,13 @@ AnalyzingVisitor.prototype.visitStatement = function(tree) {
 // structure: '[' composite ']'
 AnalyzingVisitor.prototype.visitStructure = function(tree) {
     tree.children[0].accept(this);
+};
+
+
+// subcomponent: variable indices
+AnalyzingVisitor.prototype.visitSubcomponent = function(tree) {
+    tree.children[0].accept(this);
+    tree.children[1].accept(this);
 };
 
 

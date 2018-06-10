@@ -24,7 +24,7 @@ describe('Bali Virtual Machine™', function() {
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];
                 if (!file.endsWith('.bali')) continue;
-                //console.log('      ' + file);
+                console.log('      ' + file);
                 var prefix = file.split('.').slice(0, 1);
                 var baliFile = testFolder + prefix + '.bali';
                 var type = fs.readFileSync(baliFile, 'utf8');
