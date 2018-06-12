@@ -1,6 +1,6 @@
 
 1.IfStatement:
-PUSH HANDLERS 1.IfStatementHandlers
+PUSH ADDRESS 1.IfStatementHandlers
 
 1.1.ConditionClause:
 LOAD VARIABLE $a
@@ -16,7 +16,8 @@ LOAD VARIABLE $b
 STORE VARIABLE $a
 
 1.1.2.EvaluateStatement:
-PUSH DOCUMENT `"$foo := bar; $bar := baz"($mediatype: "application/bali")`
+PUSH ELEMENT `none`
+PUSH CODE `$foo := bar; $bar := baz`
 STORE VARIABLE $b
 
 1.1.3.ThrowStatement:
@@ -29,19 +30,21 @@ JUMP TO 1.IfStatementDone
 1.2.ConditionClause:
 LOAD VARIABLE $a
 EXECUTE $asNumeric ON TARGET
-PUSH DOCUMENT `0`
+PUSH ELEMENT `none`
+PUSH ELEMENT `0`
 EXECUTE $asNumeric ON TARGET
 INVOKE $more WITH 2 PARAMETERS
 EXECUTE $asLogical ON TARGET
 JUMP TO 1.3.ElseClause ON FALSE
 
 1.2.1.EvaluateStatement:
-PUSH DOCUMENT `false`
+PUSH ELEMENT `none`
+PUSH ELEMENT `false`
 STORE VARIABLE $_result_
 
 1.2.2.EvaluateStatement:
-PUSH DOCUMENT `<bali:/bali/types/SomeType>`
-PUSH DOCUMENT `1`
+PUSH ELEMENT `<bali:/bali/types/SomeType>`
+PUSH ELEMENT `1`
 INVOKE $list WITH PARAMETER
 LOAD VARIABLE $b
 INVOKE $addItem WITH 2 PARAMETERS
@@ -62,15 +65,17 @@ SKIP INSTRUCTION
 
 1.3.1.EvaluateStatement:
 LOAD VARIABLE $b
-PUSH DOCUMENT `1`
+PUSH ELEMENT `1`
 INVOKE $list WITH PARAMETER
-PUSH DOCUMENT `$tag`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$tag`
 INVOKE $addItem WITH 2 PARAMETERS
 EXECUTE $find ON TARGET WITH PARAMETERS
 STORE VARIABLE $d
 
 1.3.2.EvaluateStatement:
-PUSH DOCUMENT `(3, 4i)`
+PUSH ELEMENT `none`
+PUSH ELEMENT `(3, 4i)`
 STORE VARIABLE $_result_
 
 1.3.3.ReturnStatement:
@@ -81,7 +86,7 @@ HANDLE RESULT
 SKIP INSTRUCTION
 
 1.IfStatementDone:
-POP HANDLERS
+POP ADDRESS
 JUMP TO 1.IfStatementSucceeded
 
 1.IfStatementHandlers:
@@ -91,35 +96,45 @@ STORE VARIABLE $_exception_
 LOAD VARIABLE $_exception_
 STORE VARIABLE $exception
 LOAD VARIABLE $exception
-PUSH DOCUMENT `1`
+PUSH ELEMENT `none`
+PUSH ELEMENT `1`
 INVOKE $catalog WITH PARAMETER
-PUSH DOCUMENT `$type`
-PUSH DOCUMENT `$warning`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$type`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$warning`
 INVOKE $setValue WITH 3 PARAMETERS
+PUSH STRUCTURE
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.5.HandleClause ON FALSE
 
 1.4.1.EvaluateStatement:
 LOAD VARIABLE $count
 EXECUTE $asNumeric ON TARGET
-PUSH DOCUMENT `1`
+PUSH ELEMENT `none`
+PUSH ELEMENT `1`
 EXECUTE $asNumeric ON TARGET
 INVOKE $sum WITH 2 PARAMETERS
 STORE VARIABLE $count
 
 1.4.2.EvaluateStatement:
-PUSH DOCUMENT `2`
+PUSH ELEMENT `none`
+PUSH ELEMENT `2`
 INVOKE $catalog WITH PARAMETER
-PUSH DOCUMENT `$message`
-PUSH DOCUMENT `"Something not too serious happened."`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$message`
+PUSH ELEMENT `none`
+PUSH ELEMENT `"Something not too serious happened."`
 INVOKE $setValue WITH 3 PARAMETERS
-PUSH DOCUMENT `$exception`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$exception`
 LOAD VARIABLE $exception
 INVOKE $setValue WITH 3 PARAMETERS
+PUSH STRUCTURE
 STORE VARIABLE $_result_
 
 1.4.HandleClauseDone:
-PUSH DOCUMENT `none`
+PUSH ELEMENT `none`
 STORE VARIABLE $_exception_
 JUMP TO 1.IfStatementSucceeded
 
@@ -127,23 +142,32 @@ JUMP TO 1.IfStatementSucceeded
 LOAD VARIABLE $_exception_
 STORE VARIABLE $exception
 LOAD VARIABLE $exception
-PUSH DOCUMENT `1`
+PUSH ELEMENT `none`
+PUSH ELEMENT `1`
 INVOKE $catalog WITH PARAMETER
-PUSH DOCUMENT `$type`
-PUSH DOCUMENT `$moderate`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$type`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$moderate`
 INVOKE $setValue WITH 3 PARAMETERS
+PUSH STRUCTURE
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.IfStatementFailed ON FALSE
 
 1.5.1.EvaluateStatement:
-PUSH DOCUMENT `2`
+PUSH ELEMENT `none`
+PUSH ELEMENT `2`
 INVOKE $catalog WITH PARAMETER
-PUSH DOCUMENT `$message`
-PUSH DOCUMENT `"Something serious happened."`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$message`
+PUSH ELEMENT `none`
+PUSH ELEMENT `"Something serious happened."`
 INVOKE $setValue WITH 3 PARAMETERS
-PUSH DOCUMENT `$exception`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$exception`
 LOAD VARIABLE $exception
 INVOKE $setValue WITH 3 PARAMETERS
+PUSH STRUCTURE
 STORE VARIABLE $exception
 
 1.5.2.ThrowStatement:
@@ -151,7 +175,7 @@ LOAD VARIABLE $exception
 HANDLE EXCEPTION
 
 1.5.HandleClauseDone:
-PUSH DOCUMENT `none`
+PUSH ELEMENT `none`
 STORE VARIABLE $_exception_
 JUMP TO 1.IfStatementSucceeded
 
@@ -165,7 +189,8 @@ SKIP INSTRUCTION
 SKIP INSTRUCTION
 
 2.1.ConditionClause:
-PUSH DOCUMENT `true`
+PUSH ELEMENT `none`
+PUSH ELEMENT `true`
 EXECUTE $asLogical ON TARGET
 JUMP TO 2.WhileStatementDone ON FALSE
 
@@ -192,7 +217,7 @@ SKIP INSTRUCTION
 
 2.1.2.2.1.WithStatement:
 LOAD VARIABLE $sequence
-EXECUTE $asComposite ON TARGET
+EXECUTE $asSequential ON TARGET
 EXECUTE $iterator ON TARGET
 STORE VARIABLE $_iterator_1_
 
@@ -210,12 +235,14 @@ STORE VARIABLE $_selector_2_
 
 2.1.2.2.1.1.1.1.OptionClause:
 LOAD VARIABLE $_selector_2_
-PUSH DOCUMENT `$first`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$first`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 2.1.2.2.1.1.1.2.OptionClause ON FALSE
 
 2.1.2.2.1.1.1.1.1.EvaluateStatement:
-PUSH DOCUMENT `true`
+PUSH ELEMENT `none`
+PUSH ELEMENT `true`
 STORE VARIABLE $_result_
 
 2.1.2.2.1.1.1.1.OptionClauseDone:
@@ -223,12 +250,14 @@ JUMP TO 2.1.2.2.1.1.1.SelectStatementDone
 
 2.1.2.2.1.1.1.2.OptionClause:
 LOAD VARIABLE $_selector_2_
-PUSH DOCUMENT `$second`
+PUSH ELEMENT `none`
+PUSH ELEMENT `$second`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 2.1.2.2.1.1.1.3.ElseClause ON FALSE
 
 2.1.2.2.1.1.1.2.1.EvaluateStatement:
-PUSH DOCUMENT `false`
+PUSH ELEMENT `none`
+PUSH ELEMENT `false`
 STORE VARIABLE $_result_
 
 2.1.2.2.1.1.1.2.OptionClauseDone:

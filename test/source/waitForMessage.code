@@ -1,18 +1,22 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2801    11     1    PUSH DOCUMENT 1
-[002]:    2802    11     2    PUSH DOCUMENT 2
-[003]:    D001    62     1    EXECUTE 1 ON TARGET
-[004]:    8001    40     1    STORE VARIABLE 1
-[005]:    7801    33     1    LOAD MESSAGE 1
-[006]:    8002    40     2    STORE VARIABLE 2
-[007]:    6003    30     3    LOAD VARIABLE 3
-[008]:    2803    11     3    PUSH DOCUMENT 3
-[009]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
-[00A]:    2804    11     4    PUSH DOCUMENT 4
-[00B]:    2802    11     2    PUSH DOCUMENT 2
-[00C]:    D001    62     1    EXECUTE 1 ON TARGET
-[00D]:    8004    40     4    STORE VARIABLE 4
-[00E]:    7802    33     2    LOAD MESSAGE 2
-[00F]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[001]:    2801    11     1    PUSH ELEMENT 1
+[002]:    2802    11     2    PUSH ELEMENT 2
+[003]:    2803    11     3    PUSH ELEMENT 3
+[004]:    D001    62     1    EXECUTE 1 ON TARGET
+[005]:    8001    40     1    STORE VARIABLE 1
+[006]:    7801    33     1    LOAD MESSAGE 1
+[007]:    8002    40     2    STORE VARIABLE 2
+[008]:    6003    30     3    LOAD VARIABLE 3
+[009]:    2802    11     2    PUSH ELEMENT 2
+[00A]:    2804    11     4    PUSH ELEMENT 4
+[00B]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
+[00C]:    2802    11     2    PUSH ELEMENT 2
+[00D]:    2805    11     5    PUSH ELEMENT 5
+[00E]:    2802    11     2    PUSH ELEMENT 2
+[00F]:    2803    11     3    PUSH ELEMENT 3
+[010]:    D001    62     1    EXECUTE 1 ON TARGET
+[011]:    8004    40     4    STORE VARIABLE 4
+[012]:    7802    33     2    LOAD MESSAGE 2
+[013]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
 

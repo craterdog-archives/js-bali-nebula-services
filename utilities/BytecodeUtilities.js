@@ -70,19 +70,18 @@ exports.decodeModifier = function(instruction) {
         case JUMP:
             return CONDITIONS[number];
         case PUSH:
+            return PUSHABLES[number];
         case POP:
-            return STACKS[number];
+            return POPABLES[number];
         case LOAD:
         case STORE:
-            return TYPES[number];
+            return COMPONENTS[number];
         case INVOKE:
             return number;
         case EXECUTE:
             return PROCEDURES[number];
         case HANDLE:
             return CONTEXTS[number];
-        default:
-            throw new Error('BYTECODE: Attempted to return the modifier for an invalid opcode: ' + opcode);
     }
 };
 
@@ -120,7 +119,7 @@ exports.operandIsIndex = function(instruction) {
     var modcode = extractModcode(instruction);
     switch (opcode) {
         case PUSH:
-            return modcode !== 0;
+            return modcode !== ADDRESS && modcode !== STRUCTURE;
         case LOAD:
         case STORE:
         case INVOKE:
@@ -161,17 +160,20 @@ exports.instructionIsValid = function(instruction) {
             return operand !== 0 || modcode === 0;
         case PUSH:
             switch (modcode) {
-                case HANDLERS:
-                case DOCUMENT:
+                case ADDRESS:
+                case ELEMENT:
+                case CODE:
                     return operand !== 0;
+                case STRUCTURE:
+                    return operand === 0;
                 default:
                     return false;
             }
             break;
         case POP:
             switch (modcode) {
-                case HANDLERS:
-                case DOCUMENT:
+                case ADDRESS:
+                case COMPONENT:
                     return operand === 0;
                 default:
                     return false;
@@ -293,7 +295,8 @@ exports.instructionAsString = function(operation, modifier, operand) {
             }
             break;
         case 'PUSH':
-            instruction = 'PUSH ' + modifier + ' ' + operand;
+            instruction = 'PUSH ' + modifier;
+            if (operand) instruction += ' ' + operand;
             break;
         case 'POP':
             instruction = 'POP ' + modifier;
@@ -393,8 +396,14 @@ var ON_TRUE = 0x1000;
 var ON_FALSE = 0x1800;
 
 
-// types
-var HANDLERS = 0x0000;
+// literals
+var ADDRESS = 0x0000;
+var ELEMENT = 0x0800;
+var STRUCTURE = 0x1000;
+var CODE = 0x1800;
+var COMPONENT = 0x0800;
+
+// components
 var VARIABLE = 0x0000;
 var DOCUMENT = 0x0800;
 var DRAFT = 0x1000;
@@ -420,11 +429,15 @@ var MODCODES = {
     'ON NONE': ON_NONE,
     'ON TRUE': ON_TRUE,
     'ON FALSE': ON_FALSE,
+    'ADDRESS': ADDRESS,
+    'ELEMENT': ELEMENT,
+    'STRUCTURE': STRUCTURE,
+    'CODE': CODE,
+    'COMPONENT': COMPONENT,
     'VARIABLE': VARIABLE,
     'DOCUMENT': DOCUMENT,
     'DRAFT': DRAFT,
     'MESSAGE': MESSAGE,
-    'HANDLERS': HANDLERS,
     'WITH PARAMETERS': WITH_PARAMETERS,
     'ON TARGET': ON_TARGET,
     'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS,
@@ -439,12 +452,19 @@ var CONDITIONS = [
     'ON FALSE'
 ];
 
-var STACKS = [
-    'HANDLERS',
-    'DOCUMENT'
+var PUSHABLES = [
+    'ADDRESS',
+    'ELEMENT',
+    'STRUCTURE',
+    'CODE'
 ];
 
-var TYPES = [
+var POPABLES = [
+    'ADDRESS',
+    'COMPONENT'
+];
+
+var COMPONENTS = [
     'VARIABLE',
     'DOCUMENT',
     'DRAFT',

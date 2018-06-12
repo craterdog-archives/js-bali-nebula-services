@@ -110,7 +110,7 @@ AnalyzingVisitor.prototype.visitComplementExpression = function(tree) {
 };
 
 
-// component: item parameters?
+// component: object parameters?
 AnalyzingVisitor.prototype.visitComponent = function(tree) {
     tree.children[0].accept(this);
     if (tree.children.length > 1) {
@@ -279,7 +279,7 @@ AnalyzingVisitor.prototype.visitMessageExpression = function(tree) {
 };
 
 
-// parameters: '(' composite ')'
+// parameters: '(' collection ')'
 AnalyzingVisitor.prototype.visitParameters = function(tree) {
     tree.children[0].accept(this);
 };
@@ -368,7 +368,7 @@ AnalyzingVisitor.prototype.visitStatement = function(tree) {
 };
 
 
-// structure: '[' composite ']'
+// structure: '[' collection ']'
 AnalyzingVisitor.prototype.visitStructure = function(tree) {
     tree.children[0].accept(this);
 };

@@ -37,9 +37,10 @@ exports.extractSymbols = function(procedure) {
 
 function ScanningVisitor() {
     this.symbols = {
-        literals: [],
-        variables: [],
         addresses: {},
+        elements: [],
+        code: [],
+        variables: [],
         references: [],
         intrinsics: [],
         procedures: []
@@ -87,21 +88,28 @@ ScanningVisitor.prototype.visitJumpInstruction = function(instruction) {
 
 
 // pushInstruction:
-//     'PUSH' 'HANDLERS' LABEL |
-//     'PUSH' 'DOCUMENT' LITERAL
+//     'PUSH' 'ADDRESS' LABEL |
+//     'PUSH' 'ELEMENT' LITERAL |
+//     'PUSH' 'STRUCTURE' |
+//     'PUSH' 'CODE' LITERAL
 ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.value;
-    if (modifier === 'DOCUMENT' && !this.symbols.literals.includes(value)) {
-        this.symbols.literals.push(value);
+    switch (modifier) {
+        case 'ELEMENT':
+            if (!this.symbols.elements.includes(value)) this.symbols.elements.push(value);
+            break;
+        case 'CODE':
+            if (!this.symbols.code.includes(value)) this.symbols.code.push(value);
+            break;
     }
     this.address++;
 };
 
 
 // popInstruction:
-//     'POP' 'HANDLERS' |
-//     'POP' 'DOCUMENT'
+//     'POP' 'ADDRESS' |
+//     'POP' 'COMPONENT'
 ScanningVisitor.prototype.visitPopInstruction = function(instruction) {
     this.address++;
 };
@@ -125,8 +133,6 @@ ScanningVisitor.prototype.visitLoadInstruction = function(instruction) {
         case 'MESSAGE':
             type = 'references';
             break;
-        default:
-            throw new Error('ANALYZER: Illegal modifier for the LOAD instruction: ' + modifier);
     }
     if (!this.symbols[type].includes(symbol)) {
         this.symbols[type].push(symbol);
@@ -153,8 +159,6 @@ ScanningVisitor.prototype.visitStoreInstruction = function(instruction) {
         case 'MESSAGE':
             type = 'references';
             break;
-        default:
-            throw new Error('ANALYZER: Illegal modifier for the STORE instruction: ' + modifier);
     }
     if (!this.symbols[type].includes(symbol)) {
         this.symbols[type].push(symbol);

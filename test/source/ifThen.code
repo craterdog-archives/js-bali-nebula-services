@@ -1,10 +1,11 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
 [001]:    0000    00 [000]    SKIP INSTRUCTION
-[002]:    2801    11     1    PUSH DOCUMENT 1
-[003]:    D001    62     1    EXECUTE 1 ON TARGET
-[004]:    1807    03 [007]    JUMP TO [007] ON FALSE
-[005]:    6001    30     1    LOAD VARIABLE 1
-[006]:    8002    40     2    STORE VARIABLE 2
-[007]:    0000    00 [000]    SKIP INSTRUCTION
+[002]:    2801    11     1    PUSH ELEMENT 1
+[003]:    2802    11     2    PUSH ELEMENT 2
+[004]:    D001    62     1    EXECUTE 1 ON TARGET
+[005]:    1808    03 [008]    JUMP TO [008] ON FALSE
+[006]:    6001    30     1    LOAD VARIABLE 1
+[007]:    8002    40     2    STORE VARIABLE 2
+[008]:    0000    00 [000]    SKIP INSTRUCTION
 

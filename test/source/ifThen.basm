@@ -3,7 +3,8 @@
 SKIP INSTRUCTION
 
 1.1.ConditionClause:
-PUSH DOCUMENT `true`
+PUSH ELEMENT `none`
+PUSH ELEMENT `true`
 EXECUTE $asLogical ON TARGET
 JUMP TO 1.IfStatementDone ON FALSE
 

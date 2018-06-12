@@ -1,27 +1,31 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2801    11     1    PUSH DOCUMENT 1
-[002]:    D001    62     1    EXECUTE 1 ON TARGET
-[003]:    D002    62     2    EXECUTE 2 ON TARGET
-[004]:    8001    40     1    STORE VARIABLE 1
-[005]:    6001    30     1    LOAD VARIABLE 1
-[006]:    D003    62     3    EXECUTE 3 ON TARGET
-[007]:    1818    03 [018]    JUMP TO [018] ON FALSE
-[008]:    6001    30     1    LOAD VARIABLE 1
-[009]:    D004    62     4    EXECUTE 4 ON TARGET
-[00A]:    8002    40     2    STORE VARIABLE 2
-[00B]:    2802    11     2    PUSH DOCUMENT 2
-[00C]:    8003    40     3    STORE VARIABLE 3
-[00D]:    0000    00 [000]    SKIP INSTRUCTION
-[00E]:    6003    30     3    LOAD VARIABLE 3
-[00F]:    D005    62     5    EXECUTE 5 ON TARGET
-[010]:    1814    03 [014]    JUMP TO [014] ON FALSE
-[011]:    2803    11     3    PUSH DOCUMENT 3
-[012]:    8004    40     4    STORE VARIABLE 4
-[013]:    0018    00 [018]    JUMP TO [018]
-[014]:    0000    00 [000]    SKIP INSTRUCTION
-[015]:    2804    11     4    PUSH DOCUMENT 4
-[016]:    8005    40     5    STORE VARIABLE 5
-[017]:    0005    00 [005]    JUMP TO [005]
-[018]:    0000    00 [000]    SKIP INSTRUCTION
+[001]:    2801    11     1    PUSH ELEMENT 1
+[002]:    2802    11     2    PUSH ELEMENT 2
+[003]:    D001    62     1    EXECUTE 1 ON TARGET
+[004]:    D002    62     2    EXECUTE 2 ON TARGET
+[005]:    8001    40     1    STORE VARIABLE 1
+[006]:    6001    30     1    LOAD VARIABLE 1
+[007]:    D003    62     3    EXECUTE 3 ON TARGET
+[008]:    181C    03 [01C]    JUMP TO [01C] ON FALSE
+[009]:    6001    30     1    LOAD VARIABLE 1
+[00A]:    D004    62     4    EXECUTE 4 ON TARGET
+[00B]:    8002    40     2    STORE VARIABLE 2
+[00C]:    2801    11     1    PUSH ELEMENT 1
+[00D]:    2803    11     3    PUSH ELEMENT 3
+[00E]:    8003    40     3    STORE VARIABLE 3
+[00F]:    0000    00 [000]    SKIP INSTRUCTION
+[010]:    6003    30     3    LOAD VARIABLE 3
+[011]:    D005    62     5    EXECUTE 5 ON TARGET
+[012]:    1817    03 [017]    JUMP TO [017] ON FALSE
+[013]:    2801    11     1    PUSH ELEMENT 1
+[014]:    2801    11     1    PUSH ELEMENT 1
+[015]:    8004    40     4    STORE VARIABLE 4
+[016]:    001C    00 [01C]    JUMP TO [01C]
+[017]:    0000    00 [000]    SKIP INSTRUCTION
+[018]:    2801    11     1    PUSH ELEMENT 1
+[019]:    2804    11     4    PUSH ELEMENT 4
+[01A]:    8005    40     5    STORE VARIABLE 5
+[01B]:    0006    00 [006]    JUMP TO [006]
+[01C]:    0000    00 [000]    SKIP INSTRUCTION
 

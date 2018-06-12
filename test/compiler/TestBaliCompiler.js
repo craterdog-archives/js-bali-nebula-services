@@ -38,11 +38,11 @@ describe('Bali Virtual Machine™', function() {
                 var type = {};
                 var instructions = compiler.compileProcedure(tree, type);
                 expect(instructions).to.exist;  // jshint ignore:line
+                //fs.writeFileSync(basmFile, instructions + '\n', 'utf8');  // add POSIX terminator
                 // strip off the POSIX newline terminator so that the round-trip comparison will work
                 var expected = fs.readFileSync(basmFile, 'utf8').slice(0, -1);
                 expect(expected).to.exist;  // jshint ignore:line
                 expect(instructions).to.equal(expected);
-                fs.writeFileSync(basmFile, instructions + '\n', 'utf8');  // add POSIX terminator
             }
         });
 

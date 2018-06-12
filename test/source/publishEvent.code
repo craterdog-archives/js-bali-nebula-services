@@ -1,15 +1,23 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2801    11     1    PUSH DOCUMENT 1
-[002]:    A801    51     1    INVOKE 1 WITH PARAMETER
-[003]:    2802    11     2    PUSH DOCUMENT 2
-[004]:    2803    11     3    PUSH DOCUMENT 3
-[005]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
-[006]:    2804    11     4    PUSH DOCUMENT 4
-[007]:    2805    11     5    PUSH DOCUMENT 5
+[001]:    2801    11     1    PUSH ELEMENT 1
+[002]:    2802    11     2    PUSH ELEMENT 2
+[003]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[004]:    2801    11     1    PUSH ELEMENT 1
+[005]:    2803    11     3    PUSH ELEMENT 3
+[006]:    2801    11     1    PUSH ELEMENT 1
+[007]:    2804    11     4    PUSH ELEMENT 4
 [008]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
-[009]:    2806    11     6    PUSH DOCUMENT 6
-[00A]:    2807    11     7    PUSH DOCUMENT 7
-[00B]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
-[00C]:    9801    43     1    STORE MESSAGE 1
+[009]:    2801    11     1    PUSH ELEMENT 1
+[00A]:    2805    11     5    PUSH ELEMENT 5
+[00B]:    2801    11     1    PUSH ELEMENT 1
+[00C]:    2806    11     6    PUSH ELEMENT 6
+[00D]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[00E]:    2801    11     1    PUSH ELEMENT 1
+[00F]:    2807    11     7    PUSH ELEMENT 7
+[010]:    2801    11     1    PUSH ELEMENT 1
+[011]:    2808    11     8    PUSH ELEMENT 8
+[012]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[013]:    3000    12     0    PUSH STRUCTURE 0
+[014]:    9801    43     1    STORE MESSAGE 1
 

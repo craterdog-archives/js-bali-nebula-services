@@ -1,5 +1,6 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2801    11     1    PUSH DOCUMENT 1
-[002]:    8001    40     1    STORE VARIABLE 1
+[001]:    2801    11     1    PUSH ELEMENT 1
+[002]:    2801    11     1    PUSH ELEMENT 1
+[003]:    8001    40     1    STORE VARIABLE 1
 

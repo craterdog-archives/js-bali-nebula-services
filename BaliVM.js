@@ -89,7 +89,7 @@ exports.formatType = function(type) {
  * @param {Reference} typeReference A reference to the type containing the message definition.
  * @param {Reference} targetReference A reference to the target that supports the message.
  * @param {Symbol} message The symbol for the message to be processed.
- * @param {Composite} parameters The list or catalog of parameters that were passed with the message.
+ * @param {Collection} parameters The list or catalog of parameters that were passed with the message.
  */
 exports.processMessage = function(typeReference, targetReference, message, parameters) {
     var type = cloud.readDocument(typeReference);

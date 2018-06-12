@@ -1,6 +1,7 @@
 
 1.EvaluateStatement:
-PUSH DOCUMENT `none`
+PUSH ELEMENT `none`
+PUSH ELEMENT `none`
 STORE VARIABLE $_result_
 
 

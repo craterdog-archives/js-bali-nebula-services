@@ -101,8 +101,11 @@ function lookupSymbol(symbols, operation, modifier, index) {
     switch (operation) {
         case 'PUSH':
             switch (modifier) {
-                case 'DOCUMENT':
-                    key = 'literals';
+                case 'ELEMENT':
+                    key = 'elements';
+                    break;
+                case 'CODE':
+                    key = 'code';
                     break;
             }
             return symbols[key][index];
@@ -179,17 +182,25 @@ AssemblingVisitor.prototype.visitJumpInstruction = function(instruction) {
 
 
 // pushInstruction:
-//     'PUSH' 'HANDLERS' LABEL |
-//     'PUSH' 'DOCUMENT' LITERAL
+//     'PUSH' 'ADDRESS' LABEL |
+//     'PUSH' 'ELEMENT' LITERAL |
+//     'PUSH' 'STRUCTURE' |
+//     'PUSH' 'CODE' LITERAL
 AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.value;
     switch(modifier) {
-        case 'HANDLERS':
+        case 'ADDRESS':
             value = this.symbols.addresses[value];
             break;
-        case 'DOCUMENT':
-            value = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
+        case 'ELEMENT':
+            value = this.symbols.elements.indexOf(value) + 1;  // unit based indexing
+            break;
+        case 'STRUCTURE':
+            // no value
+            break;
+        case 'CODE':
+            value = this.symbols.code.indexOf(value) + 1;  // unit based indexing
             break;
         default:
             throw new Error('ASSEMBLER: Illegal modifier for the LOAD instruction: ' + modifier);
@@ -200,8 +211,8 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
 
 
 // popInstruction:
-//     'POP' 'HANDLERS' |
-//     'POP' 'DOCUMENT'
+//     'POP' 'ADDRESS' |
+//     'POP' 'COMPONENT'
 AssemblingVisitor.prototype.visitPopInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var bytes = utilities.encodeInstruction('POP', modifier);

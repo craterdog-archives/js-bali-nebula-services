@@ -1,44 +1,55 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2009    10 [009]    PUSH HANDLERS [009]
-[002]:    2801    11     1    PUSH DOCUMENT 1
-[003]:    D001    62     1    EXECUTE 1 ON TARGET
-[004]:    8001    40     1    STORE VARIABLE 1
-[005]:    6002    30     2    LOAD VARIABLE 2
-[006]:    9801    43     1    STORE MESSAGE 1
-[007]:    4000    20     0    POP HANDLERS
-[008]:    0029    00 [029]    JUMP TO [029]
-[009]:    8003    40     3    STORE VARIABLE 3
-[00A]:    6003    30     3    LOAD VARIABLE 3
-[00B]:    8004    40     4    STORE VARIABLE 4
-[00C]:    6004    30     4    LOAD VARIABLE 4
-[00D]:    2802    11     2    PUSH DOCUMENT 2
-[00E]:    A801    51     1    INVOKE 1 WITH PARAMETER
-[00F]:    2803    11     3    PUSH DOCUMENT 3
-[010]:    2804    11     4    PUSH DOCUMENT 4
-[011]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
-[012]:    B003    52     3    INVOKE 3 WITH 2 PARAMETERS
-[013]:    1819    03 [019]    JUMP TO [019] ON FALSE
-[014]:    2805    11     5    PUSH DOCUMENT 5
-[015]:    8005    40     5    STORE VARIABLE 5
-[016]:    2806    11     6    PUSH DOCUMENT 6
-[017]:    8003    40     3    STORE VARIABLE 3
-[018]:    0029    00 [029]    JUMP TO [029]
-[019]:    6003    30     3    LOAD VARIABLE 3
-[01A]:    8004    40     4    STORE VARIABLE 4
-[01B]:    6004    30     4    LOAD VARIABLE 4
-[01C]:    2802    11     2    PUSH DOCUMENT 2
-[01D]:    A801    51     1    INVOKE 1 WITH PARAMETER
-[01E]:    2803    11     3    PUSH DOCUMENT 3
-[01F]:    2807    11     7    PUSH DOCUMENT 7
-[020]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
-[021]:    B003    52     3    INVOKE 3 WITH 2 PARAMETERS
-[022]:    1828    03 [028]    JUMP TO [028] ON FALSE
-[023]:    2806    11     6    PUSH DOCUMENT 6
-[024]:    8005    40     5    STORE VARIABLE 5
-[025]:    2806    11     6    PUSH DOCUMENT 6
-[026]:    8003    40     3    STORE VARIABLE 3
-[027]:    0029    00 [029]    JUMP TO [029]
-[028]:    E000    70     0    HANDLE EXCEPTION
-[029]:    0000    00 [000]    SKIP INSTRUCTION
+[001]:    200A    10 [00A]    PUSH ADDRESS [00A]
+[002]:    2801    11     1    PUSH ELEMENT 1
+[003]:    2802    11     2    PUSH ELEMENT 2
+[004]:    D001    62     1    EXECUTE 1 ON TARGET
+[005]:    8001    40     1    STORE VARIABLE 1
+[006]:    6002    30     2    LOAD VARIABLE 2
+[007]:    9801    43     1    STORE MESSAGE 1
+[008]:    4000    20     0    POP ADDRESS
+[009]:    0034    00 [034]    JUMP TO [034]
+[00A]:    8003    40     3    STORE VARIABLE 3
+[00B]:    6003    30     3    LOAD VARIABLE 3
+[00C]:    8004    40     4    STORE VARIABLE 4
+[00D]:    6004    30     4    LOAD VARIABLE 4
+[00E]:    2801    11     1    PUSH ELEMENT 1
+[00F]:    2803    11     3    PUSH ELEMENT 3
+[010]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[011]:    2801    11     1    PUSH ELEMENT 1
+[012]:    2804    11     4    PUSH ELEMENT 4
+[013]:    2801    11     1    PUSH ELEMENT 1
+[014]:    2805    11     5    PUSH ELEMENT 5
+[015]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[016]:    3000    12     0    PUSH STRUCTURE 0
+[017]:    B003    52     3    INVOKE 3 WITH 2 PARAMETERS
+[018]:    181F    03 [01F]    JUMP TO [01F] ON FALSE
+[019]:    2801    11     1    PUSH ELEMENT 1
+[01A]:    2806    11     6    PUSH ELEMENT 6
+[01B]:    8005    40     5    STORE VARIABLE 5
+[01C]:    2801    11     1    PUSH ELEMENT 1
+[01D]:    8003    40     3    STORE VARIABLE 3
+[01E]:    0034    00 [034]    JUMP TO [034]
+[01F]:    6003    30     3    LOAD VARIABLE 3
+[020]:    8004    40     4    STORE VARIABLE 4
+[021]:    6004    30     4    LOAD VARIABLE 4
+[022]:    2801    11     1    PUSH ELEMENT 1
+[023]:    2803    11     3    PUSH ELEMENT 3
+[024]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[025]:    2801    11     1    PUSH ELEMENT 1
+[026]:    2804    11     4    PUSH ELEMENT 4
+[027]:    2801    11     1    PUSH ELEMENT 1
+[028]:    2807    11     7    PUSH ELEMENT 7
+[029]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[02A]:    3000    12     0    PUSH STRUCTURE 0
+[02B]:    B003    52     3    INVOKE 3 WITH 2 PARAMETERS
+[02C]:    1833    03 [033]    JUMP TO [033] ON FALSE
+[02D]:    2801    11     1    PUSH ELEMENT 1
+[02E]:    2801    11     1    PUSH ELEMENT 1
+[02F]:    8005    40     5    STORE VARIABLE 5
+[030]:    2801    11     1    PUSH ELEMENT 1
+[031]:    8003    40     3    STORE VARIABLE 3
+[032]:    0034    00 [034]    JUMP TO [034]
+[033]:    E000    70     0    HANDLE EXCEPTION
+[034]:    0000    00 [000]    SKIP INSTRUCTION
 
