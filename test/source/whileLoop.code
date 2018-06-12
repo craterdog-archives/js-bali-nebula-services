@@ -15,5 +15,5 @@
 [00D]:    6004    30     4    LOAD VARIABLE 4
 [00E]:    8003    40     3    STORE VARIABLE 3
 [00F]:    0002    00 [002]    JUMP TO [002]
-[010]:    0000    00 [000]    SKIP INSTRUCTION
-
+[010]:    6005    30     5    LOAD VARIABLE 5
+[011]:    E800    71     0    HANDLE RESULT

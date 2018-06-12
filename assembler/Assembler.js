@@ -70,7 +70,6 @@ exports.disassembleBytecode = function(bytecode, symbols) {
 
         address++;
     }
-    procedure += '\n';
     return procedure;
 };
 
@@ -96,40 +95,39 @@ function lookupLabel(symbols, address) {
  * to the specified index.
  */
 function lookupSymbol(symbols, operation, modifier, index) {
-    index--;  // zero based indexing
-    var key;
+    var type;
     switch (operation) {
         case 'PUSH':
             switch (modifier) {
                 case 'ELEMENT':
-                    key = 'elements';
+                    type = 'elements';
                     break;
                 case 'CODE':
-                    key = 'code';
+                    type = 'code';
                     break;
             }
-            return symbols[key][index];
+            break;
         case 'LOAD':
         case 'STORE':
             switch (modifier) {
                 case 'VARIABLE':
-                    key = 'variables';
+                    type = 'variables';
                     break;
                 case 'DOCUMENT':
                 case 'DRAFT':
                 case 'MESSAGE':
-                    key = 'references';
+                    type = 'references';
                     break;
             }
-            return symbols[key][index];
+            break;
         case 'INVOKE':
-            return symbols.intrinsics[index];
+            type = 'intrinsics';
+            break;
         case 'EXECUTE':
-            return symbols.procedures[index];
-        default:
-            throw new Error('ASSEMBLER: Invalid operation with an index: ' + operation);
+            type = 'procedures';
+            break;
     }
-    
+    return symbols[type][index - 1];  // javascript zero based indexing
 }
 
 
@@ -184,7 +182,6 @@ AssemblingVisitor.prototype.visitJumpInstruction = function(instruction) {
 // pushInstruction:
 //     'PUSH' 'ADDRESS' LABEL |
 //     'PUSH' 'ELEMENT' LITERAL |
-//     'PUSH' 'STRUCTURE' |
 //     'PUSH' 'CODE' LITERAL
 AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
@@ -196,14 +193,9 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
         case 'ELEMENT':
             value = this.symbols.elements.indexOf(value) + 1;  // unit based indexing
             break;
-        case 'STRUCTURE':
-            // no value
-            break;
         case 'CODE':
             value = this.symbols.code.indexOf(value) + 1;  // unit based indexing
             break;
-        default:
-            throw new Error('ASSEMBLER: Illegal modifier for the LOAD instruction: ' + modifier);
     }
     var bytes = utilities.encodeInstruction('PUSH', modifier, value);
     this.bytecode.push(bytes);
@@ -228,19 +220,18 @@ AssemblingVisitor.prototype.visitPopInstruction = function(instruction) {
 AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
-    var index;
+    var type;
     switch(modifier) {
         case 'VARIABLE':
-            index = this.symbols.variables.indexOf(symbol) + 1;  // unit based indexing
+            type = 'variables';
             break;
         case 'DOCUMENT':
         case 'DRAFT':
         case 'MESSAGE':
-            index = this.symbols.references.indexOf(symbol) + 1;  // unit based indexing
+            type = 'references';
             break;
-        default:
-            throw new Error('ASSEMBLER: Illegal modifier for the LOAD instruction: ' + modifier);
     }
+    var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
     var bytes = utilities.encodeInstruction('LOAD', modifier, index);
     this.bytecode.push(bytes);
 };
@@ -254,19 +245,18 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
 AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.symbol;
-    var index;
+    var type;
     switch(modifier) {
         case 'VARIABLE':
-            index = this.symbols.variables.indexOf(symbol) + 1;  // unit based indexing
+            type = 'variables';
             break;
         case 'DOCUMENT':
         case 'DRAFT':
         case 'MESSAGE':
-            index = this.symbols.references.indexOf(symbol) + 1;  // unit based indexing
+            type = 'references';
             break;
-        default:
-            throw new Error('ASSEMBLER: Illegal modifier for the STORE instruction: ' + modifier);
     }
+    var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
     var bytes = utilities.encodeInstruction('STORE', modifier, index);
     this.bytecode.push(bytes);
 };

@@ -1,7 +1,6 @@
 
 1.EvaluateStatement:
 PUSH ELEMENT `none`
-PUSH ELEMENT `none`
 STORE VARIABLE $_result_
-
-
+LOAD VARIABLE $_result_
+HANDLE RESULT

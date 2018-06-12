@@ -1,6 +1,5 @@
 
 1.WithStatement:
-PUSH ELEMENT `none`
 PUSH ELEMENT `$sequence`
 EXECUTE $asSequential ON TARGET
 EXECUTE $iterator ON TARGET
@@ -15,7 +14,6 @@ EXECUTE $getNext ON TARGET
 STORE VARIABLE $symbol
 
 1.1.1.EvaluateStatement:
-PUSH ELEMENT `none`
 PUSH ELEMENT `true`
 STORE VARIABLE $x
 
@@ -29,7 +27,6 @@ JUMP TO 1.1.2.IfStatementDone ON FALSE
 
 1.1.2.1.1.EvaluateStatement:
 PUSH ELEMENT `none`
-PUSH ELEMENT `none`
 STORE VARIABLE $y
 
 1.1.2.1.2.ContinueStatement:
@@ -39,7 +36,6 @@ JUMP TO 1.1.ConditionClause
 SKIP INSTRUCTION
 
 1.1.3.EvaluateStatement:
-PUSH ELEMENT `none`
 PUSH ELEMENT `any`
 STORE VARIABLE $z
 
@@ -47,6 +43,5 @@ STORE VARIABLE $z
 JUMP TO 1.1.ConditionClause
 
 1.WithStatementDone:
-SKIP INSTRUCTION
-
-
+LOAD VARIABLE $_result_
+HANDLE RESULT

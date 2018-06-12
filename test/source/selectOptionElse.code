@@ -1,39 +1,31 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
 [001]:    2801    11     1    PUSH ELEMENT 1
-[002]:    2802    11     2    PUSH ELEMENT 2
-[003]:    8001    40     1    STORE VARIABLE 1
-[004]:    6001    30     1    LOAD VARIABLE 1
-[005]:    2801    11     1    PUSH ELEMENT 1
-[006]:    2803    11     3    PUSH ELEMENT 3
-[007]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
-[008]:    180D    03 [00D]    JUMP TO [00D] ON FALSE
-[009]:    2801    11     1    PUSH ELEMENT 1
-[00A]:    2801    11     1    PUSH ELEMENT 1
-[00B]:    8002    40     2    STORE VARIABLE 2
-[00C]:    0024    00 [024]    JUMP TO [024]
-[00D]:    6001    30     1    LOAD VARIABLE 1
-[00E]:    2801    11     1    PUSH ELEMENT 1
-[00F]:    2804    11     4    PUSH ELEMENT 4
-[010]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
-[011]:    1816    03 [016]    JUMP TO [016] ON FALSE
-[012]:    2801    11     1    PUSH ELEMENT 1
-[013]:    2801    11     1    PUSH ELEMENT 1
-[014]:    8002    40     2    STORE VARIABLE 2
-[015]:    0024    00 [024]    JUMP TO [024]
-[016]:    6001    30     1    LOAD VARIABLE 1
-[017]:    2801    11     1    PUSH ELEMENT 1
-[018]:    2805    11     5    PUSH ELEMENT 5
-[019]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
-[01A]:    181F    03 [01F]    JUMP TO [01F] ON FALSE
-[01B]:    2801    11     1    PUSH ELEMENT 1
-[01C]:    2801    11     1    PUSH ELEMENT 1
-[01D]:    8002    40     2    STORE VARIABLE 2
-[01E]:    0024    00 [024]    JUMP TO [024]
-[01F]:    0000    00 [000]    SKIP INSTRUCTION
-[020]:    2801    11     1    PUSH ELEMENT 1
-[021]:    2801    11     1    PUSH ELEMENT 1
-[022]:    8002    40     2    STORE VARIABLE 2
-[023]:    0024    00 [024]    JUMP TO [024]
-[024]:    0000    00 [000]    SKIP INSTRUCTION
-
+[002]:    8001    40     1    STORE VARIABLE 1
+[003]:    6001    30     1    LOAD VARIABLE 1
+[004]:    2802    11     2    PUSH ELEMENT 2
+[005]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
+[006]:    180A    03 [00A]    JUMP TO [00A] ON FALSE
+[007]:    2803    11     3    PUSH ELEMENT 3
+[008]:    8002    40     2    STORE VARIABLE 2
+[009]:    001C    00 [01C]    JUMP TO [01C]
+[00A]:    6001    30     1    LOAD VARIABLE 1
+[00B]:    2804    11     4    PUSH ELEMENT 4
+[00C]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
+[00D]:    1811    03 [011]    JUMP TO [011] ON FALSE
+[00E]:    2803    11     3    PUSH ELEMENT 3
+[00F]:    8002    40     2    STORE VARIABLE 2
+[010]:    001C    00 [01C]    JUMP TO [01C]
+[011]:    6001    30     1    LOAD VARIABLE 1
+[012]:    2805    11     5    PUSH ELEMENT 5
+[013]:    B001    52     1    INVOKE 1 WITH 2 PARAMETERS
+[014]:    1818    03 [018]    JUMP TO [018] ON FALSE
+[015]:    2803    11     3    PUSH ELEMENT 3
+[016]:    8002    40     2    STORE VARIABLE 2
+[017]:    001C    00 [01C]    JUMP TO [01C]
+[018]:    0000    00 [000]    SKIP INSTRUCTION
+[019]:    2803    11     3    PUSH ELEMENT 3
+[01A]:    8002    40     2    STORE VARIABLE 2
+[01B]:    001C    00 [01C]    JUMP TO [01C]
+[01C]:    6002    30     2    LOAD VARIABLE 2
+[01D]:    E800    71     0    HANDLE RESULT

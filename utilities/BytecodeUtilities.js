@@ -70,9 +70,8 @@ exports.decodeModifier = function(instruction) {
         case JUMP:
             return CONDITIONS[number];
         case PUSH:
-            return PUSHABLES[number];
         case POP:
-            return POPABLES[number];
+            return TYPES[number];
         case LOAD:
         case STORE:
             return COMPONENTS[number];
@@ -100,7 +99,7 @@ exports.operandIsAddress = function(instruction) {
         case JUMP:
             return true;
         case PUSH:
-            return modcode === 0;
+            return modcode === ADDRESS;
         default:
             return false;
     }
@@ -119,7 +118,7 @@ exports.operandIsIndex = function(instruction) {
     var modcode = extractModcode(instruction);
     switch (opcode) {
         case PUSH:
-            return modcode !== ADDRESS && modcode !== STRUCTURE;
+            return modcode !== ADDRESS;
         case LOAD:
         case STORE:
         case INVOKE:
@@ -157,15 +156,13 @@ exports.instructionIsValid = function(instruction) {
     switch (opcode) {
         case JUMP:
             // the SKIP INSTRUCTION is the only one allowed to have a zero operand
-            return operand !== 0 || modcode === 0;
+            return operand > 0 || modcode === 0;
         case PUSH:
             switch (modcode) {
                 case ADDRESS:
                 case ELEMENT:
                 case CODE:
-                    return operand !== 0;
-                case STRUCTURE:
-                    return operand === 0;
+                    return operand > 0;
                 default:
                     return false;
             }
@@ -183,7 +180,7 @@ exports.instructionIsValid = function(instruction) {
         case STORE:
         case INVOKE:
         case EXECUTE:
-            return operand !== 0;
+            return operand > 0;
         case HANDLE:
             switch (modcode) {
                 case EXCEPTION:
@@ -309,12 +306,8 @@ exports.instructionAsString = function(operation, modifier, operand) {
             break;
         case 'INVOKE':
             instruction = 'INVOKE ' + operand;
-            if (modifier === 1) {
-                instruction += ' WITH PARAMETER';
-            }
-            if (modifier > 1) {
-                instruction += ' WITH ' + modifier + ' PARAMETERS';
-            }
+            if (modifier === 1) instruction += ' WITH PARAMETER';
+            if (modifier > 1) instruction += ' WITH ' + modifier + ' PARAMETERS';
             break;
         case 'EXECUTE':
             instruction = 'EXECUTE ' + operand;
@@ -396,12 +389,11 @@ var ON_TRUE = 0x1000;
 var ON_FALSE = 0x1800;
 
 
-// literals
+// types
 var ADDRESS = 0x0000;
 var ELEMENT = 0x0800;
-var STRUCTURE = 0x1000;
-var CODE = 0x1800;
-var COMPONENT = 0x0800;
+var CODE = 0x1000;
+var COMPONENT = 0x1800;
 
 // components
 var VARIABLE = 0x0000;
@@ -431,7 +423,6 @@ var MODCODES = {
     'ON FALSE': ON_FALSE,
     'ADDRESS': ADDRESS,
     'ELEMENT': ELEMENT,
-    'STRUCTURE': STRUCTURE,
     'CODE': CODE,
     'COMPONENT': COMPONENT,
     'VARIABLE': VARIABLE,
@@ -446,21 +437,16 @@ var MODCODES = {
 };
 
 var CONDITIONS = [
-    '',  // same as 'ON_ANY'
+    '',  // same as 'ON ANY'
     'ON NONE',
     'ON TRUE',
     'ON FALSE'
 ];
 
-var PUSHABLES = [
+var TYPES = [
     'ADDRESS',
     'ELEMENT',
-    'STRUCTURE',
-    'CODE'
-];
-
-var POPABLES = [
-    'ADDRESS',
+    'CODE',
     'COMPONENT'
 ];
 

@@ -361,16 +361,16 @@ CompilingVisitor.prototype.visitComponent = function(tree) {
     var object = tree.children[0];
     var parameters = tree.children[1];
 
+    // the VM places the object on top of the component stack
+    object.accept(this);
+
     if (parameters) {
         // the VM loads the parameters associated with the object onto the top of the component stack
         parameters.accept(this);
-    } else {
-        // the VM loads the 'none' element onto the top of the component stack
-        this.builder.insertPushInstruction('ELEMENT', 'none');  // no parameters
-    }
 
-    // the VM instantiates the parameterized object on top of the component stack
-    object.accept(this);
+        // the VM sets the parameters for the object
+        this.builder.insertInvokeInstruction('$setParameters', 2);
+    }
 };
 
 
@@ -533,7 +533,7 @@ CompilingVisitor.prototype.visitEvaluateClause = function(tree) {
         // the VM places the value of the expression on top of the component stack
         expression.accept(this);
         
-        // the VM stores the value of the expression in the result variable
+        // the VM stores the value of the expression in the temporary result variable
         this.builder.insertStoreInstruction('VARIABLE', '$_result_');
     }
 };
@@ -632,12 +632,12 @@ CompilingVisitor.prototype.visitHandleClause = function(tree) {
     var handleLabel = clausePrefix + 'HandleClause';
     this.builder.insertLabel(handleLabel);
 
-    // the VM loads the exception onto the top of the component stack
-    this.builder.insertLoadInstruction('VARIABLE', '$_exception_');
-
     // the VM stores the exception that is on top of the component stack in the variable
     var exception = symbol.value;
     this.builder.insertStoreInstruction('VARIABLE', exception);
+
+    // the VM loads the exception back on top of the component stack for the next handler
+    this.builder.insertLoadInstruction('VARIABLE', exception);
 
     // the VM compares the template expression with the actual exception
     this.builder.insertLoadInstruction('VARIABLE', exception);
@@ -651,13 +651,14 @@ CompilingVisitor.prototype.visitHandleClause = function(tree) {
     }
     this.builder.insertJumpInstruction(nextLabel, 'ON FALSE');
 
+    // the VM pops the exception off the component stack since this handler will handle it
+    this.builder.insertPopInstruction('COMPONENT');
+
     // the VM executes the handler block
     block.accept(this);
 
     // the exception was handled successfully
     this.builder.insertLabel(clausePrefix + 'HandleClauseDone');
-    this.builder.insertPushInstruction('ELEMENT', 'none');
-    this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
     this.builder.insertJumpInstruction(statement.successLabel);
 };
 
@@ -1038,31 +1039,6 @@ CompilingVisitor.prototype.visitRange = function(tree) {
 
 
 /*
- * This method inserts the instructions that cause the VM to prepare the recipient
- * of a value to receive it. The recipient may be either a variable or an indexed
- * child of a collection component. If it is a variable (identified by its symbol)
- * no preparation is needed. But if it is the latter, the children of the collection
- * component must be traversed using the specified indices until the parent of the
- * last child and the last child's index are left on the component stack. This
- * leaves the stack ready for a call to '$setValue' to set the value of the child
- * to the value of an expression that will be placed on the top of the component
- * stack prior to the call.
- */
-// subcomponent: variable indices
-CompilingVisitor.prototype.visitSubcomponent = function(tree) {
-    var variable = tree.children[0];
-    var indices = tree.children[1];
-
-    // the VM places the value of the variable onto the top of the component stack
-    variable.accept(this);
-
-    // the VM replaces the value of the variable on the component stack with
-    // the parent and index of the subcomponent
-    indices.accept(this);
-};
-
-
-/*
  * This method inserts the instructions that cause the VM to evaluate an
  * optional expression and then set the resulting value that is on top
  * of the component stack as the result of the current procedure. The VM
@@ -1073,11 +1049,12 @@ CompilingVisitor.prototype.visitReturnClause = function(tree) {
     if (tree.children.length > 0) {
         var result = tree.children[0];
 
-        // the VM stores the value of the result expression in a temporary variable
+        // the VM places the value of the result expression on top of the component stack
         result.accept(this);
-        this.builder.insertStoreInstruction('VARIABLE', '$_result_');
+    } else {
+        // the VM places a 'none' value on top of the component stack
+        this.builder.insertPushInstruction('ELEMENT', 'none');
     }
-    this.builder.insertLoadInstruction('VARIABLE', '$_result_');
 
     // the VM returns the result to the calling procedure
     this.builder.insertHandleInstruction('RESULT');
@@ -1229,9 +1206,6 @@ CompilingVisitor.prototype.visitStatement = function(tree) {
             // the VM will direct any exceptions from the main clause here to be handled
             this.builder.insertLabel(statement.handlerLabel);
 
-            // the VM stores the exception that is on top of the component stack in a temporary variable
-            this.builder.insertStoreInstruction('VARIABLE', '$_exception_');
-
             // the VM tries each handler for the exception
             var handlers = statement.handleClauses;
             for (var i = 0; i < handlers.length; i++) {
@@ -1263,9 +1237,31 @@ CompilingVisitor.prototype.visitStructure = function(tree) {
 
     // the VM places the value of the collection on top of the component stack
     collection.accept(this);
+};
 
-    // the VM instantiates a parameterized structure using the collection to initialize it
-    this.builder.insertPushInstruction('STRUCTURE');
+
+/*
+ * This method inserts the instructions that cause the VM to prepare the recipient
+ * of a value to receive it. The recipient may be either a variable or an indexed
+ * child of a collection component. If it is a variable (identified by its symbol)
+ * no preparation is needed. But if it is the latter, the children of the collection
+ * component must be traversed using the specified indices until the parent of the
+ * last child and the last child's index are left on the component stack. This
+ * leaves the stack ready for a call to '$setValue' to set the value of the child
+ * to the value of an expression that will be placed on the top of the component
+ * stack prior to the call.
+ */
+// subcomponent: variable indices
+CompilingVisitor.prototype.visitSubcomponent = function(tree) {
+    var variable = tree.children[0];
+    var indices = tree.children[1];
+
+    // the VM places the value of the variable onto the top of the component stack
+    variable.accept(this);
+
+    // the VM replaces the value of the variable on the component stack with
+    // the parent and index of the subcomponent
+    indices.accept(this);
 };
 
 
@@ -1303,7 +1299,7 @@ CompilingVisitor.prototype.visitSubcomponentExpression = function(tree) {
 CompilingVisitor.prototype.visitThrowClause = function(tree) {
     var exception = tree.children[0];
 
-    // the VM evaluates the exception expression
+    // the VM places the value of the exception expression on top of the component stack
     exception.accept(this);
 
     // the VM jumps to the handler clauses for the current context
@@ -1820,13 +1816,11 @@ InstructionBuilder.prototype.insertHandleInstruction = function(context) {
 
 
 /*
- * This method finalizes the builder by adding a 'skip' instruction with any
- * outstanding label that has not yet been prepended to an instruction.
+ * This method finalizes the builder by adding instructions to handle the
+ * result if not handled earlier.
  */
 InstructionBuilder.prototype.finalize = function() {
-    // check for existing label
-    if (this.nextLabel) {
-        this.insertSkipInstruction();
-    }
-    this.asmcode += '\n';  // POSIX requires all lines end with a line feed
+    this.insertLoadInstruction('VARIABLE', '$_result_');
+    this.insertHandleInstruction('RESULT');
+    //this.asmcode += '\n';  // POSIX requires all lines end with a line feed
 };

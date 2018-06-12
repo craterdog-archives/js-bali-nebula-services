@@ -24,7 +24,7 @@ if a < b then {
     ]
     throw exception
 }
-while (true) do {
+while true do {
     $foo := bar
     if foo then {
         break loop

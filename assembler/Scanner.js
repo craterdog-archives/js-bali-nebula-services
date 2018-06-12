@@ -90,19 +90,20 @@ ScanningVisitor.prototype.visitJumpInstruction = function(instruction) {
 // pushInstruction:
 //     'PUSH' 'ADDRESS' LABEL |
 //     'PUSH' 'ELEMENT' LITERAL |
-//     'PUSH' 'STRUCTURE' |
 //     'PUSH' 'CODE' LITERAL
 ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.value;
+    var type;
     switch (modifier) {
         case 'ELEMENT':
-            if (!this.symbols.elements.includes(value)) this.symbols.elements.push(value);
+            type = 'elements';
             break;
         case 'CODE':
-            if (!this.symbols.code.includes(value)) this.symbols.code.push(value);
+            type = 'code';
             break;
     }
+    if (type && !this.symbols[type].includes(value)) this.symbols[type].push(value);
     this.address++;
 };
 

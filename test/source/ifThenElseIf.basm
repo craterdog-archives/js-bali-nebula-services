@@ -3,7 +3,6 @@
 SKIP INSTRUCTION
 
 1.1.ConditionClause:
-PUSH ELEMENT `none`
 PUSH ELEMENT `true`
 EXECUTE $asLogical ON TARGET
 JUMP TO 1.2.ConditionClause ON FALSE
@@ -16,7 +15,6 @@ STORE VARIABLE $_result_
 JUMP TO 1.IfStatementDone
 
 1.2.ConditionClause:
-PUSH ELEMENT `none`
 PUSH ELEMENT `false`
 EXECUTE $asLogical ON TARGET
 JUMP TO 1.IfStatementDone ON FALSE
@@ -26,6 +24,5 @@ LOAD VARIABLE $no
 STORE VARIABLE $_result_
 
 1.IfStatementDone:
-SKIP INSTRUCTION
-
-
+LOAD VARIABLE $_result_
+HANDLE RESULT

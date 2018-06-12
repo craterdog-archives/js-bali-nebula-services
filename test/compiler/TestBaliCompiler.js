@@ -30,17 +30,15 @@ describe('Bali Virtual Machine™', function() {
                 var prefix = file.split('.').slice(0, 1);
                 var baliFile = testFolder + prefix + '.bali';
                 var basmFile = testFolder + prefix + '.basm';
-                // strip off the POSIX newline terminator so that the round-trip comparison will work
-                var source = fs.readFileSync(baliFile, 'utf8').slice(0, -1);
+                var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
                 var tree = language.parseProcedure(source);
                 expect(tree).to.exist;  // jshint ignore:line
                 var type = {};
                 var instructions = compiler.compileProcedure(tree, type);
                 expect(instructions).to.exist;  // jshint ignore:line
-                //fs.writeFileSync(basmFile, instructions + '\n', 'utf8');  // add POSIX terminator
-                // strip off the POSIX newline terminator so that the round-trip comparison will work
-                var expected = fs.readFileSync(basmFile, 'utf8').slice(0, -1);
+                //fs.writeFileSync(basmFile, instructions, 'utf8');
+                var expected = fs.readFileSync(basmFile, 'utf8');
                 expect(expected).to.exist;  // jshint ignore:line
                 expect(instructions).to.equal(expected);
             }

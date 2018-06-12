@@ -78,7 +78,7 @@ exports.compileType = function(source) {
  * @returns {string} The The formatted Bali document for the type.
  */
 exports.formatType = function(type) {
-    var document = language.formatParseTree(type);
+    var document = language.formatParseTree(type) + '\n';  // add POSIX terminator
     return document;
 };
 
