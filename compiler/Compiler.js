@@ -1822,5 +1822,4 @@ InstructionBuilder.prototype.insertHandleInstruction = function(context) {
 InstructionBuilder.prototype.finalize = function() {
     this.insertLoadInstruction('VARIABLE', '$_result_');
     this.insertHandleInstruction('RESULT');
-    //this.asmcode += '\n';  // POSIX requires all lines end with a line feed
 };
