@@ -23,6 +23,7 @@
  * based index or address. The value zero is reserved for specifying an
  * invalid index or address.
  */
+var types = require('bali-instruction-set/syntax/InstructionTypes');
 
 
 // PUBLIC FUNCTIONS
@@ -31,14 +32,16 @@
  * This function takes an operation, a modifier and an operand and
  * encodes them into the corresponding instruction as a two byte number.
  *
- * @param {string} operation The operation for the bytecode.
- * @param {string} modifier The modifier for the bytecode.
+ * @param {number} operation The operation for the bytecode.
+ * @param {number} modifier The modifier for the bytecode.
  * @param {number} optionalOperand The optional operand associated with the operation.
  * @return {number} The bytecode for the instruction.
  */
 exports.encodeInstruction = function(operation, modifier, optionalOperand) {
+    var opcode = (operation << 13) & OPCODE_MASK;
+    var modcode = (modifier << 11) & MODCODE_MASK;
     var operand = optionalOperand === undefined ? 0 : optionalOperand;
-    var instruction = OPCODES[operation] | MODCODES[modifier] | (operand & OPERAND_MASK);
+    var instruction = opcode | modcode | operand;
     return instruction;
 };
 
@@ -47,11 +50,10 @@ exports.encodeInstruction = function(operation, modifier, optionalOperand) {
  * This function decodes the operation for an instruction.
  *
  * @param {number} instruction The instruction to be decoded.
- * @return {string} The decoded operation.
+ * @return {number} The decoded operation.
  */
 exports.decodeOperation = function(instruction) {
-    var opcode = extractOpcode(instruction);
-    var operation = OPERATIONS[opcode >>> 13];
+    var operation = (instruction & OPCODE_MASK) >>> 13;
     return operation;
 };
 
@@ -60,73 +62,11 @@ exports.decodeOperation = function(instruction) {
  * This function decodes the modifier for an instruction.
  *
  * @param {number} instruction The instruction to be decoded.
- * @return {number|string} The decoded modifier.
+ * @return {number} The decoded modifier.
  */
 exports.decodeModifier = function(instruction) {
-    var opcode = extractOpcode(instruction);
-    var modcode = extractModcode(instruction);
-    var number = modcode >>> 11;
-    switch (opcode) {
-        case JUMP:
-            return CONDITIONS[number];
-        case PUSH:
-        case POP:
-            return TYPES[number];
-        case LOAD:
-        case STORE:
-            return COMPONENTS[number];
-        case INVOKE:
-            return number;
-        case EXECUTE:
-            return PROCEDURES[number];
-        case HANDLE:
-            return CONTEXTS[number];
-    }
-};
-
-
-/**
- * This function determines whether or not the operand of an instruction
- * is an address.
- *
- * @param {number} instruction The instruction to be decoded.
- * @return {boolean} Whether or not the operand is an address.
- */
-exports.operandIsAddress = function(instruction) {
-    var opcode = extractOpcode(instruction);
-    var modcode = extractModcode(instruction);
-    switch (opcode) {
-        case JUMP:
-            return true;
-        case PUSH:
-            return modcode === HANDLER;
-        default:
-            return false;
-    }
-};
-
-
-/**
- * This function determines whether or not the operand of an instruction
- * is an index.
- *
- * @param {number} instruction The instruction to be decoded.
- * @return {boolean} Whether or not the operand is an index.
- */
-exports.operandIsIndex = function(instruction) {
-    var opcode = extractOpcode(instruction);
-    var modcode = extractModcode(instruction);
-    switch (opcode) {
-        case PUSH:
-            return modcode !== HANDLER;
-        case LOAD:
-        case STORE:
-        case INVOKE:
-        case EXECUTE:
-            return true;
-        default:
-            return false;
-    }
+    var modifier = (instruction & MODCODE_MASK) >>> 11;
+    return modifier;
 };
 
 
@@ -143,6 +83,52 @@ exports.decodeOperand = function(instruction) {
 
 
 /**
+ * This function determines whether or not the operand of an instruction
+ * is an address.
+ *
+ * @param {number} instruction The instruction to be decoded.
+ * @return {boolean} Whether or not the operand is an address.
+ */
+exports.operandIsAddress = function(instruction) {
+    var operation = exports.decodeOperation(instruction);
+    var modifier = exports.decodeModifier(instruction);
+    var operand = exports.decodeOperand(instruction);
+    switch (operation) {
+        case types.JUMP:
+            return operand > 0;
+        case types.PUSH:
+            return modifier === types.HANDLER;
+        default:
+            return false;
+    }
+};
+
+
+/**
+ * This function determines whether or not the operand of an instruction
+ * is an index.
+ *
+ * @param {number} instruction The instruction to be decoded.
+ * @return {boolean} Whether or not the operand is an index.
+ */
+exports.operandIsIndex = function(instruction) {
+    var operation = exports.decodeOperation(instruction);
+    var modifier = exports.decodeModifier(instruction);
+    switch (operation) {
+        case types.PUSH:
+            return modifier !== types.HANDLER;
+        case types.LOAD:
+        case types.STORE:
+        case types.INVOKE:
+        case types.EXECUTE:
+            return true;
+        default:
+            return false;
+    }
+};
+
+
+/**
  * This function determines whether or not an instruction
  * is valid.
  *
@@ -150,41 +136,42 @@ exports.decodeOperand = function(instruction) {
  * @return {boolean} Whether or not the instruction is valid.
  */
 exports.instructionIsValid = function(instruction) {
-    var opcode = extractOpcode(instruction);
-    var modcode = extractModcode(instruction);
+    var operation = exports.decodeOperation(instruction);
+    var modifier = exports.decodeModifier(instruction);
     var operand = exports.decodeOperand(instruction);
-    switch (opcode) {
-        case JUMP:
+    switch (operation) {
+        case types.JUMP:
             // the SKIP INSTRUCTION is the only one allowed to have a zero operand
-            return operand > 0 || modcode === 0;
-        case PUSH:
-            switch (modcode) {
-                case HANDLER:
-                case ELEMENT:
-                case CODE:
+            // and only if the modifier is also zero
+            return operand > 0 || modifier === 0;
+        case types.PUSH:
+            switch (modifier) {
+                case types.HANDLER:
+                case types.ELEMENT:
+                case types.CODE:
                     return operand > 0;
                 default:
                     return false;
             }
             break;
-        case POP:
-            switch (modcode) {
-                case HANDLER:
-                case COMPONENT:
+        case types.POP:
+            switch (modifier) {
+                case types.HANDLER:
+                case types.COMPONENT:
                     return operand === 0;
                 default:
                     return false;
             }
             break;
-        case LOAD:
-        case STORE:
-        case INVOKE:
-        case EXECUTE:
+        case types.LOAD:
+        case types.STORE:
+        case types.INVOKE:
+        case types.EXECUTE:
             return operand > 0;
-        case HANDLE:
-            switch (modcode) {
-                case EXCEPTION:
-                case RESULT:
+        case types.HANDLE:
+            switch (modifier) {
+                case types.EXCEPTION:
+                case types.RESULT:
                     return operand === 0;
                 default:
                     return false;
@@ -193,61 +180,6 @@ exports.instructionIsValid = function(instruction) {
         default:
             return false;
     }
-};
-
-
-/**
- * This function returns the canonical string format for a Bali virtual
- * machine address in hexidecimal [000..3FF].
- * 
- * @param {number} address The virtual machine address.
- * @returns {string} The canonical string representation of the address.
- */
-exports.addressAsString = function(address) {
-    if (address === 0) return null;  // invalid address
-    var string = address.toString(16).toUpperCase();
-    while (string.length < 3) string = '0' + string;
-    string = '[' + string + ']';
-    return string;
-};
-
-
-/**
- * This function returns a human readable version of a Bali virtual machine
- * 16 bit (word) bytecode instruction.
- * 
- * @param {number} address The address of the instruction.
- * @param {number} instruction The 16 bit bytecode instruction to be formatted.
- * @returns {string} The human readable form of the bytecode instruction.
- */
-exports.wordAsString = function(address, instruction) {
-    address = exports.addressAsString(address);
-    var opcode = extractOpcode(instruction) >>> 13;
-    var modcode = extractModcode(instruction) >>> 11;
-    var operation = exports.decodeOperation(instruction);
-    var modifier = exports.decodeModifier(instruction);
-    var operand = exports.decodeOperand(instruction);
-    if (exports.operandIsAddress(instruction)) {
-        operand = exports.addressAsString(operand);
-    } else {
-        operand = operand.toString();
-    }
-
-    // format the instruction as hexadecimal bytes
-    var bytes = instruction.toString(16).toUpperCase();
-    while (bytes.length < 4) bytes = '0' + bytes;
-
-    // format the description
-    var description = exports.instructionAsString(operation, modifier, operand);
-
-    // format the bytecode
-    if (operand === null) operand = '[000]';  // for the SKIP INSTRUCTION
-    while (operand.length < 5) operand = ' ' + operand;  // pad operand string with spaces
-    var bytecode = '' + opcode + modcode + ' ' + operand;
-
-    // put them all together
-    var formatted = address + ':    ' + bytes + '    ' + bytecode + '    ' + description;
-    return formatted;
 };
 
 
@@ -263,7 +195,7 @@ exports.bytecodeAsString = function(bytecode) {
     var address = 1;  // bali VM unit based addressing
     while (address <= bytecode.length) {
         var instruction = bytecode[address - 1];  // javascript zero based indexing
-        string += exports.wordAsString(address, instruction) + '\n';
+        string += wordAsString(address, instruction) + '\n';
         address++;  // ready for next instruction
     }
     return string;
@@ -271,72 +203,61 @@ exports.bytecodeAsString = function(bytecode) {
 
 
 /**
- * This function takes an operation, a modifier and an operand and
- * formats them into a human readable version of a Bali virtual
- * machine instruction.
+ * This function takes an instruction and formats it into a human readable
+ * version of a Bali virtual machine instruction.
  *
- * @param {string} operation The operation for the instruction.
- * @param {string|number} modifier The modifier for the instruction.
- * @param {string} operand The optional operand associated with the instruction.
+ * @param {number} instruction The instruction to be formatted.
+ * @param {string} optionalOperand An optional label, symbol, or element as operand.
  * @return {string} The human readable form of the instruction.
  */
-exports.instructionAsString = function(operation, modifier, operand) {
-    var instruction;
+exports.instructionAsString = function(instruction, optionalOperand) {
+    var operation = exports.decodeOperation(instruction);
+    var modifier = exports.decodeModifier(instruction);
+
+    var operand = exports.decodeOperand(instruction);
+    if (optionalOperand !== undefined) {
+        operand = optionalOperand;
+    } else if (exports.operandIsAddress(instruction)) {
+        operand = addressAsString(operand);
+    } else if (exports.operandIsIndex(instruction)) {
+        operand = indexAsString(operand);
+    }
+
+    var string = types.OPERATIONS[operation] + ' ';
     switch (operation) {
-        case 'JUMP':
-            if (modifier === '' && operand === null) {
-                instruction = 'SKIP INSTRUCTION';
+        case types.JUMP:
+            if (modifier === 0 && operand === 0) {
+                string = 'SKIP INSTRUCTION';
             } else {
-                instruction = 'JUMP TO ' + operand;
-                if (modifier) instruction += ' ' + modifier;
+                string += 'TO ' + operand;
+                if (modifier > 0) string += ' ' + types.CONDITIONS[modifier];
             }
             break;
-        case 'PUSH':
-            instruction = 'PUSH ' + modifier;
-            if (operand) instruction += ' ' + operand;
+        case types.PUSH:
+            string += types.TYPES[modifier] + ' ' + operand;
             break;
-        case 'POP':
-            instruction = 'POP ' + modifier;
+        case types.POP:
+            string += types.TYPES[modifier];
             break;
-        case 'LOAD':
-            instruction = 'LOAD ' + modifier + ' ' + operand;
+        case types.LOAD:
+        case types.STORE:
+            string += types.COMPONENTS[modifier] + ' ' + operand;
             break;
-        case 'STORE':
-            instruction = 'STORE ' + modifier + ' ' + operand;
+        case types.INVOKE:
+            string += operand;
+            if (modifier === 1) string += ' WITH PARAMETER';
+            if (modifier > 1) string += ' WITH ' + modifier + ' PARAMETERS';
             break;
-        case 'INVOKE':
-            instruction = 'INVOKE ' + operand;
-            if (modifier === 1) instruction += ' WITH PARAMETER';
-            if (modifier > 1) instruction += ' WITH ' + modifier + ' PARAMETERS';
+        case types.EXECUTE:
+            string += operand;
+            if (modifier > 0) string += ' ' + types.PARAMETERS[modifier];
             break;
-        case 'EXECUTE':
-            instruction = 'EXECUTE ' + operand;
-            if (modifier) instruction += ' ' + modifier;
-            break;
-        case 'HANDLE':
-            instruction = 'HANDLE ' + modifier;
+        case types.HANDLE:
+            string += types.CONTEXTS[modifier];
             break;
     }
-    return instruction;
+    return string;
 };
-
-
-// PRIVATE FUNCTIONS
-
-/*
- * This function takes a bytecode instruction and extracts its opcode.
- */
-function extractOpcode(instruction) {
-    return instruction & OPCODE_MASK;
-}
-
-
-/*
- * This function takes a bytecode instruction and extracts its modcode.
- */
-function extractModcode(instruction) {
-    return instruction & MODCODE_MASK;
-}
 
 
 // PRIVATE CONSTANTS
@@ -346,125 +267,68 @@ var OPCODE_MASK = 0xE000;
 var MODCODE_MASK = 0x1800;
 var OPERAND_MASK = 0x07FF;
 
-// opcodes
-var SKIP = 0x0000;
-var JUMP = 0x0000;
-var PUSH = 0x2000;
-var POP = 0x4000;
-var LOAD = 0x6000;
-var STORE = 0x8000;
-var INVOKE = 0xA000;
-var EXECUTE = 0xC000;
-var HANDLE = 0xE000;
 
-// operations
-var OPERATIONS = [
-    'JUMP',
-    'PUSH',
-    'POP',
-    'LOAD',
-    'STORE',
-    'INVOKE',
-    'EXECUTE',
-    'HANDLE'
-];
+// PRIVATE FUNCTIONS
 
-// opcodes
-var OPCODES = {
-    'SKIP': SKIP,
-    'JUMP': JUMP,
-    'PUSH': PUSH,
-    'POP': POP,
-    'LOAD': LOAD,
-    'STORE': STORE,
-    'INVOKE': INVOKE,
-    'EXECUTE': EXECUTE,
-    'HANDLE': HANDLE
-};
-
-// conditions
-var ON_ANY = 0x0000;
-var ON_NONE = 0x0800;
-var ON_TRUE = 0x1000;
-var ON_FALSE = 0x1800;
+/**
+ * This function returns the canonical string format for an index to a
+ * literal value or symbol.
+ * 
+ * @param {number} index The index to be formatted.
+ * @returns {string} The canonical string representation of the index.
+ */
+function indexAsString(index) {
+    var string = index.toString();
+    return string;
+}
 
 
-// types
-var HANDLER = 0x0000;
-var ELEMENT = 0x0800;
-var CODE = 0x1000;
-var COMPONENT = 0x1800;
+/**
+ * This function returns the canonical string format for a Bali virtual
+ * machine address in hexidecimal [000..3FF].
+ * 
+ * @param {number} address The virtual machine address.
+ * @returns {string} The canonical string representation of the address.
+ */
+function addressAsString(address) {
+    var string = address.toString(16).toUpperCase();
+    while (string.length < 3) string = '0' + string;
+    string = '[' + string + ']';
+    return string;
+}
 
-// components
-var VARIABLE = 0x0000;
-var DOCUMENT = 0x0800;
-var DRAFT = 0x1000;
-var MESSAGE = 0x1800;
 
-// procedures
-var WITH_PARAMETERS = 0x0800;
-var ON_TARGET = 0x1000;
-var ON_TARGET_WITH_PARAMETERS = 0x1800;
+/**
+ * This function returns a human readable version of a Bali virtual machine
+ * 16 bit (word) bytecode instruction.
+ * 
+ * @param {number} address The address of the instruction.
+ * @param {number} instruction The 16 bit bytecode instruction to be formatted.
+ * @returns {string} The human readable form of the bytecode instruction.
+ */
+function wordAsString(address, instruction) {
+    address = addressAsString(address);
+    var operation = exports.decodeOperation(instruction);
+    var modifier = exports.decodeModifier(instruction);
+    var operand = exports.decodeOperand(instruction);
+    if (exports.operandIsAddress(instruction)) {
+        operand = addressAsString(operand);
+    } else {
+        operand = indexAsString(operand);
+    }
 
-// contexts
-var EXCEPTION = 0x0000;
-var RESULT = 0x0800;
+    // format the instruction as hexadecimal bytes
+    var bytes = instruction.toString(16).toUpperCase();
+    while (bytes.length < 4) bytes = '0' + bytes;
 
-// modcodes
-var MODCODES = {
-    // these first four must be first to allow numbers to work in addition to strings
-    '0': 0x0000,
-    '1': 0x0800,
-    '2': 0x1000,
-    '3': 0x1800,
-    'ON ANY': ON_ANY,
-    'ON NONE': ON_NONE,
-    'ON TRUE': ON_TRUE,
-    'ON FALSE': ON_FALSE,
-    'HANDLER': HANDLER,
-    'ELEMENT': ELEMENT,
-    'CODE': CODE,
-    'COMPONENT': COMPONENT,
-    'VARIABLE': VARIABLE,
-    'DOCUMENT': DOCUMENT,
-    'DRAFT': DRAFT,
-    'MESSAGE': MESSAGE,
-    'WITH PARAMETERS': WITH_PARAMETERS,
-    'ON TARGET': ON_TARGET,
-    'ON TARGET WITH PARAMETERS': ON_TARGET_WITH_PARAMETERS,
-    'EXCEPTION': EXCEPTION,
-    'RESULT': RESULT
-};
+    // format the description
+    var description = exports.instructionAsString(instruction);
 
-var CONDITIONS = [
-    '',  // same as 'ON ANY'
-    'ON NONE',
-    'ON TRUE',
-    'ON FALSE'
-];
+    // format the bytecode
+    while (operand.length < 5) operand = ' ' + operand;  // pad operand string with spaces
+    var bytecode = '' + operation + modifier + ' ' + operand;
 
-var TYPES = [
-    'HANDLER',
-    'ELEMENT',
-    'CODE',
-    'COMPONENT'
-];
-
-var COMPONENTS = [
-    'VARIABLE',
-    'DOCUMENT',
-    'DRAFT',
-    'MESSAGE'
-];
-
-var PROCEDURES = [
-    '',  // no target or parameters
-    'WITH PARAMETERS',
-    'ON TARGET',
-    'ON TARGET WITH PARAMETERS'
-];
-
-var CONTEXTS = [
-    'EXCEPTION',
-    'RESULT'
-];
+    // put them all together
+    var formatted = address + ':    ' + bytes + '    ' + bytecode + '    ' + description;
+    return formatted;
+}

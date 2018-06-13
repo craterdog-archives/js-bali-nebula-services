@@ -214,7 +214,7 @@ SKIP INSTRUCTION
 
 2.1.ConditionClause:
 LOAD VARIABLE $height
-EXECUTE $asLogical ON TARGET
+EXECUTE $asBoolean ON TARGET
 JUMP TO 2.IfStatementDone ON FALSE
 
 2.1.1.EvaluateStatement:

@@ -8,6 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 'use strict';
+var types = require('bali-instruction-set/syntax/InstructionTypes');
 var utilities = require('../utilities/BytecodeUtilities');
 
 /**
@@ -52,20 +53,20 @@ exports.disassembleBytecode = function(bytecode, symbols) {
         }
 
         // decode the instruction
-        var bytes = bytecode[address - 1];  // javascript zero based indexing
-        var operation = utilities.decodeOperation(bytes);
-        var modifier = utilities.decodeModifier(bytes);
-        var operand = utilities.decodeOperand(bytes);
-        if (utilities.operandIsAddress(bytes)) {
+        var instruction = bytecode[address - 1];  // javascript zero based indexing
+        var operation = utilities.decodeOperation(instruction);
+        var modifier = utilities.decodeModifier(instruction);
+        var operand = utilities.decodeOperand(instruction);
+        if (utilities.operandIsAddress(instruction)) {
             operand = lookupLabel(symbols, operand);
-        } else if (utilities.operandIsIndex(bytes)) {
+        } else if (utilities.operandIsIndex(instruction)) {
             operand = lookupSymbol(symbols, operation, modifier, operand);
         } else {
-            operand = 0;
+            operand = undefined;
         }
 
         // format the instruction
-        procedure += utilities.instructionAsString(operation, modifier, operand);
+        procedure += utilities.instructionAsString(instruction, operand);
         procedure += '\n';
 
         address++;
@@ -97,33 +98,33 @@ function lookupLabel(symbols, address) {
 function lookupSymbol(symbols, operation, modifier, index) {
     var type;
     switch (operation) {
-        case 'PUSH':
+        case types.PUSH:
             switch (modifier) {
-                case 'ELEMENT':
+                case types.ELEMENT:
                     type = 'elements';
                     break;
-                case 'CODE':
+                case types.CODE:
                     type = 'code';
                     break;
             }
             break;
-        case 'LOAD':
-        case 'STORE':
+        case types.LOAD:
+        case types.STORE:
             switch (modifier) {
-                case 'VARIABLE':
+                case types.VARIABLE:
                     type = 'variables';
                     break;
-                case 'DOCUMENT':
-                case 'DRAFT':
-                case 'MESSAGE':
+                case types.DOCUMENT:
+                case types.DRAFT:
+                case types.MESSAGE:
                     type = 'references';
                     break;
             }
             break;
-        case 'INVOKE':
+        case types.INVOKE:
             type = 'intrinsics';
             break;
-        case 'EXECUTE':
+        case types.EXECUTE:
             type = 'procedures';
             break;
     }
@@ -159,12 +160,6 @@ AssemblingVisitor.prototype.visitStep = function(step) {
 
 
 // skipInstruction: 'SKIP' 'INSTRUCTION'
-AssemblingVisitor.prototype.visitSkipInstruction = function(instruction) {
-    var bytes = utilities.encodeInstruction('JUMP', '');
-    this.bytecode.push(bytes);
-};
-
-
 // jumpInstruction:
 //     'JUMP' 'TO' LABEL |
 //     'JUMP' 'TO' LABEL 'ON' 'NONE' |
@@ -172,9 +167,12 @@ AssemblingVisitor.prototype.visitSkipInstruction = function(instruction) {
 //     'JUMP' 'TO' LABEL 'ON' 'FALSE'
 AssemblingVisitor.prototype.visitJumpInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var label = instruction.label;
-    var address = this.symbols.addresses[label];
-    var bytes = utilities.encodeInstruction('JUMP', modifier, address);
+    var label = instruction.operand;
+    var address = 0;
+    if (label && label !== 0) {
+        address = this.symbols.addresses[label];
+    }
+    var bytes = utilities.encodeInstruction(types.JUMP, modifier, address);
     this.bytecode.push(bytes);
 };
 
@@ -185,19 +183,19 @@ AssemblingVisitor.prototype.visitJumpInstruction = function(instruction) {
 //     'PUSH' 'CODE' LITERAL
 AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var value = instruction.value;
+    var value = instruction.operand;
     switch(modifier) {
-        case 'HANDLER':
+        case types.HANDLER:
             value = this.symbols.addresses[value];
             break;
-        case 'ELEMENT':
+        case types.ELEMENT:
             value = this.symbols.elements.indexOf(value) + 1;  // unit based indexing
             break;
-        case 'CODE':
+        case types.CODE:
             value = this.symbols.code.indexOf(value) + 1;  // unit based indexing
             break;
     }
-    var bytes = utilities.encodeInstruction('PUSH', modifier, value);
+    var bytes = utilities.encodeInstruction(types.PUSH, modifier, value);
     this.bytecode.push(bytes);
 };
 
@@ -207,7 +205,7 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
 //     'POP' 'COMPONENT'
 AssemblingVisitor.prototype.visitPopInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var bytes = utilities.encodeInstruction('POP', modifier);
+    var bytes = utilities.encodeInstruction(types.POP, modifier);
     this.bytecode.push(bytes);
 };
 
@@ -219,20 +217,20 @@ AssemblingVisitor.prototype.visitPopInstruction = function(instruction) {
 //     'LOAD' 'MESSAGE' SYMBOL
 AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var symbol = instruction.symbol;
+    var symbol = instruction.operand;
     var type;
     switch(modifier) {
-        case 'VARIABLE':
+        case types.VARIABLE:
             type = 'variables';
             break;
-        case 'DOCUMENT':
-        case 'DRAFT':
-        case 'MESSAGE':
+        case types.DOCUMENT:
+        case types.DRAFT:
+        case types.MESSAGE:
             type = 'references';
             break;
     }
     var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
-    var bytes = utilities.encodeInstruction('LOAD', modifier, index);
+    var bytes = utilities.encodeInstruction(types.LOAD, modifier, index);
     this.bytecode.push(bytes);
 };
 
@@ -244,20 +242,20 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
 //     'STORE' 'MESSAGE' SYMBOL
 AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var symbol = instruction.symbol;
+    var symbol = instruction.operand;
     var type;
     switch(modifier) {
-        case 'VARIABLE':
+        case types.VARIABLE:
             type = 'variables';
             break;
-        case 'DOCUMENT':
-        case 'DRAFT':
-        case 'MESSAGE':
+        case types.DOCUMENT:
+        case types.DRAFT:
+        case types.MESSAGE:
             type = 'references';
             break;
     }
     var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
-    var bytes = utilities.encodeInstruction('STORE', modifier, index);
+    var bytes = utilities.encodeInstruction(types.STORE, modifier, index);
     this.bytecode.push(bytes);
 };
 
@@ -267,10 +265,10 @@ AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
 //     'INVOKE' SYMBOL 'WITH' 'PARAMETER' |
 //     'INVOKE' SYMBOL 'WITH' NUMBER 'PARAMETERS'
 AssemblingVisitor.prototype.visitInvokeInstruction = function(instruction) {
-    var count = instruction.count;
-    var symbol = instruction.symbol;
+    var count = instruction.modifier;
+    var symbol = instruction.operand;
     var index = this.symbols.intrinsics.indexOf(symbol) + 1;  // bali VM unit based indexing
-    var bytes = utilities.encodeInstruction('INVOKE', count, index);
+    var bytes = utilities.encodeInstruction(types.INVOKE, count, index);
     this.bytecode.push(bytes);
 };
 
@@ -282,9 +280,9 @@ AssemblingVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 AssemblingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var symbol = instruction.symbol;
+    var symbol = instruction.operand;
     var index = this.symbols.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
-    var bytes = utilities.encodeInstruction('EXECUTE', modifier, index);
+    var bytes = utilities.encodeInstruction(types.EXECUTE, modifier, index);
     this.bytecode.push(bytes);
 };
 
@@ -294,6 +292,6 @@ AssemblingVisitor.prototype.visitExecuteInstruction = function(instruction) {
 //     'HANDLE' 'RESULT'
 AssemblingVisitor.prototype.visitHandleInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var bytes = utilities.encodeInstruction('HANDLE', modifier);
+    var bytes = utilities.encodeInstruction(types.HANDLE, modifier);
     this.bytecode.push(bytes);
 };

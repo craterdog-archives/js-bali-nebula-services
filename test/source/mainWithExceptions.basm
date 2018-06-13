@@ -1,6 +1,6 @@
 
 1.QueueStatement:
-PUSH ADDRESS 1.QueueStatementHandlers
+PUSH HANDLER 1.QueueStatementHandlers
 PUSH ELEMENT `<bali:/queues/myqueue>`
 EXECUTE $asReference ON TARGET
 STORE VARIABLE $_queue_1_
@@ -8,7 +8,7 @@ LOAD VARIABLE $message
 STORE MESSAGE $_queue_1_
 
 1.QueueStatementDone:
-POP ADDRESS
+POP HANDLER
 JUMP TO 1.QueueStatementSucceeded
 
 1.QueueStatementHandlers:

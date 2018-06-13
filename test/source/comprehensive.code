@@ -1,6 +1,6 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2032    10 [032]    PUSH ADDRESS [032]
+[001]:    2032    10 [032]    PUSH HANDLER [032]
 [002]:    6001    30     1    LOAD VARIABLE 1
 [003]:    D001    62     1    EXECUTE 1 ON TARGET
 [004]:    6002    30     2    LOAD VARIABLE 2
@@ -34,7 +34,7 @@
 [020]:    6005    30     5    LOAD VARIABLE 5
 [021]:    E800    71     0    HANDLE RESULT
 [022]:    0030    00 [030]    JUMP TO [030]
-[023]:    0000    00 [000]    SKIP INSTRUCTION
+[023]:    0000    00     0    SKIP INSTRUCTION
 [024]:    6002    30     2    LOAD VARIABLE 2
 [025]:    2804    11     4    PUSH ELEMENT 4
 [026]:    A803    51     3    INVOKE 3 WITH PARAMETER
@@ -46,10 +46,10 @@
 [02C]:    8004    40     4    STORE VARIABLE 4
 [02D]:    2807    11     7    PUSH ELEMENT 7
 [02E]:    E800    71     0    HANDLE RESULT
-[02F]:    0000    00 [000]    SKIP INSTRUCTION
-[030]:    4000    20     0    POP ADDRESS
+[02F]:    0000    00     0    SKIP INSTRUCTION
+[030]:    4000    20     0    POP HANDLER
 [031]:    0066    00 [066]    JUMP TO [066]
-[032]:    0000    00 [000]    SKIP INSTRUCTION
+[032]:    0000    00     0    SKIP INSTRUCTION
 [033]:    8003    40     3    STORE VARIABLE 3
 [034]:    6003    30     3    LOAD VARIABLE 3
 [035]:    6003    30     3    LOAD VARIABLE 3
@@ -101,20 +101,20 @@
 [063]:    E000    70     0    HANDLE EXCEPTION
 [064]:    0066    00 [066]    JUMP TO [066]
 [065]:    E000    70     0    HANDLE EXCEPTION
-[066]:    0000    00 [000]    SKIP INSTRUCTION
-[067]:    0000    00 [000]    SKIP INSTRUCTION
+[066]:    0000    00     0    SKIP INSTRUCTION
+[067]:    0000    00     0    SKIP INSTRUCTION
 [068]:    2810    11    16    PUSH ELEMENT 16
 [069]:    D002    62     2    EXECUTE 2 ON TARGET
 [06A]:    1897    03 [097]    JUMP TO [097] ON FALSE
 [06B]:    6008    30     8    LOAD VARIABLE 8
 [06C]:    8009    40     9    STORE VARIABLE 9
-[06D]:    0000    00 [000]    SKIP INSTRUCTION
+[06D]:    0000    00     0    SKIP INSTRUCTION
 [06E]:    6009    30     9    LOAD VARIABLE 9
 [06F]:    D002    62     2    EXECUTE 2 ON TARGET
 [070]:    1873    03 [073]    JUMP TO [073] ON FALSE
 [071]:    0097    00 [097]    JUMP TO [097]
 [072]:    0095    00 [095]    JUMP TO [095]
-[073]:    0000    00 [000]    SKIP INSTRUCTION
+[073]:    0000    00     0    SKIP INSTRUCTION
 [074]:    600A    30    10    LOAD VARIABLE 10
 [075]:    D005    62     5    EXECUTE 5 ON TARGET
 [076]:    D006    62     6    EXECUTE 6 ON TARGET
@@ -141,14 +141,14 @@
 [08B]:    2802    11     2    PUSH ELEMENT 2
 [08C]:    8004    40     4    STORE VARIABLE 4
 [08D]:    0091    00 [091]    JUMP TO [091]
-[08E]:    0000    00 [000]    SKIP INSTRUCTION
+[08E]:    0000    00     0    SKIP INSTRUCTION
 [08F]:    0078    00 [078]    JUMP TO [078]
 [090]:    0091    00 [091]    JUMP TO [091]
-[091]:    0000    00 [000]    SKIP INSTRUCTION
+[091]:    0000    00     0    SKIP INSTRUCTION
 [092]:    0078    00 [078]    JUMP TO [078]
-[093]:    0000    00 [000]    SKIP INSTRUCTION
-[094]:    0000    00 [000]    SKIP INSTRUCTION
-[095]:    0000    00 [000]    SKIP INSTRUCTION
+[093]:    0000    00     0    SKIP INSTRUCTION
+[094]:    0000    00     0    SKIP INSTRUCTION
+[095]:    0000    00     0    SKIP INSTRUCTION
 [096]:    0068    00 [068]    JUMP TO [068]
 [097]:    6004    30     4    LOAD VARIABLE 4
 [098]:    E800    71     0    HANDLE RESULT

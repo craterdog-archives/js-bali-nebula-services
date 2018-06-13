@@ -1,6 +1,6 @@
 
 1.IfStatement:
-PUSH ADDRESS 1.IfStatementHandlers
+PUSH HANDLER 1.IfStatementHandlers
 
 1.1.ConditionClause:
 LOAD VARIABLE $a
@@ -8,7 +8,7 @@ EXECUTE $asNumeric ON TARGET
 LOAD VARIABLE $b
 EXECUTE $asNumeric ON TARGET
 INVOKE $less WITH 2 PARAMETERS
-EXECUTE $asLogical ON TARGET
+EXECUTE $asBoolean ON TARGET
 JUMP TO 1.2.ConditionClause ON FALSE
 
 1.1.1.EvaluateStatement:
@@ -32,7 +32,7 @@ EXECUTE $asNumeric ON TARGET
 PUSH ELEMENT `0`
 EXECUTE $asNumeric ON TARGET
 INVOKE $more WITH 2 PARAMETERS
-EXECUTE $asLogical ON TARGET
+EXECUTE $asBoolean ON TARGET
 JUMP TO 1.3.ElseClause ON FALSE
 
 1.2.1.EvaluateStatement:
@@ -79,7 +79,7 @@ HANDLE RESULT
 SKIP INSTRUCTION
 
 1.IfStatementDone:
-POP ADDRESS
+POP HANDLER
 JUMP TO 1.IfStatementSucceeded
 
 1.IfStatementHandlers:
@@ -162,7 +162,7 @@ SKIP INSTRUCTION
 
 2.1.ConditionClause:
 PUSH ELEMENT `true`
-EXECUTE $asLogical ON TARGET
+EXECUTE $asBoolean ON TARGET
 JUMP TO 2.WhileStatementDone ON FALSE
 
 2.1.1.EvaluateStatement:
@@ -174,7 +174,7 @@ SKIP INSTRUCTION
 
 2.1.2.1.ConditionClause:
 LOAD VARIABLE $foo
-EXECUTE $asLogical ON TARGET
+EXECUTE $asBoolean ON TARGET
 JUMP TO 2.1.2.2.ElseClause ON FALSE
 
 2.1.2.1.1.BreakStatement:

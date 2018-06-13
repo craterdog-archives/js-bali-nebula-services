@@ -1,14 +1,14 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
-[001]:    2009    10 [009]    PUSH ADDRESS [009]
+[001]:    2009    10 [009]    PUSH HANDLER [009]
 [002]:    2801    11     1    PUSH ELEMENT 1
 [003]:    D001    62     1    EXECUTE 1 ON TARGET
 [004]:    8001    40     1    STORE VARIABLE 1
 [005]:    6002    30     2    LOAD VARIABLE 2
 [006]:    9801    43     1    STORE MESSAGE 1
-[007]:    4000    20     0    POP ADDRESS
+[007]:    4000    20     0    POP HANDLER
 [008]:    0027    00 [027]    JUMP TO [027]
-[009]:    0000    00 [000]    SKIP INSTRUCTION
+[009]:    0000    00     0    SKIP INSTRUCTION
 [00A]:    8003    40     3    STORE VARIABLE 3
 [00B]:    6003    30     3    LOAD VARIABLE 3
 [00C]:    6003    30     3    LOAD VARIABLE 3

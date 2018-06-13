@@ -14,6 +14,7 @@
  * Bali Virtual Machine™ extracting useful information about symbols and
  * addresses.
  */
+var types = require('bali-instruction-set/syntax/InstructionTypes');
 
 
 // PUBLIC FUNCTIONS
@@ -71,12 +72,6 @@ ScanningVisitor.prototype.visitStep = function(step) {
 };
 
 
-// skipInstruction: 'SKIP' 'INSTRUCTION'
-ScanningVisitor.prototype.visitSkipInstruction = function(instruction) {
-    this.address++;
-};
-
-
 // jumpInstruction:
 //     'JUMP' 'TO' LABEL |
 //     'JUMP' 'TO' LABEL 'ON' 'NONE' |
@@ -93,13 +88,13 @@ ScanningVisitor.prototype.visitJumpInstruction = function(instruction) {
 //     'PUSH' 'CODE' LITERAL
 ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var value = instruction.value;
+    var value = instruction.operand;
     var type;
     switch (modifier) {
-        case 'ELEMENT':
+        case types.ELEMENT:
             type = 'elements';
             break;
-        case 'CODE':
+        case types.CODE:
             type = 'code';
             break;
     }
@@ -123,15 +118,15 @@ ScanningVisitor.prototype.visitPopInstruction = function(instruction) {
 //     'LOAD' 'MESSAGE' SYMBOL
 ScanningVisitor.prototype.visitLoadInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var symbol = instruction.symbol;
+    var symbol = instruction.operand;
     var type;
     switch(modifier) {
-        case 'VARIABLE':
+        case types.VARIABLE:
             type = 'variables';
             break;
-        case 'DOCUMENT':
-        case 'DRAFT':
-        case 'MESSAGE':
+        case types.DOCUMENT:
+        case types.DRAFT:
+        case types.MESSAGE:
             type = 'references';
             break;
     }
@@ -149,15 +144,15 @@ ScanningVisitor.prototype.visitLoadInstruction = function(instruction) {
 //     'STORE' 'MESSAGE' SYMBOL
 ScanningVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var symbol = instruction.symbol;
+    var symbol = instruction.operand;
     var type;
     switch(modifier) {
-        case 'VARIABLE':
+        case types.VARIABLE:
             type = 'variables';
             break;
-        case 'DOCUMENT':
-        case 'DRAFT':
-        case 'MESSAGE':
+        case types.DOCUMENT:
+        case types.DRAFT:
+        case types.MESSAGE:
             type = 'references';
             break;
     }
@@ -173,7 +168,7 @@ ScanningVisitor.prototype.visitStoreInstruction = function(instruction) {
 //     'INVOKE' SYMBOL 'WITH' 'PARAMETER' |
 //     'INVOKE' SYMBOL 'WITH' NUMBER 'PARAMETERS'
 ScanningVisitor.prototype.visitInvokeInstruction = function(instruction) {
-    var symbol = instruction.symbol;
+    var symbol = instruction.operand;
     if (!this.symbols.intrinsics.includes(symbol)) {
         this.symbols.intrinsics.push(symbol);
     }
@@ -187,7 +182,7 @@ ScanningVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' |
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 ScanningVisitor.prototype.visitExecuteInstruction = function(instruction) {
-    var symbol = instruction.symbol;
+    var symbol = instruction.operand;
     if (!this.symbols.procedures.includes(symbol)) {
         this.symbols.procedures.push(symbol);
     }
