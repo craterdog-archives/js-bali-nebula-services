@@ -12,6 +12,8 @@
 /*
  * This class defines the Bali Virtual Machine™.
  */
+var language = require('bali-language/BaliLanguage');
+var types = require('bali-instruction-set/syntax/InstructionTypes');
 var elements = require('../elements');
 // var intrinsics = require('../intrinsics');
 var TaskContext = require('./TaskContext');
@@ -311,34 +313,159 @@ VirtualMachine.prototype.executeInstruction = function() {
     var operation = this.context.operation;
     var modifier = this.context.modifier;
     var operand = this.context.operand;
-    switch (operation) {
-        case 'JUMP':
-            this.processJumpInstruction(modifier, operand);
-            break;
-        case 'PUSH':
-            this.processPushInstruction(modifier, operand);
-            break;
-        case 'POP':
-            this.processPopInstruction(modifier);
-            break;
-        case 'LOAD':
-            this.processLoadInstruction(modifier, operand);
-            break;
-        case 'STORE':
-            this.processStoreInstruction(modifier, operand);
-            break;
-        case 'INVOKE':
-            this.processInvokeInstruction(modifier, operand);
-            break;
-        case 'EXECUTE':
-            this.processExecuteInstruction(modifier, operand);
-            break;
-        case 'HANDLE':
-            this.processHandleInstruction(modifier);
-            break;
-    }
+
+    // pass execution off to the correct handler
+    this.handlers[(operation << 2) | modifier](operand);
+
     if (this.context.isDone()) this.popContext();
 };
+
+
+VirtualMachine.prototype.handlers = [
+    // JUMP TO label
+    function(operand) {
+        var address = operand;
+        // if the address is not zero then use it as the next instruction to be executed,
+        // otherwise it is a SKIP INSTRUCTION (aka NOOP)
+        if (address > 0) {
+            this.context.instructionPointer = address;
+        }
+    },
+
+    // JUMP TO label ON NONE
+    function(operand) {
+        var address = operand;
+        // pop the condition component off the component stack
+        var component = this.context.components.pop();
+        // if the condition is 'none' then use the address as the next instruction to be executed
+        if (component === elements.Template.NONE) {
+            this.context.instructionPointer = address;
+        }
+    },
+
+    // JUMP TO label ON TRUE
+    function(operand) {
+        var address = operand;
+        // pop the condition component off the component stack
+        var component = this.context.components.pop();
+        // if the condition is 'true' then use the address as the next instruction to be executed
+        if (component === elements.Template.TRUE) {
+            this.context.instructionPointer = address;
+        }
+    },
+
+    // JUMP TO label ON FALSE
+    function(operand) {
+        var address = operand;
+        // pop the condition component off the component stack
+        var component = this.context.components.pop();
+        // if the condition is 'false' then use the address as the next instruction to be executed
+        if (component === elements.Template.FALSE) {
+            this.context.instructionPointer = address;
+        }
+    },
+
+    // PUSH HANDLER label
+    function(operand) {
+        var address = operand;
+        // push the address of the current exception handlers on to the handlers stack
+        this.context.handlers.push(address);
+    },
+
+    // PUSH ELEMENT literal
+    function(operand) {
+        var literal = this.lookupLiteral(operand);
+        var element = language.parseElement(literal);
+        this.context.components.push(element);
+    },
+
+    // PUSH CODE literal
+    function(operand) {
+        var literal = this.lookupLiteral(operand);
+        var code = language.parseProcedure(literal);
+        this.context.components.push(code);
+    },
+
+    // POP HANDLER
+    function(operand) {
+    },
+
+    // POP COMPONENT
+    function(operand) {
+    },
+
+    // LOAD VARIABLE symbol
+    function(operand) {
+    },
+
+    // LOAD DOCUMENT symbol
+    function(operand) {
+    },
+
+    // LOAD DRAFT symbol
+    function(operand) {
+    },
+
+    // LOAD MESSAGE symbol
+    function(operand) {
+    },
+
+    // STORE VARIABLE symbol
+    function(operand) {
+    },
+
+    // STORE DOCUMENT symbol
+    function(operand) {
+    },
+
+    // STORE DRAFT symbol
+    function(operand) {
+    },
+
+    // STORE MESSAGE symbol
+    function(operand) {
+    },
+
+    // INVOKE symbol
+    function(operand) {
+    },
+
+    // INVOKE symbol WITH PARAMETER
+    function(operand) {
+    },
+
+    // INVOKE symbol WITH 2 PARAMETERS
+    function(operand) {
+    },
+
+    // INVOKE symbol WITH 3 PARAMETERS
+    function(operand) {
+    },
+
+    // EXECUTE symbol
+    function(operand) {
+    },
+
+    // EXECUTE symbol WITH PARAMETERS
+    function(operand) {
+    },
+
+    // EXECUTE symbol ON TARGET
+    function(operand) {
+    },
+
+    // EXECUTE symbol ON TARGET WITH PARAMETERS
+    function(operand) {
+    },
+
+    // HANDLE EXCEPTION
+    function(operand) {
+    },
+
+    // HANDLE RESULT
+    function(operand) {
+    }
+];
 
 
 /**
@@ -365,194 +492,10 @@ VirtualMachine.prototype.publishCompletionEvent = function() {
 };
 
 
-/**
- * This method handles the processing of a JUMP instruction.
- * 
- * @param {string} modifier The modifier for the operation.
- * @param {number} address The address to be jumped to.
- */
-VirtualMachine.prototype.processJumpInstruction = function(modifier, address) {
-    switch (modifier) {
-        case '':
-            this.jumpOnAny(address);
-            break;
-        case 'ON NONE':
-            this.jumpOnNone(address);
-            break;
-        case 'ON TRUE':
-            this.jumpOnTrue(address);
-            break;
-        case 'ON FALSE':
-            this.jumpOnFalse(address);
-            break;
-    }
-};
 
-
-/**
- * This method handles the processing of a PUSH instruction.
- * 
- * @param {string} modifier The modifier for the operation.
- * @param {number} value The value to be pushed.
- */
-VirtualMachine.prototype.processPushInstruction = function(modifier, value) {
-    switch (modifier) {
-        case 'HANDLER':
-            this.pushAddress(value);
-            break;
-        case 'ELEMENT':
-            this.pushElement(value);
-            break;
-        case 'CODE':
-            this.pushCode(value);
-            break;
-    }
-};
-
-
-/**
- * This method handles the processing of a POP instruction.
- * 
- * @param {string} modifier The modifier for the operation.
- */
-VirtualMachine.prototype.processPopInstruction = function(modifier) {
-    switch (modifier) {
-        case 'HANDLER':
-            this.popAddress();
-            break;
-        case 'COMPONENT':
-            this.popComponent();
-            break;
-    }
-};
-
-
-/**
- * This method handles the processing of a LOAD instruction.
- * 
- * @param {string} modifier The modifier for the operation.
- * @param {number} index The index into the symbol catalog.
- */
-VirtualMachine.prototype.processLoadInstruction = function(modifier, index) {
-    switch (modifier) {
-        case 'VARIABLE':
-            this.loadVariable(index);
-            break;
-        case 'DRAFT':
-            this.loadDraft(index);
-            break;
-        case 'DOCUMENT':
-            this.loadDocument(index);
-            break;
-        case 'MESSAGE':
-            this.loadMessage(index);
-            break;
-    }
-};
-
-
-/**
- * This method handles the processing of a STORE instruction.
- * 
- * @param {string} modifier The modifier for the operation.
- * @param {number} index The index into the symbol catalog.
- */
-VirtualMachine.prototype.processStoreInstruction = function(modifier, index) {
-    switch (modifier) {
-        case 'VARIABLE':
-            this.storeVariable(index);
-            break;
-        case 'DRAFT':
-            this.storeDraft(index);
-            break;
-        case 'DOCUMENT':
-            this.storeDocument(index);
-            break;
-        case 'MESSAGE':
-            this.storeMessage(index);
-            break;
-    }
-};
-
-
-/**
- * This method handles the processing of a INVOKE instruction.
- * 
- * @param {number} numberOfParameters The number of parameters passed to the intrinsic function.
- * @param {number} index The index into the symbol catalog.
- */
-VirtualMachine.prototype.processInvokeInstruction = function(numberOfParameters, index) {
-    this.invokeIntrinsic(index, numberOfParameters);
-};
-
-
-/**
- * This method handles the processing of a EXECUTE instruction.
- * 
- * @param {string} modifier The modifier for the operation.
- * @param {number} index The index into the symbol catalog.
- */
-VirtualMachine.prototype.processExecuteInstruction = function(modifier, index) {
-    switch (modifier) {
-        case '':
-            this.executeProcedure(index);
-            break;
-        case 'WITH PARAMETERS':
-            this.executeProcedureWithParameters(index);
-            break;
-        case 'ON TARGET':
-            this.executeProcedureOnTarget(index);
-            break;
-        case 'ON TARGET WITH PARAMETERS':
-            this.executeProcedureOnTargetWithParameters(index);
-            break;
-    }
-};
-
-
-/**
- * This method handles the processing of a HANDLE instruction.
- * 
- * @param {string} modifier The modifier for the operation.
- */
-VirtualMachine.prototype.processHandleInstruction = function(modifier) {
-    switch (modifier) {
-        case 'RESULT':
-            this.handleResult();
-            break;
-        case 'EXCEPTION':
-            this.handleException();
-            break;
-    }
-};
-
-
-VirtualMachine.prototype.jumpOnAny = function(address) {
-    // address === 0 means a SKIP INSTRUCTION (aka NOOP)
-    if (address > 0) this.context.instructionPointer = address;
-};
-
-
-VirtualMachine.prototype.jumpOnNone = function(address) {
-    var component = this.context.components.pop();
-    if (component === elements.Template.NONE) this.context.instructionPointer = address;
-};
-
-
-VirtualMachine.prototype.jumpOnTrue = function(address) {
-    var component = this.context.components.pop();
-    if (component === elements.Probability.TRUE) this.context.instructionPointer = address;
-};
-
-
-VirtualMachine.prototype.jumpOnFalse = function(address) {
-    var component = this.context.components.pop();
-    if (component === elements.Probability.FALSE) this.context.instructionPointer = address;
-};
 
 
 VirtualMachine.prototype.pushAddress = function(address) {
-    this.context.handlers.push(address);
 };
 
 

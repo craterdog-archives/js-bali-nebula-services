@@ -39,8 +39,7 @@ exports.extractSymbols = function(procedure) {
 function ScanningVisitor() {
     this.symbols = {
         addresses: {},
-        elements: [],
-        code: [],
+        literals: [],
         variables: [],
         references: [],
         intrinsics: [],
@@ -89,16 +88,12 @@ ScanningVisitor.prototype.visitJumpInstruction = function(instruction) {
 ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.operand;
-    var type;
     switch (modifier) {
         case types.ELEMENT:
-            type = 'elements';
-            break;
         case types.CODE:
-            type = 'code';
+            if (!this.symbols.literals.includes(value)) this.symbols.literals.push(value);
             break;
     }
-    if (type && !this.symbols[type].includes(value)) this.symbols[type].push(value);
     this.address++;
 };
 

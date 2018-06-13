@@ -101,10 +101,8 @@ function lookupSymbol(symbols, operation, modifier, index) {
         case types.PUSH:
             switch (modifier) {
                 case types.ELEMENT:
-                    type = 'elements';
-                    break;
                 case types.CODE:
-                    type = 'code';
+                    type = 'literals';
                     break;
             }
             break;
@@ -189,10 +187,8 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
             value = this.symbols.addresses[value];
             break;
         case types.ELEMENT:
-            value = this.symbols.elements.indexOf(value) + 1;  // unit based indexing
-            break;
         case types.CODE:
-            value = this.symbols.code.indexOf(value) + 1;  // unit based indexing
+            value = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
             break;
     }
     var bytes = utilities.encodeInstruction(types.PUSH, modifier, value);
