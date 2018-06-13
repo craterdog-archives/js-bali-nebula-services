@@ -88,7 +88,7 @@ ScanningVisitor.prototype.visitJumpInstruction = function(instruction) {
 
 
 // pushInstruction:
-//     'PUSH' 'ADDRESS' LABEL |
+//     'PUSH' 'HANDLER' LABEL |
 //     'PUSH' 'ELEMENT' LITERAL |
 //     'PUSH' 'CODE' LITERAL
 ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
@@ -109,7 +109,7 @@ ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
 
 
 // popInstruction:
-//     'POP' 'ADDRESS' |
+//     'POP' 'HANDLER' |
 //     'POP' 'COMPONENT'
 ScanningVisitor.prototype.visitPopInstruction = function(instruction) {
     this.address++;

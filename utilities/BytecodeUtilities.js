@@ -99,7 +99,7 @@ exports.operandIsAddress = function(instruction) {
         case JUMP:
             return true;
         case PUSH:
-            return modcode === ADDRESS;
+            return modcode === HANDLER;
         default:
             return false;
     }
@@ -118,7 +118,7 @@ exports.operandIsIndex = function(instruction) {
     var modcode = extractModcode(instruction);
     switch (opcode) {
         case PUSH:
-            return modcode !== ADDRESS;
+            return modcode !== HANDLER;
         case LOAD:
         case STORE:
         case INVOKE:
@@ -159,7 +159,7 @@ exports.instructionIsValid = function(instruction) {
             return operand > 0 || modcode === 0;
         case PUSH:
             switch (modcode) {
-                case ADDRESS:
+                case HANDLER:
                 case ELEMENT:
                 case CODE:
                     return operand > 0;
@@ -169,7 +169,7 @@ exports.instructionIsValid = function(instruction) {
             break;
         case POP:
             switch (modcode) {
-                case ADDRESS:
+                case HANDLER:
                 case COMPONENT:
                     return operand === 0;
                 default:
@@ -390,7 +390,7 @@ var ON_FALSE = 0x1800;
 
 
 // types
-var ADDRESS = 0x0000;
+var HANDLER = 0x0000;
 var ELEMENT = 0x0800;
 var CODE = 0x1000;
 var COMPONENT = 0x1800;
@@ -421,7 +421,7 @@ var MODCODES = {
     'ON NONE': ON_NONE,
     'ON TRUE': ON_TRUE,
     'ON FALSE': ON_FALSE,
-    'ADDRESS': ADDRESS,
+    'HANDLER': HANDLER,
     'ELEMENT': ELEMENT,
     'CODE': CODE,
     'COMPONENT': COMPONENT,
@@ -444,7 +444,7 @@ var CONDITIONS = [
 ];
 
 var TYPES = [
-    'ADDRESS',
+    'HANDLER',
     'ELEMENT',
     'CODE',
     'COMPONENT'

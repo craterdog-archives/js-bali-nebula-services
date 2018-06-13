@@ -21,23 +21,62 @@ var ProcedureContext = require('./ProcedureContext');
 
 // TODO: replace with require('bali-cloud-api')
 var cloud = {
-    readDocument: function(reference) {},
-    checkoutDocument: function(reference) {},
-    discardDraft: function(reference) {},
-    saveDraft: function(reference, document) {},
-    commitDocument: function(reference, document) {},
-    readMessage: function(reference) {},
-    writeMessage: function(message, reference) {},
-    publishEvent: function(event) {}
+    readDocument: function(reference) {
+        console.log('readDocument(' + reference + ')');
+    },
+    checkoutDocument: function(reference) {
+        console.log('checkoutDocument(' + reference + ')');
+    },
+    saveDraft: function(reference, document) {
+        console.log('saveDraft(' + reference + ', ' +  document + ')');
+    },
+    discardDraft: function(reference) {
+        console.log('discardDraft(' + reference + ')');
+    },
+    commitDocument: function(reference, document) {
+        console.log('commitDocument(' + reference + ', ' +  document + ')');
+    },
+    readMessage: function(reference) {
+        console.log('readMessage(' + reference + ')');
+    },
+    writeMessage: function(reference, message) {
+        console.log('writeMessage(' + reference + ', ' +  message + ')');
+    },
+    publishEvent: function(event) {
+        console.log('publishEvent(' + event + ')');
+    }
 };
 
 // TODO: replace with require('../intrinsics')
 var intrinsics = {
-    catalog: function(capacity) {},
-    isFalse: function(component) {},
-    isNone: function(component) {},
-    isTrue: function(component) {},
-    list: function(capacity) {}
+    and: function() {},
+    catalog: function() {},
+    complement: function() {},
+    conjugate: function() {},
+    default: function() {},
+    difference: function() {},
+    equal: function() {},
+    exponential: function() {},
+    factorial: function() {},
+    getValue: function() {},
+    inverse: function() {},
+    is: function() {},
+    less: function() {},
+    list: function() {},
+    magnitude: function() {},
+    matches: function() {},
+    more: function() {},
+    negative: function() {},
+    or: function() {},
+    product: function() {},
+    quotient: function() {},
+    range: function() {},
+    remainder: function() {},
+    sans: function() {},
+    setParameters: function() {},
+    setValue: function() {},
+    sum: function() {},
+    xor: function() {}
 };
 
 
@@ -56,6 +95,7 @@ function VirtualMachine(taskReference) {
         this.taskReference = new elements.Reference('bali:/#' + new elements.Tag());
         this.taskContext = new TaskContext();
     }
+    this.context = this.taskContext.contexts.peek();
     return this;
 }
 VirtualMachine.prototype.constructor = VirtualMachine;
@@ -80,7 +120,7 @@ VirtualMachine.prototype.processInstructions = function() {
 
     // determine the outcome of the processing
     if (this.isDone()) {
-        // the task completed either successfully or with an exception
+        // the task completed successfully or with an exception
         this.publishCompletionEvent();
 
     } else {
@@ -129,9 +169,9 @@ VirtualMachine.prototype.isDone = function() {
 
 
 /**
- * This method retrieves the component that is on top of the execution stack.
+ * This method retrieves the component that is on top of the component stack.
  * 
- * @returns {object} The component from the top of the execution stack.
+ * @returns {object} The component from the top of the component stack.
  */
 VirtualMachine.prototype.getComponent = function() {
     return this.taskContext.popComponent();
@@ -139,13 +179,24 @@ VirtualMachine.prototype.getComponent = function() {
 
 
 /**
- * This method returns the literal value associated with a specific index.
+ * This method returns the element value associated with a specific index.
  * 
- * @param {number} index The index of the literal in the symbol catalog.
- * @returns {Literal} The literal value associated with the index.
+ * @param {number} index The index of the element in the symbol catalog.
+ * @returns {Literal} The element value associated with the index.
  */
-VirtualMachine.prototype.getLiteral = function(index) {
-    return this.currentContext().symbols.literals[index - 1];  // JS zero based indexing
+VirtualMachine.prototype.getElement = function(index) {
+    return this.context.symbols.elements[index - 1];  // JS zero based indexing
+};
+
+
+/**
+ * This method returns the code value associated with a specific index.
+ * 
+ * @param {number} index The index of the code in the symbol catalog.
+ * @returns {Literal} The code value associated with the index.
+ */
+VirtualMachine.prototype.getCode = function(index) {
+    return this.context.symbols.code[index - 1];  // JS zero based indexing
 };
 
 
@@ -156,7 +207,7 @@ VirtualMachine.prototype.getLiteral = function(index) {
  * @returns {Reference} The reference associated with the index.
  */
 VirtualMachine.prototype.getReference = function(index) {
-    return this.currentContext().symbols.references[index - 1];  // JS zero based indexing
+    return this.context.symbols.references[index - 1];  // JS zero based indexing
 };
 
 
@@ -167,7 +218,7 @@ VirtualMachine.prototype.getReference = function(index) {
  * @returns {object} The variable value associated with the index.
  */
 VirtualMachine.prototype.getVariable = function(index) {
-    return this.currentContext().symbols.variables[index - 1];  // JS zero based indexing
+    return this.context.symbols.variables[index - 1];  // JS zero based indexing
 };
 
 
@@ -178,7 +229,18 @@ VirtualMachine.prototype.getVariable = function(index) {
  * @param {object} value The value of the variable to be set.
  */
 VirtualMachine.prototype.setVariable = function(index, value) {
-    this.currentContext().symbols.variables[index - 1] = value;  // JS zero based indexing
+    this.context.symbols.variables[index - 1] = value;  // JS zero based indexing
+};
+
+
+/**
+ * This method returns the intrinsic name associated with a specific index.
+ * 
+ * @param {number} index The index of the intrinsic in the symbol catalog.
+ * @returns {string} The intrinsic name value associated with the index.
+ */
+VirtualMachine.prototype.getIntrinsic = function(index) {
+    return this.context.symbols.intrinsics[index - 1];  // JS zero based indexing
 };
 
 
@@ -189,12 +251,12 @@ VirtualMachine.prototype.setVariable = function(index, value) {
  * @returns {string} The procedure name value associated with the index.
  */
 VirtualMachine.prototype.getProcedure = function(index) {
-    return this.currentContext().symbols.procedures[index - 1];  // JS zero based indexing
+    return this.context.symbols.procedures[index - 1];  // JS zero based indexing
 };
 
 
 /**
- * This method places a component on top of the execution stack.
+ * This method places a component on top of the component stack.
  * 
  * @param {object} component The component.
  */
@@ -210,16 +272,6 @@ VirtualMachine.prototype.pushComponent = function(component) {
  */
 VirtualMachine.prototype.pushContext = function(context) {
     this.taskContext.pushContext(context);
-};
-
-
-/**
- * This method returns the procedure context that is on top of the context stack.
- * 
- * @returns {ProcedureContex} The current procedure context.
- */
-VirtualMachine.prototype.currentContext = function() {
-    return this.taskContext.currentContext();
 };
 
 
@@ -256,30 +308,36 @@ VirtualMachine.prototype.fetchInstruction = function() {
  * machine.
  */
 VirtualMachine.prototype.executeInstruction = function() {
-    var context = this.currentContext();
-    var operation = context.operation;
-    var modifier = context.modifier;
-    var operand = context.operand;
+    var operation = this.context.operation;
+    var modifier = this.context.modifier;
+    var operand = this.context.operand;
     switch (operation) {
         case 'JUMP':
-            this.handleJumpInstruction(modifier, operand);
+            this.processJumpInstruction(modifier, operand);
+            break;
+        case 'PUSH':
+            this.processPushInstruction(modifier, operand);
+            break;
+        case 'POP':
+            this.processPopInstruction(modifier);
             break;
         case 'LOAD':
-            this.handleLoadInstruction(modifier, operand);
+            this.processLoadInstruction(modifier, operand);
             break;
         case 'STORE':
-            this.handleStoreInstruction(modifier, operand);
+            this.processStoreInstruction(modifier, operand);
             break;
         case 'INVOKE':
-            this.handleInvokeInstruction(modifier, operand);
+            this.processInvokeInstruction(modifier, operand);
             break;
         case 'EXECUTE':
-            this.handleExecuteInstruction(modifier, operand);
+            this.processExecuteInstruction(modifier, operand);
             break;
-        default:
-            throw new Error('BALI VM: Invalid operation attempted: ' + operation);
+        case 'HANDLE':
+            this.processHandleInstruction(modifier);
+            break;
     }
-    if (context.isDone()) this.popContext();
+    if (this.context.isDone()) this.popContext();
 };
 
 
@@ -313,22 +371,58 @@ VirtualMachine.prototype.publishCompletionEvent = function() {
  * @param {string} modifier The modifier for the operation.
  * @param {number} address The address to be jumped to.
  */
-VirtualMachine.prototype.handleJumpInstruction = function(modifier, address) {
+VirtualMachine.prototype.processJumpInstruction = function(modifier, address) {
     switch (modifier) {
         case '':
-            this.jump(address);
+            this.jumpOnAny(address);
             break;
         case 'ON NONE':
             this.jumpOnNone(address);
             break;
-        case 'ON FALSE':
-            this.jumpOnFalse(address);
-            break;
         case 'ON TRUE':
             this.jumpOnTrue(address);
             break;
-        default:
-            throw new Error('BALI VM: Invalid modifier for the JUMP instruction: ' + modifier);
+        case 'ON FALSE':
+            this.jumpOnFalse(address);
+            break;
+    }
+};
+
+
+/**
+ * This method handles the processing of a PUSH instruction.
+ * 
+ * @param {string} modifier The modifier for the operation.
+ * @param {number} value The value to be pushed.
+ */
+VirtualMachine.prototype.processPushInstruction = function(modifier, value) {
+    switch (modifier) {
+        case 'HANDLER':
+            this.pushAddress(value);
+            break;
+        case 'ELEMENT':
+            this.pushElement(value);
+            break;
+        case 'CODE':
+            this.pushCode(value);
+            break;
+    }
+};
+
+
+/**
+ * This method handles the processing of a POP instruction.
+ * 
+ * @param {string} modifier The modifier for the operation.
+ */
+VirtualMachine.prototype.processPopInstruction = function(modifier) {
+    switch (modifier) {
+        case 'HANDLER':
+            this.popAddress();
+            break;
+        case 'COMPONENT':
+            this.popComponent();
+            break;
     }
 };
 
@@ -339,10 +433,13 @@ VirtualMachine.prototype.handleJumpInstruction = function(modifier, address) {
  * @param {string} modifier The modifier for the operation.
  * @param {number} index The index into the symbol catalog.
  */
-VirtualMachine.prototype.handleLoadInstruction = function(modifier, index) {
+VirtualMachine.prototype.processLoadInstruction = function(modifier, index) {
     switch (modifier) {
-        case 'LITERAL':
-            this.loadLiteral(index);
+        case 'VARIABLE':
+            this.loadVariable(index);
+            break;
+        case 'DRAFT':
+            this.loadDraft(index);
             break;
         case 'DOCUMENT':
             this.loadDocument(index);
@@ -350,11 +447,6 @@ VirtualMachine.prototype.handleLoadInstruction = function(modifier, index) {
         case 'MESSAGE':
             this.loadMessage(index);
             break;
-        case 'VARIABLE':
-            this.loadVariable(index);
-            break;
-        default:
-            throw new Error('BALI VM: Invalid modifier for the LOAD instruction: ' + modifier);
     }
 };
 
@@ -365,8 +457,11 @@ VirtualMachine.prototype.handleLoadInstruction = function(modifier, index) {
  * @param {string} modifier The modifier for the operation.
  * @param {number} index The index into the symbol catalog.
  */
-VirtualMachine.prototype.handleStoreInstruction = function(modifier, index) {
+VirtualMachine.prototype.processStoreInstruction = function(modifier, index) {
     switch (modifier) {
+        case 'VARIABLE':
+            this.storeVariable(index);
+            break;
         case 'DRAFT':
             this.storeDraft(index);
             break;
@@ -376,11 +471,6 @@ VirtualMachine.prototype.handleStoreInstruction = function(modifier, index) {
         case 'MESSAGE':
             this.storeMessage(index);
             break;
-        case 'VARIABLE':
-            this.storeVariable(index);
-            break;
-        default:
-            throw new Error('BALI VM: Invalid modifier for the STORE instruction: ' + modifier);
     }
 };
 
@@ -391,17 +481,8 @@ VirtualMachine.prototype.handleStoreInstruction = function(modifier, index) {
  * @param {number} numberOfParameters The number of parameters passed to the intrinsic function.
  * @param {number} index The index into the symbol catalog.
  */
-VirtualMachine.prototype.handleInvokeInstruction = function(numberOfParameters, index) {
-    switch (numberOfParameters) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-            this.invokeIntrinsic(index, numberOfParameters);
-            break;
-        default:
-            throw new Error('BALI VM: Invalid number of arguments for the INVOKE instruction: ' + numberOfParameters);
-    }
+VirtualMachine.prototype.processInvokeInstruction = function(numberOfParameters, index) {
+    this.invokeIntrinsic(index, numberOfParameters);
 };
 
 
@@ -411,7 +492,7 @@ VirtualMachine.prototype.handleInvokeInstruction = function(numberOfParameters, 
  * @param {string} modifier The modifier for the operation.
  * @param {number} index The index into the symbol catalog.
  */
-VirtualMachine.prototype.handleExecuteInstruction = function(modifier, index) {
+VirtualMachine.prototype.processExecuteInstruction = function(modifier, index) {
     switch (modifier) {
         case '':
             this.executeProcedure(index);
@@ -425,38 +506,81 @@ VirtualMachine.prototype.handleExecuteInstruction = function(modifier, index) {
         case 'ON TARGET WITH PARAMETERS':
             this.executeProcedureOnTargetWithParameters(index);
             break;
-        default:
-            throw new Error('BALI VM: Invalid modifier for the EXECUTE instruction: ' + modifier);
     }
 };
 
 
-VirtualMachine.prototype.jump = function(address) {
+/**
+ * This method handles the processing of a HANDLE instruction.
+ * 
+ * @param {string} modifier The modifier for the operation.
+ */
+VirtualMachine.prototype.processHandleInstruction = function(modifier) {
+    switch (modifier) {
+        case 'RESULT':
+            this.handleResult();
+            break;
+        case 'EXCEPTION':
+            this.handleException();
+            break;
+    }
+};
+
+
+VirtualMachine.prototype.jumpOnAny = function(address) {
     // address === 0 means a SKIP INSTRUCTION (aka NOOP)
-    if (address > 0) this.currentContext().instructionPointer = address;
+    if (address > 0) this.context.instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.jumpOnNone = function(address) {
-    var component = this.getComponent();
-    if (intrinsics.isNone(component)) this.currentContext().instructionPointer = address;
-
+    var component = this.context.components.pop();
+    if (component === elements.Template.NONE) this.context.instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.jumpOnTrue = function(address) {
-    var component = this.getComponent();
-    if (intrinsics.isTrue(component)) this.currentContext().instructionPointer = address;
+    var component = this.context.components.pop();
+    if (component === elements.Probability.TRUE) this.context.instructionPointer = address;
 };
 
 
 VirtualMachine.prototype.jumpOnFalse = function(address) {
-    var component = this.getComponent();
-    if (intrinsics.isFalse(component)) this.currentContext().instructionPointer = address;
+    var component = this.context.components.pop();
+    if (component === elements.Probability.FALSE) this.context.instructionPointer = address;
 };
 
 
-VirtualMachine.prototype.loadLiteral = function(index) {
+VirtualMachine.prototype.pushAddress = function(address) {
+    this.context.handlers.push(address);
+};
+
+
+VirtualMachine.prototype.pushElement = function(index) {
+};
+
+
+VirtualMachine.prototype.pushCode = function(index) {
+};
+
+
+VirtualMachine.prototype.popAddress = function() {
+    this.context.handlers.pop();
+};
+
+
+VirtualMachine.prototype.popComponent = function() {
+    this.context.components.pop();
+};
+
+
+VirtualMachine.prototype.loadVariable = function(index) {
+    var variable = this.getVariable(index);
+    this.pushComponent(variable);
+};
+
+
+VirtualMachine.prototype.loadDraft = function(index) {
     var literal = this.getLiteral(index);
     this.pushComponent(literal);
 };
@@ -478,14 +602,14 @@ VirtualMachine.prototype.loadMessage = function(index) {
         // set the task status to 'waiting'
         this.pauseForMessage();
         // make sure that the same instruction will be tried again
-        this.currentContext().instructionPointer--;
+        this.context.instructionPointer--;
     }
 };
 
 
-VirtualMachine.prototype.loadVariable = function(index) {
-    var variable = this.getVariable(index);
-    this.pushComponent(variable);
+VirtualMachine.prototype.storeVariable = function(index) {
+    var variable = this.getComponent();
+    this.setVariable(index, variable);
 };
 
 
@@ -506,25 +630,19 @@ VirtualMachine.prototype.storeDocument = function(index) {
 VirtualMachine.prototype.storeMessage = function(index) {
     var reference = this.getReference(index);
     var message = this.getComponent();
-    cloud.writeMessage(message, reference);
-};
-
-
-VirtualMachine.prototype.storeVariable = function(index) {
-    var variable = this.getComponent();
-    this.setVariable(index, variable);
+    cloud.writeMessage(reference, message);
 };
 
 
 VirtualMachine.prototype.invokeIntrinsic = function(index, numberOfParameters) {
-    // pop the parameters off the execution stack
+    // pop the parameters off the component stack
     var parameters = [];
     while (numberOfParameters-- > 0) parameters.push(this.getComponent());
 
     // execute the intrinsic function passing the parameters
     var result = intrinsics[index - 1].apply(this, parameters);
 
-    // push the result of the function onto the top of the execution stack
+    // push the result of the function onto the top of the component stack
     this.pushComponent(result);
 };
 
@@ -571,3 +689,12 @@ VirtualMachine.prototype.executeProcedureOnTargetWithParameters = function(index
     var newContext = new ProcedureContext(type, target, procedure, parameters);
     this.pushContext(newContext);
 };
+
+
+VirtualMachine.prototype.handleResult = function() {
+};
+
+
+VirtualMachine.prototype.handleException = function() {
+};
+

@@ -399,7 +399,7 @@ CompilingVisitor.prototype.visitContinueClause = function(tree) {
 
 
 /*
- * This method evaluates the first expression and if its 'asLogical()' value is
+ * This method evaluates the first expression and if its 'asBoolean()' value is
  * 'false', replaces it on top of the component stack with the value of the
  * second expression.
  */
@@ -410,7 +410,7 @@ CompilingVisitor.prototype.visitDefaultExpression = function(tree) {
 
     // the VM places the result of the proposed value expression on top of the component stack
     value.accept(this);
-    this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asBoolean', 'ON TARGET');
 
     // the VM places the result of the default value expression on top of the component stack
     defaultValue.accept(this);
@@ -695,7 +695,7 @@ CompilingVisitor.prototype.visitIfClause = function(tree) {
 
         // the VM places the condition value on top of the component stack
         condition.accept(this);
-        this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
+        this.builder.insertExecuteInstruction('$asBoolean', 'ON TARGET');
 
         // determine what the next label will be
         var nextLabel = this.builder.getNextClausePrefix();
@@ -1185,7 +1185,7 @@ CompilingVisitor.prototype.visitStatement = function(tree) {
 
     // the VM pushes any exception handlers onto the exception handler stack
     if (this.builder.hasHandlers()) {
-        this.builder.insertPushInstruction('ADDRESS', statement.handlerLabel);
+        this.builder.insertPushInstruction('HANDLER', statement.handlerLabel);
     }
 
     // the VM attempts to execute the main clause
@@ -1198,7 +1198,7 @@ CompilingVisitor.prototype.visitStatement = function(tree) {
 
         if (this.builder.hasHandlers()) {
             // the exception handlers are no longer needed
-            this.builder.insertPopInstruction('ADDRESS');
+            this.builder.insertPopInstruction('HANDLER');
 
             // jump over the exception handlers
             this.builder.insertJumpInstruction(statement.successLabel);
@@ -1370,7 +1370,7 @@ CompilingVisitor.prototype.visitWhileClause = function(tree) {
 
     // the VM jumps past the end of the loop if the condition expression evaluates to false
     condition.accept(this);
-    this.builder.insertExecuteInstruction('$asLogical', 'ON TARGET');
+    this.builder.insertExecuteInstruction('$asBoolean', 'ON TARGET');
     this.builder.insertJumpInstruction(statement.doneLabel, 'ON FALSE');
 
     // if the condition is true, then the VM enters the block
@@ -1738,7 +1738,7 @@ InstructionBuilder.prototype.insertJumpInstruction = function(label, context) {
 InstructionBuilder.prototype.insertPushInstruction = function(type, value) {
     var instruction = 'PUSH ' + type;
     switch (type) {
-        case 'ADDRESS':
+        case 'HANDLER':
             instruction += ' ' + value;  // value as a label
             break;
         case 'ELEMENT':
