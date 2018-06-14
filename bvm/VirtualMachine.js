@@ -13,7 +13,6 @@
  * This class defines the Bali Virtual Machine™.
  */
 var language = require('bali-language/BaliLanguage');
-var types = require('bali-instruction-set/syntax/InstructionTypes');
 var elements = require('../elements');
 // var intrinsics = require('../intrinsics');
 var TaskContext = require('./TaskContext');
@@ -171,132 +170,6 @@ VirtualMachine.prototype.isDone = function() {
 
 
 /**
- * This method retrieves the component that is on top of the component stack.
- * 
- * @returns {object} The component from the top of the component stack.
- */
-VirtualMachine.prototype.getComponent = function() {
-    return this.taskContext.popComponent();
-};
-
-
-/**
- * This method returns the element value associated with a specific index.
- * 
- * @param {number} index The index of the element in the symbol catalog.
- * @returns {Literal} The element value associated with the index.
- */
-VirtualMachine.prototype.getElement = function(index) {
-    return this.context.symbols.elements[index - 1];  // JS zero based indexing
-};
-
-
-/**
- * This method returns the code value associated with a specific index.
- * 
- * @param {number} index The index of the code in the symbol catalog.
- * @returns {Literal} The code value associated with the index.
- */
-VirtualMachine.prototype.getCode = function(index) {
-    return this.context.symbols.code[index - 1];  // JS zero based indexing
-};
-
-
-/**
- * This method returns the reference associated with a specific index.
- * 
- * @param {number} index The index of the reference in the symbol catalog.
- * @returns {Reference} The reference associated with the index.
- */
-VirtualMachine.prototype.getReference = function(index) {
-    return this.context.symbols.references[index - 1];  // JS zero based indexing
-};
-
-
-/**
- * This method returns the variable value associated with a specific index.
- * 
- * @param {number} index The index of the variable in the symbol catalog.
- * @returns {object} The variable value associated with the index.
- */
-VirtualMachine.prototype.getVariable = function(index) {
-    return this.context.symbols.variables[index - 1];  // JS zero based indexing
-};
-
-
-/**
- * This method sets the value of the variable associated with a specific index.
- * 
- * @param {number} index The index of the variable in the symbol catalog.
- * @param {object} value The value of the variable to be set.
- */
-VirtualMachine.prototype.setVariable = function(index, value) {
-    this.context.symbols.variables[index - 1] = value;  // JS zero based indexing
-};
-
-
-/**
- * This method returns the intrinsic name associated with a specific index.
- * 
- * @param {number} index The index of the intrinsic in the symbol catalog.
- * @returns {string} The intrinsic name value associated with the index.
- */
-VirtualMachine.prototype.getIntrinsic = function(index) {
-    return this.context.symbols.intrinsics[index - 1];  // JS zero based indexing
-};
-
-
-/**
- * This method returns the procedure name associated with a specific index.
- * 
- * @param {number} index The index of the procedure in the symbol catalog.
- * @returns {string} The procedure name value associated with the index.
- */
-VirtualMachine.prototype.getProcedure = function(index) {
-    return this.context.symbols.procedures[index - 1];  // JS zero based indexing
-};
-
-
-/**
- * This method places a component on top of the component stack.
- * 
- * @param {object} component The component.
- */
-VirtualMachine.prototype.pushComponent = function(component) {
-    this.taskContext.pushComponent(component);
-};
-
-
-/**
- * This method places a new procedure context on top of the context stack.
- * 
- * @param {ProcedureContex} context The new procedure context.
- */
-VirtualMachine.prototype.pushContext = function(context) {
-    this.taskContext.pushContext(context);
-};
-
-
-/**
- * This method removes the procedure context is was on top of the context stack.
- * 
- * @returns {ProcedureContex} The procedure context that was on top of the context stack.
- */
-VirtualMachine.prototype.popContext = function() {
-    return this.taskContext.popContext();
-};
-
-
-/**
- * This method tells the virtual machine to pause its processing until a message
- * arrives from another task.
- */
-VirtualMachine.prototype.pauseForMessage = function() {
-    this.taskContext.wait();
-};
-
-
-/**
  * This method fetches the next instruction for the current procedure into the
  * virtual machine.
  */
@@ -313,11 +186,32 @@ VirtualMachine.prototype.executeInstruction = function() {
     var operation = this.context.operation;
     var modifier = this.context.modifier;
     var operand = this.context.operand;
-
     // pass execution off to the correct handler
     this.handlers[(operation << 2) | modifier](operand);
+};
 
-    if (this.context.isDone()) this.popContext();
+
+/**
+ * This method publishes a completion event for the current task to the Bali Event Queue™.
+ * Any tasks that are waiting on that type of event will be notified asynchronously.
+ */
+VirtualMachine.prototype.publishCompletionEvent = function() {
+    var event = {
+        '$type': '$completion',
+        '$task': this.taskReference,
+        '$result': this.getComponent()
+        // TODO: need to handle unhandled exceptions as well...
+    };
+    cloud.sendMessage(event, new elements.Reference('bali:/bali/EventQueue>'));
+};
+
+
+/**
+ * This method saves the current state of the task out to the Bali Document Repository™
+ * so that processing on it can continue at a later time.
+ */
+VirtualMachine.prototype.saveState = function() {
+    cloud.saveDraft(this.taskReference, this.taskContext);
 };
 
 
@@ -656,80 +550,3 @@ VirtualMachine.prototype.handlers = [
         this.context.components.push(result);
     }
 ];
-
-
-/**
- * This method saves the current state of the task out to the Bali Document Repository™
- * so that processing on it can continue at a later time.
- */
-VirtualMachine.prototype.saveState = function() {
-    cloud.saveDraft(this.taskReference, this.taskContext);
-};
-
-
-/**
- * This method publishes a completion event for the current task to the Bali Event Queue™.
- * Any tasks that are waiting on that type of event will be notified asynchronously.
- */
-VirtualMachine.prototype.publishCompletionEvent = function() {
-    var event = {
-        '$type': '$completion',
-        '$task': this.taskReference,
-        '$result': this.getComponent()
-        // TODO: need to handle unhandled exceptions as well...
-    };
-    cloud.writeMessage(event, new elements.Reference('bali:/bali/EventQueue>'));
-};
-
-
-VirtualMachine.prototype.executeProcedure = function(index) {
-    var typeReference = this.getComponent();
-    var type = cloud.readDocument(typeReference);
-    var target = null;
-    var procedure = this.getProcedure(index);
-    var parameters = [];
-    var newContext = new ProcedureContext(type, target, procedure, parameters);
-    this.pushContext(newContext);
-};
-
-
-VirtualMachine.prototype.executeProcedureWithParameters = function(index) {
-    var typeReference = this.getComponent();
-    var type = cloud.readDocument(typeReference);
-    var target = null;
-    var procedure = this.getProcedure(index);
-    var parameters = this.getComponent();
-    var newContext = new ProcedureContext(type, target, procedure, parameters);
-    this.pushContext(newContext);
-};
-
-
-VirtualMachine.prototype.executeProcedureOnTarget = function(index) {
-    var typeReference = this.getComponent();
-    var type = cloud.readDocument(typeReference);
-    var target = this.getComponent();
-    var procedure = this.getProcedure(index);
-    var parameters = [];
-    var newContext = new ProcedureContext(type, target, procedure, parameters);
-    this.pushContext(newContext);
-};
-
-
-VirtualMachine.prototype.executeProcedureOnTargetWithParameters = function(index) {
-    var typeReference = this.getComponent();
-    var type = cloud.readDocument(typeReference);
-    var target = this.getComponent();
-    var procedure = this.getProcedure(index);
-    var parameters = this.getComponent();
-    var newContext = new ProcedureContext(type, target, procedure, parameters);
-    this.pushContext(newContext);
-};
-
-
-VirtualMachine.prototype.handleResult = function() {
-};
-
-
-VirtualMachine.prototype.handleException = function() {
-};
-
