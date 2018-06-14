@@ -38,11 +38,11 @@ var cloud = {
     commitDocument: function(reference, document) {
         console.log('commitDocument(' + reference + ', ' +  document + ')');
     },
-    readMessage: function(reference) {
-        console.log('readMessage(' + reference + ')');
+    receiveMessage: function(reference) {
+        console.log('receiveMessage(' + reference + ')');
     },
-    writeMessage: function(reference, message) {
-        console.log('writeMessage(' + reference + ', ' +  message + ')');
+    sendMessage: function(reference, message) {
+        console.log('sendMessage(' + reference + ', ' +  message + ')');
     },
     publishEvent: function(event) {
         console.log('publishEvent(' + event + ')');
@@ -368,102 +368,292 @@ VirtualMachine.prototype.handlers = [
     // PUSH HANDLER label
     function(operand) {
         var address = operand;
-        // push the address of the current exception handlers on to the handlers stack
+        // push the address of the current exception handlers onto the handlers stack
         this.context.handlers.push(address);
     },
 
     // PUSH ELEMENT literal
     function(operand) {
-        var literal = this.lookupLiteral(operand);
+        // lookup the literal associated with the index operand
+        var index = operand;
+        var literal = this.context.symbols.literals[index];
+        // create a new element from the literal and push it on top of the component stack
         var element = language.parseElement(literal);
         this.context.components.push(element);
     },
 
     // PUSH CODE literal
     function(operand) {
-        var literal = this.lookupLiteral(operand);
+        // lookup the literal associated with the index operand
+        var index = operand;
+        var literal = this.context.symbols.literals[index];
+        // create a new code parse tree from the literal and push it on top of the component stack
         var code = language.parseProcedure(literal);
         this.context.components.push(code);
     },
 
     // POP HANDLER
     function(operand) {
+        // remove the current exception handler address from the top of the handlers stack
+        // since it is no longer in scope
+        this.context.handlers.pop();
     },
 
     // POP COMPONENT
     function(operand) {
+        // remove the component that is on top of the component stack since it was not used
+        this.context.components.pop();
     },
 
     // LOAD VARIABLE symbol
     function(operand) {
+        // lookup the variable associated with the index operand
+        var index = operand;
+        var variable = this.context.symbols.variables[index];
+        // push the value of the variable on top of the component stack
+        this.context.components.push(variable);
     },
 
     // LOAD DOCUMENT symbol
     function(operand) {
+        // lookup the reference associated with the index operand
+        var index = operand;
+        var reference = this.context.symbols.references[index];
+        // read the referenced document from the cloud repository
+        var document = cloud.readDocument(reference);
+        // push the document on top of the component stack
+        this.context.components.push(document);
     },
 
     // LOAD DRAFT symbol
     function(operand) {
+        // lookup the reference associated with the index operand
+        var index = operand;
+        var reference = this.context.symbols.references[index];
+        // read the referenced draft from the cloud repository
+        var draft = cloud.readDraft(reference);
+        // push the document on top of the component stack
+        this.context.components.push(draft);
     },
 
     // LOAD MESSAGE symbol
     function(operand) {
+        // lookup the referenced queue associated with the index operand
+        var index = operand;
+        var queue = this.getReference(index);
+        // attempt to receive a message from the referenced queue in the cloud
+        var message = cloud.receiveMessage(queue);
+        if (message) {
+            this.context.components.push(message);
+        } else {
+            // set the task status to 'waiting'
+            this.context.status = TaskContext.WAITING;
+            // make sure that the same instruction will be tried again
+            this.context.instructionPointer--;
+        }
     },
 
     // STORE VARIABLE symbol
     function(operand) {
+        // pop the component that is on top of the component stack off the stack
+        var component = this.context.components.pop();
+        // and store the component in the variable associated with the index operand
+        var index = operand;
+        this.context.symbols.variables[index] = component;
     },
 
     // STORE DOCUMENT symbol
     function(operand) {
+        // pop the document that is on top of the component stack off the stack
+        var document = this.context.components.pop();
+        // lookup the reference associated with the index operand
+        var index = operand;
+        var reference = this.context.symbols.references[index];
+        // write the referenced document to the cloud repository
+        cloud.writeDocument(reference, document);
     },
 
     // STORE DRAFT symbol
     function(operand) {
+        // pop the draft that is on top of the component stack off the stack
+        var draft = this.context.components.pop();
+        // lookup the reference associated with the index operand
+        var index = operand;
+        var reference = this.context.symbols.references[index];
+        // write the referenced draft to the cloud repository
+        cloud.writeDraft(reference, draft);
     },
 
     // STORE MESSAGE symbol
     function(operand) {
+        // pop the message that is on top of the component stack off the stack
+        var message = this.context.components.pop();
+        // lookup the referenced queue associated with the index operand
+        var index = operand;
+        var queue = this.context.symbols.references[index];
+        // send the message to the referenced queue in the cloud
+        cloud.sendMessage(queue, message);
     },
 
     // INVOKE symbol
     function(operand) {
+        // create an empty parameters list for the intrinsic function call
+        var parameters = [];
+        // call the intrinsic function associated with the index operand
+        var index = operand;
+        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        // push the result of the function call onto the top of the component stack
+        this.context.components.push(result);
     },
 
     // INVOKE symbol WITH PARAMETER
     function(operand) {
+        // pop the parameters to the intrinsic function call off of the component stack
+        var parameters = [];
+        parameters.push(this.context.components.pop());
+        // call the intrinsic function associated with the index operand
+        var index = operand;
+        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        // push the result of the function call onto the top of the component stack
+        this.context.components.push(result);
     },
 
     // INVOKE symbol WITH 2 PARAMETERS
     function(operand) {
+        // pop the parameters to the intrinsic function call off of the component stack
+        var parameters = [];
+        parameters.push(this.context.components.pop());
+        parameters.push(this.context.components.pop());
+        // call the intrinsic function associated with the index operand
+        var index = operand;
+        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        // push the result of the function call onto the top of the component stack
+        this.context.components.push(result);
     },
 
     // INVOKE symbol WITH 3 PARAMETERS
     function(operand) {
+        // pop the parameters to the intrinsic function call off of the component stack
+        var parameters = [];
+        parameters.push(this.context.components.pop());
+        parameters.push(this.context.components.pop());
+        parameters.push(this.context.components.pop());
+        // call the intrinsic function associated with the index operand
+        var index = operand;
+        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        // push the result of the function call onto the top of the component stack
+        this.context.components.push(result);
     },
 
     // EXECUTE symbol
     function(operand) {
+        // set the target component to null since there isn't one
+        var target = null;
+        // pop the type reference for the procedure call off of the component stack
+        var reference = this.context.components.pop();
+        // read the referenced type from the cloud repository
+        var type = cloud.readDocument(reference);
+        // lookup the procedure associated with the index operand
+        var index = operand;
+        var procedure = this.context.symbols.procedures[index];
+        // create an empty parameters list for the procedure call
+        var parameters = [];
+        // create a new context for the procedure call
+        var context = new ProcedureContext(target, type, procedure, parameters);
+        // make the new context the current context for this VM
+        this.context = context;
+        this.contexts.push(context);
     },
 
     // EXECUTE symbol WITH PARAMETERS
     function(operand) {
+        // set the target component to null since there isn't one
+        var target = null;
+        // pop the type reference for the procedure call off of the component stack
+        var reference = this.context.components.pop();
+        // read the referenced type from the cloud repository
+        var type = cloud.readDocument(reference);
+        // lookup the procedure associated with the index operand
+        var index = operand;
+        var procedure = this.context.symbols.procedures[index];
+        // pop the parameters to the procedure call off of the component stack
+        var parameters = this.context.components.pop();
+        // create a new context for the procedure call
+        var context = new ProcedureContext(target, type, procedure, parameters);
+        // make the new context the current context for this VM
+        this.context = context;
+        this.contexts.push(context);
     },
 
     // EXECUTE symbol ON TARGET
     function(operand) {
+        // pop the target component for the procedure call off of the component stack
+        var target = this.context.components.pop();
+        // retrieve a reference to the type of the target component
+        var parameters = [target];
+        var reference = intrinsics[intrinsics.GET_TYPE].apply(this, parameters);
+        // read the referenced type from the cloud repository
+        var type = cloud.readDocument(reference);
+        // lookup the procedure associated with the index operand
+        var index = operand;
+        var procedure = this.context.symbols.procedures[index];
+        // create an empty parameters list for the procedure call
+        parameters = [];
+        // create a new context for the procedure call
+        var context = new ProcedureContext(target, type, procedure, parameters);
+        // make the new context the current context for this VM
+        this.context = context;
+        this.contexts.push(context);
     },
 
     // EXECUTE symbol ON TARGET WITH PARAMETERS
     function(operand) {
+        // pop the target component for the procedure call off of the component stack
+        var target = this.context.components.pop();
+        // retrieve a reference to the type of the target component
+        var parameters = [target];
+        var reference = intrinsics[intrinsics.GET_TYPE].apply(this, parameters);
+        // read the referenced type from the cloud repository
+        var type = cloud.readDocument(reference);
+        // lookup the procedure associated with the index operand
+        var index = operand;
+        var procedure = this.context.symbols.procedures[index];
+        // pop the parameters to the procedure call off of the component stack
+        parameters = this.context.components.pop();
+        // create a new context for the procedure call
+        var context = new ProcedureContext(target, type, procedure, parameters);
+        // make the new context the current context for this VM
+        this.context = context;
+        this.contexts.push(context);
     },
 
     // HANDLE EXCEPTION
     function(operand) {
+        // pop the current exception off of the component stack
+        var exception = this.context.components.pop();
+        while (this.contexts.length > 0 && this.context.handlers.length === 0) {
+            // pop the current context off of the context stack since it has no handlers
+            this.contexts.pop();
+            this.context = this.contexts.peek();
+        }
+        // TODO: need to check for no more contexts
+        // push the current exception onto the top of the component stack
+        this.context.components.push(exception);
+        // retrieve the address of the current exception handlers
+        var address = this.context.handlers.pop();
+        // use that address as the next instruction to be executed
+        this.context.instructionPointer = address;
     },
 
     // HANDLE RESULT
     function(operand) {
+        // pop the result of the procedure call off of the component stack
+        var result = this.context.components.pop();
+        // pop the current context off of the context stack since it is now out of scope
+        this.contexts.pop();
+        this.context = this.contexts.peek();
+        // push the result of the procedure call onto the top of the component stack
+        this.context.components.push(result);
     }
 ];
 
@@ -489,104 +679,6 @@ VirtualMachine.prototype.publishCompletionEvent = function() {
         // TODO: need to handle unhandled exceptions as well...
     };
     cloud.writeMessage(event, new elements.Reference('bali:/bali/EventQueue>'));
-};
-
-
-
-
-
-VirtualMachine.prototype.pushAddress = function(address) {
-};
-
-
-VirtualMachine.prototype.pushElement = function(index) {
-};
-
-
-VirtualMachine.prototype.pushCode = function(index) {
-};
-
-
-VirtualMachine.prototype.popAddress = function() {
-    this.context.handlers.pop();
-};
-
-
-VirtualMachine.prototype.popComponent = function() {
-    this.context.components.pop();
-};
-
-
-VirtualMachine.prototype.loadVariable = function(index) {
-    var variable = this.getVariable(index);
-    this.pushComponent(variable);
-};
-
-
-VirtualMachine.prototype.loadDraft = function(index) {
-    var literal = this.getLiteral(index);
-    this.pushComponent(literal);
-};
-
-
-VirtualMachine.prototype.loadDocument = function(index) {
-    var reference = this.getReference(index);
-    var component = cloud.readDocument(reference);
-    this.pushComponent(component);
-};
-
-
-VirtualMachine.prototype.loadMessage = function(index) {
-    var reference = this.getReference(index);
-    var message = cloud.readMessage(reference);
-    if (message) {
-        this.pushComponent(message);
-    } else {
-        // set the task status to 'waiting'
-        this.pauseForMessage();
-        // make sure that the same instruction will be tried again
-        this.context.instructionPointer--;
-    }
-};
-
-
-VirtualMachine.prototype.storeVariable = function(index) {
-    var variable = this.getComponent();
-    this.setVariable(index, variable);
-};
-
-
-VirtualMachine.prototype.storeDraft = function(index) {
-    var reference = this.getReference(index);
-    var draft = this.getComponent();
-    cloud.saveDraft(reference, draft);
-};
-
-
-VirtualMachine.prototype.storeDocument = function(index) {
-    var reference = this.getReference(index);
-    var document = this.getComponent();
-    cloud.commitDocument(reference, document);
-};
-
-
-VirtualMachine.prototype.storeMessage = function(index) {
-    var reference = this.getReference(index);
-    var message = this.getComponent();
-    cloud.writeMessage(reference, message);
-};
-
-
-VirtualMachine.prototype.invokeIntrinsic = function(index, numberOfParameters) {
-    // pop the parameters off the component stack
-    var parameters = [];
-    while (numberOfParameters-- > 0) parameters.push(this.getComponent());
-
-    // execute the intrinsic function passing the parameters
-    var result = intrinsics[index - 1].apply(this, parameters);
-
-    // push the result of the function onto the top of the component stack
-    this.pushComponent(result);
 };
 
 
