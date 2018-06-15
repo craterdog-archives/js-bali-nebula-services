@@ -13,15 +13,12 @@
  * This class defines the Bali Virtual Machine™.
  */
 var language = require('bali-language/BaliLanguage');
+var intrinsics = require('../intrinsics/IntrinsicFunctions');
 var elements = require('../elements');
 var bytecode = require('../utilities/BytecodeUtilities');
-// var intrinsics = require('../intrinsics');
 var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./ProcedureContext');
 // var cloud = require('bali-cloud-api');
-
-
-// TODO: replace with require('bali-cloud-api')
 var cloud = {
     readDocument: function(reference) {
         console.log('readDocument(' + reference + ')');
@@ -49,37 +46,6 @@ var cloud = {
     }
 };
 
-// TODO: replace with require('../intrinsics')
-var intrinsics = {
-    and: function() {},
-    catalog: function() {},
-    complement: function() {},
-    conjugate: function() {},
-    default: function() {},
-    difference: function() {},
-    equal: function() {},
-    exponential: function() {},
-    factorial: function() {},
-    getValue: function() {},
-    inverse: function() {},
-    is: function() {},
-    less: function() {},
-    list: function() {},
-    magnitude: function() {},
-    matches: function() {},
-    more: function() {},
-    negative: function() {},
-    or: function() {},
-    product: function() {},
-    quotient: function() {},
-    range: function() {},
-    remainder: function() {},
-    sans: function() {},
-    setParameters: function() {},
-    setValue: function() {},
-    sum: function() {},
-    xor: function() {}
-};
 
 
 /**
@@ -345,7 +311,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var parameters = [];
         // call the intrinsic function associated with the index operand
         var index = operand;
-        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
         this.procedureContext.componentStack.push(result);
     },
@@ -357,7 +323,7 @@ VirtualMachine.prototype.instructionHandlers = [
         parameters.push(this.procedureContext.componentStack.pop());
         // call the intrinsic function associated with the index operand
         var index = operand;
-        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
         this.procedureContext.componentStack.push(result);
     },
@@ -370,7 +336,7 @@ VirtualMachine.prototype.instructionHandlers = [
         parameters.push(this.procedureContext.componentStack.pop());
         // call the intrinsic function associated with the index operand
         var index = operand;
-        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
         this.procedureContext.componentStack.push(result);
     },
@@ -384,7 +350,7 @@ VirtualMachine.prototype.instructionHandlers = [
         parameters.push(this.procedureContext.componentStack.pop());
         // call the intrinsic function associated with the index operand
         var index = operand;
-        var result = intrinsics[index - 1].apply(this, parameters);  // js zero based indexing
+        var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
         this.procedureContext.componentStack.push(result);
     },

@@ -40,7 +40,7 @@ describe('Bali Virtual Machine™', function() {
                 expect(bytecode).to.exist;  // jshint ignore:line
                 var formatted = utilities.bytecodeAsString(bytecode);
                 expect(formatted).to.exist;  // jshint ignore:line
-                //fs.writeFileSync(codeFile, formatted, 'utf8');
+                fs.writeFileSync(codeFile, formatted, 'utf8');
                 var expected = fs.readFileSync(codeFile, 'utf8');
                 expect(expected).to.exist;  // jshint ignore:line
                 expect(formatted).to.equal(expected);

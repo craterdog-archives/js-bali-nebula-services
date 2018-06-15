@@ -1,16 +1,16 @@
  Addr     Bytes   Bytecode                  Instruction
 ----------------------------------------------------------------------
 [001]:    2801    11     1    PUSH ELEMENT 1
-[002]:    A801    51     1    INVOKE 1 WITH PARAMETER
+[002]:    A803    51     3    INVOKE 3 WITH PARAMETER
 [003]:    2802    11     2    PUSH ELEMENT 2
 [004]:    2803    11     3    PUSH ELEMENT 3
-[005]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[005]:    B81B    53    27    INVOKE 27 WITH 3 PARAMETERS
 [006]:    2804    11     4    PUSH ELEMENT 4
 [007]:    2805    11     5    PUSH ELEMENT 5
-[008]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[008]:    B81B    53    27    INVOKE 27 WITH 3 PARAMETERS
 [009]:    2806    11     6    PUSH ELEMENT 6
 [00A]:    2807    11     7    PUSH ELEMENT 7
-[00B]:    B802    53     2    INVOKE 2 WITH 3 PARAMETERS
+[00B]:    B81B    53    27    INVOKE 27 WITH 3 PARAMETERS
 [00C]:    9801    43     1    STORE MESSAGE 1
 [00D]:    6001    30     1    LOAD VARIABLE 1
 [00E]:    E800    71     0    HANDLE RESULT

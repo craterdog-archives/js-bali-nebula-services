@@ -21,44 +21,44 @@ The output should be:
     $parameters: [
         $disks: [
             $description: "The number of disks."
-            $type: Number(1..infinity)
+            $type: $Number(1..infinity)
             $default: 5
         ]
     ]
     $attributes: [
         $pegs: [
             $description: "The three pegs (A, B and C) that are used to hold the disks."
-            $type: Map(Stack(Number(1..infinity)))
+            $type: $Catalog($Stack($Number(1..infinity)))
             $default: 5
         ]
         $steps: [
             $description: "The steps needed to move the disks."
-            $type: List(Text)
+            $type: $List($Text)
         ]
     ]
     $messages: [
         $play: [
             $description: "This message causes the game to (re)initialize itself and play the game."
-            $result: Map(Number(1..infinity), Text)
+            $result: $Catalog($Number(1..infinity), $Text)
         ]
         $moveTower: [
             $description: "This message causes the game to move a tower of disks of a certain height from one peg to another peg using a third peg as a buffer."
             $parameters: [
                 $height: [
                     $description: "The height of the tower to be moved."
-                    $type: Number(1..infinity)
+                    $type: $Number(1..infinity)
                 ]
                 $fromPeg: [
                     $description: "The peg from which the disks originate."
-                    $type: Text
+                    $type: $Text
                 ]
                 $toPeg: [
                     $description: "The peg to which the disks should be moved."
-                    $type: Text
+                    $type: $Text
                 ]
                 $withPeg: [
                     $description: "The peg to use to buffer the disks during the move."
-                    $type: Text
+                    $type: $Text
                 ]
             ]
         ]($private)
@@ -67,11 +67,11 @@ The output should be:
             $parameters: [
                 $fromPeg: [
                     $description: "The peg from which the disk originates."
-                    $type: Text
+                    $type: $Text
                 ]
                 $toPeg: [
                     $description: "The peg to which the disk should be moved."
-                    $type: Text
+                    $type: $Text
                 ]
             ]
         ]($private)
@@ -80,16 +80,16 @@ The output should be:
         $play: [
             $source: {
                 $pegs := [
-                    "peg A": []($type: Stack)
-                    "peg B": []($type: Stack)
-                    "peg C": []($type: Stack)
+                    "peg A": []($type: $Stack($Number(1..infinity)))
+                    "peg B": []($type: $Stack($Number(1..infinity)))
+                    "peg C": []($type: $Stack($Number(1..infinity)))
                 ]
                 $steps := []
                 with each $n in [disks..1] do {
                     pegs["peg A"].push(n)
                 }
                 target.moveTower(disks, "peg A", "peg C", "peg B")
-                return steps.asMap()
+                return steps.asCatalog()
             }
             $instructions: "
 1.EvaluateStatement:
@@ -101,7 +101,16 @@ INVOKE $list WITH PARAMETER
 PUSH ELEMENT `1`
 INVOKE $catalog WITH PARAMETER
 PUSH ELEMENT `$type`
-LOAD VARIABLE $Stack
+PUSH ELEMENT `$Stack`
+PUSH ELEMENT `1`
+INVOKE $list WITH PARAMETER
+PUSH ELEMENT `$Number`
+PUSH ELEMENT `1`
+PUSH ELEMENT `infinity`
+INVOKE $range WITH 2 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
+INVOKE $addItem WITH 2 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
 INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
@@ -111,7 +120,16 @@ INVOKE $list WITH PARAMETER
 PUSH ELEMENT `1`
 INVOKE $catalog WITH PARAMETER
 PUSH ELEMENT `$type`
-LOAD VARIABLE $Stack
+PUSH ELEMENT `$Stack`
+PUSH ELEMENT `1`
+INVOKE $list WITH PARAMETER
+PUSH ELEMENT `$Number`
+PUSH ELEMENT `1`
+PUSH ELEMENT `infinity`
+INVOKE $range WITH 2 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
+INVOKE $addItem WITH 2 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
 INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
@@ -121,7 +139,16 @@ INVOKE $list WITH PARAMETER
 PUSH ELEMENT `1`
 INVOKE $catalog WITH PARAMETER
 PUSH ELEMENT `$type`
-LOAD VARIABLE $Stack
+PUSH ELEMENT `$Stack`
+PUSH ELEMENT `1`
+INVOKE $list WITH PARAMETER
+PUSH ELEMENT `$Number`
+PUSH ELEMENT `1`
+PUSH ELEMENT `infinity`
+INVOKE $range WITH 2 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
+INVOKE $addItem WITH 2 PARAMETERS
+INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
 INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
@@ -183,16 +210,18 @@ STORE VARIABLE $_result_
 
 5.ReturnStatement:
 LOAD VARIABLE $steps
-EXECUTE $asMap ON TARGET
+EXECUTE $asCatalog ON TARGET
 HANDLE RESULT
 LOAD VARIABLE $_result_
 HANDLE RESULT
 "($mediatype: "application/basm")
             $bytecode: '
-                2801A80128022803A8022804A80128056001B803B004B80328062803A8022804A80128056001B803
-                B004B80328072803A8022804A80128056001B803B004B80380022803A802800360042804B005D001
-                D00280056005D003183C6005D00480066002D0012802B0062804A8026006B007D8058007002B0000
-                60082808A8026004B0072802B0072807B0072806B007D80680076003D007E8006007E800'($mediatype: "application/bcod")
+                2801A80328022803A80F2804A803280528062804A80F280728042808B017B01AB001B01AB81BB01A
+                B81B28092803A80F2804A803280528062804A80F280728042808B017B01AB001B01AB81BB01AB81B
+                280A2803A80F2804A803280528062804A80F280728042808B017B01AB001B01AB81BB01AB81B8001
+                2803A80F800260032804B017D001D00280046004D00318576004D00480056001D0012802B00B2804
+                A80F6005B001D8058006004600006007280BA80F6003B0012802B001280AB0012809B001D8068006
+                6002D007E8006006E800'($mediatype: "application/bcod")
         ]
         $moveTower: [
             $source: {
@@ -276,9 +305,9 @@ LOAD VARIABLE $_result_
 HANDLE RESULT
 "($mediatype: "application/basm")
             $bytecode: '
-                2801800100006002D001183260032802A8016002D0022803D002B002B0036004B0036005B0036006
-                B003D803800760032804A8016004B0036006B003D804800760032802A8016002D0022803D002B002
-                B0036005B0036006B0036004B003D803800700006001E8006007E800'($mediatype: "application/bcod")
+                2801800100006002D001183260032802A80F6002D0022803D002B007B0016004B0016005B0016006
+                B001D803800760032804A80F6004B0016006B001D804800760032802A80F6002D0022803D002B007
+                B0016005B0016006B0016004B001D803800700006001E8006007E800'($mediatype: "application/bcod")
         ]
         $moveDisk: [
             $source: {
@@ -319,8 +348,8 @@ LOAD VARIABLE $_result_
 HANDLE RESULT
 "($mediatype: "application/basm")
             $bytecode: '
-                6001D0016002B001D00280036001D0016004B0012801A8026003B003D803800560062801A8022802
-                B003D80480056005E800'($mediatype: "application/bcod")
+                6001D0016002B00BD00280036001D0016004B00B2801A80F6003B001D803800560062801A80F2802
+                B001D80480056005E800'($mediatype: "application/bcod")
         ]
     ]
-]($type: Class)
+]($type: $Class)

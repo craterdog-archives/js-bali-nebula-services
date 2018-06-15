@@ -405,18 +405,30 @@ CompilingVisitor.prototype.visitContinueClause = function(tree) {
  */
 // defaultExpression: expression '?' expression
 CompilingVisitor.prototype.visitDefaultExpression = function(tree) {
-    var value = tree.children[0];
+    var proposedValue = tree.children[0];
     var defaultValue = tree.children[1];
 
-    // the VM places the result of the proposed value expression on top of the component stack
-    value.accept(this);
+    // the VM places the result of the first expression on top of the component stack
+    proposedValue.accept(this);
+
+    // the VM stores the value of the proposed expression into a temporary variable
+    var value = this.createTemporaryVariable('value');
+    this.builder.insertStoreInstruction('VARIABLE', value);
+
+    // the VM loads the value of the proposed expression back onto the component stack
+    this.builder.insertLoadInstruction('VARIABLE', value);
+
+    // the VM replaces the proposed value with its boolean value
     this.builder.insertExecuteInstruction('$asBoolean', 'ON TARGET');
 
-    // the VM places the result of the default value expression on top of the component stack
+    // the VM loads the value of the proposed expression back onto the component stack
+    this.builder.insertLoadInstruction('VARIABLE', value);
+
+    // the VM places the value of the second expression on top of the component stack
     defaultValue.accept(this);
 
     // the VM leaves the actual value on the top of the component stack
-    this.builder.insertInvokeInstruction('$default', 2);
+    this.builder.insertInvokeInstruction('$default', 3);
 };
 
 

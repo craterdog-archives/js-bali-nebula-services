@@ -42,7 +42,6 @@ function ScanningVisitor() {
         literals: [],
         variables: [],
         references: [],
-        intrinsics: [],
         procedures: []
     };
     this.address = 1;  // bali VM unit based addressing
@@ -163,10 +162,6 @@ ScanningVisitor.prototype.visitStoreInstruction = function(instruction) {
 //     'INVOKE' SYMBOL 'WITH' 'PARAMETER' |
 //     'INVOKE' SYMBOL 'WITH' NUMBER 'PARAMETERS'
 ScanningVisitor.prototype.visitInvokeInstruction = function(instruction) {
-    var symbol = instruction.operand;
-    if (!this.symbols.intrinsics.includes(symbol)) {
-        this.symbols.intrinsics.push(symbol);
-    }
     this.address++;
 };
 

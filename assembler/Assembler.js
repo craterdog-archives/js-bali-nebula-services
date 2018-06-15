@@ -10,6 +10,7 @@
 'use strict';
 var types = require('bali-instruction-set/syntax/InstructionTypes');
 var utilities = require('../utilities/BytecodeUtilities');
+var intrinsics = require('../intrinsics/IntrinsicFunctions');
 
 /**
  * This library provides functions that assemble and disassemble instructions
@@ -120,8 +121,7 @@ function lookupSymbol(symbols, operation, modifier, index) {
             }
             break;
         case types.INVOKE:
-            type = 'intrinsics';
-            break;
+            return intrinsics.intrinsicNames[index - 1];  // javascript zero based indexing
         case types.EXECUTE:
             type = 'procedures';
             break;
@@ -263,7 +263,7 @@ AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
 AssemblingVisitor.prototype.visitInvokeInstruction = function(instruction) {
     var count = instruction.modifier;
     var symbol = instruction.operand;
-    var index = this.symbols.intrinsics.indexOf(symbol) + 1;  // bali VM unit based indexing
+    var index = intrinsics.intrinsicNames.indexOf(symbol) + 1;  // bali VM unit based indexing
     var bytes = utilities.encodeInstruction(types.INVOKE, count, index);
     this.bytecode.push(bytes);
 };
