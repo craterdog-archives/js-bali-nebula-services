@@ -9,7 +9,7 @@
  ************************************************************************/
 'use strict';
 var codex = require('./EncodingUtilities');
-var forge = require('node-forge');
+var random = require('node-forge').random;
 
 
 /**
@@ -20,7 +20,7 @@ var forge = require('node-forge');
  * @return {string} The binary string containing random bytes.
  */
 exports.generateRandomBytes = function(numberOfBytes) {
-    var bytes = forge.random.getBytesSync(numberOfBytes);
+    var bytes = random.getBytesSync(numberOfBytes);
     return bytes;
 };
 

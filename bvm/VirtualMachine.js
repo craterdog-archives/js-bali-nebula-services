@@ -401,7 +401,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var target = this.procedureContext.componentStack.pop();
         // retrieve a reference to the type of the target component
         var parameters = [target];
-        var reference = intrinsics[intrinsics.GET_TYPE].apply(this, parameters);
+        var reference = intrinsics.intrinsicFunctions[intrinsics.GET_TYPE].apply(this, parameters);
         // read the referenced type from the cloud repository
         var type = cloud.readDocument(reference);
         // lookup the procedure associated with the index operand
@@ -422,7 +422,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var target = this.procedureContext.componentStack.pop();
         // retrieve a reference to the type of the target component
         var parameters = [target];
-        var reference = intrinsics[intrinsics.GET_TYPE].apply(this, parameters);
+        var reference = intrinsics.intrinsicFunctions[intrinsics.GET_TYPE].apply(this, parameters);
         // read the referenced type from the cloud repository
         var type = cloud.readDocument(reference);
         // lookup the procedure associated with the index operand
