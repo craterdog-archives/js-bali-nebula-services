@@ -283,13 +283,13 @@ ListIterator.prototype.hasNext = function() {
 
 ListIterator.prototype.getPrevious = function() {
     if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the list.");
-    var item = this.list.array[--currentIndex];
+    var item = this.list.array[--this.currentIndex];
     return item;
 };
 
 
 ListIterator.prototype.getNext = function() {
     if (!this.hasNext()) throw new Error("The iterator is at the end of the list.");
-    var item = this.list.array[currentIndex++];
+    var item = this.list.array[this.currentIndex++];
     return item;
 };

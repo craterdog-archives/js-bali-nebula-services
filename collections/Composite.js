@@ -102,7 +102,11 @@ Composite.prototype.compareTo = function(that) {
     }
     if (result === 0) {
         // same so far, check for different lengths
-        result = this.getSize() === that.getSize();
+        if (this.getSize() < that.getSize()) {
+            return -1;
+        } else if (this.getSize() > that.getSize()) {
+            return 1;
+        }
     }
     return result;
 };

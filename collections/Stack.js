@@ -16,7 +16,6 @@
  * data structures as the number items changes over time.
  */
 var Composite = require('./Composite').Composite;
-var LinkedList = require('./LinkedList').LinkedList;
 
 
 /**
@@ -27,7 +26,7 @@ var LinkedList = require('./LinkedList').LinkedList;
 function Stack(optionalCapacity) {
     Composite.call(this);
     this.capacity = optionalCapacity ? optionalCapacity : 1024;
-    this.list = new LinkedList();
+    this.array = [];
     return this;
 }
 Stack.prototype = Object.create(Composite.prototype);
@@ -44,7 +43,7 @@ exports.Stack = Stack;
  * @returns {Number}
  */
 Stack.prototype.getSize = function() {
-    var size = this.list.getSize();
+    var size = this.array.length;
     return size;
 };
 
@@ -53,7 +52,7 @@ Stack.prototype.getSize = function() {
  * This method removes all items from the stack.
  */
 Stack.prototype.removeAll = function() {
-    this.list.removeAll();
+    this.array.splice(0);
 };
 
 
@@ -64,7 +63,7 @@ Stack.prototype.removeAll = function() {
  * @returns {Iterator}
  */
 Stack.prototype.iterator = function() {
-    var iterator = this.list.iterator();
+    var iterator = new StackIterator(this);
     return iterator;
 };
 
@@ -75,8 +74,8 @@ Stack.prototype.iterator = function() {
  * @param {Object} item The new item to be added.
  */
 Stack.prototype.pushItem = function(item) {
-    if (this.list.getSize() < this.capacity) {
-        this.list.addTail(item);
+    if (this.array.length < this.capacity) {
+        this.array.push(item);
     } else {
         throw new Error("Attempted to push an item onto a full stack.");
     }
@@ -91,9 +90,9 @@ Stack.prototype.pushItem = function(item) {
  */
 Stack.prototype.popItem = function() {
     var item;
-    var size = this.list.getSize();
+    var size = this.array.length;
     if (size > 0) {
-        item = this.list.removeTail();
+        item = this.array.pop();
     } else {
         throw new Error("Attempted to pop the top item of an empty stack.");
     }
@@ -109,11 +108,66 @@ Stack.prototype.popItem = function() {
  */
 Stack.prototype.getTop = function() {
     var item = null;
-    var size = this.list.size();
+    var size = this.array.length;
     if (size > 0) {
-        item = this.list.getTail();
+        item = this.array.peek();
     } else {
         throw new Error("Attempted to access the top item of an empty stack.");
     }
+    return item;
+};
+
+
+// PRIVATE CLASSES
+
+/**
+ * The constructor for the StackIterator class.
+ * 
+ * @param {Stack} stack The stack to be iterated over.
+ * @returns {StackIterator} The new stack iterator.
+ */
+function StackIterator(stack) {
+    this.currentIndex = 0;  // before the first item
+    this.stack = stack;
+    return this;
+}
+StackIterator.prototype.constructor = StackIterator;
+
+
+StackIterator.prototype.toStart = function() {
+    this.currentIndex = 0;
+};
+
+
+StackIterator.prototype.toIndex = function(index) {
+    this.currentIndex = this.stack.array.normalizedIndex(index);
+};
+
+
+StackIterator.prototype.toEnd = function() {
+    this.currentIndex = this.stack.array.length;
+};
+
+
+StackIterator.prototype.hasPrevious = function() {
+    return this.currentIndex > 0;
+};
+
+
+StackIterator.prototype.hasNext = function() {
+    return this.currentIndex < this.stack.array.length;
+};
+
+
+StackIterator.prototype.getPrevious = function() {
+    if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the stack.");
+    var item = this.stack.array[--this.currentIndex];
+    return item;
+};
+
+
+StackIterator.prototype.getNext = function() {
+    if (!this.hasNext()) throw new Error("The iterator is at the end of the stack.");
+    var item = this.stack.array[this.currentIndex++];
     return item;
 };
