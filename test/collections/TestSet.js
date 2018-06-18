@@ -63,6 +63,48 @@ describe('Bali Virtual Machine™', function() {
             expect(size).to.equal(0);
         });
 
+        it('should be able to add and remove items from a set', function() {
+            var set = new collections.Set();
+            var item2 = new Item(2);
+            var item5 = new Item(5);
+            var item3 = new Item(3);
+            var item1 = new Item(1);
+            var item4 = new Item(4);
+            set.addItem(item2);
+            set.addItem(item5);
+            set.addItem(item3);
+            set.addItem(item1);
+            set.addItem(item4);
+            var size = set.getSize();
+            expect(size).to.exist;  // jshint ignore:line
+            expect(size).to.equal(5);
+            expect(set.getItem(2).value).to.equal(item2.value);
+            expect(set.getItem(5).value).to.equal(item5.value);
+            var iterator = set.iterator();
+            expect(iterator).to.exist;  // jshint ignore:line
+            var value = 0;
+            var item;
+            while (iterator.hasNext()) {
+                value++;
+                item = iterator.getNext();
+                console.log('value: ' + item.value);
+                expect(item.value).to.equal(value);
+            }
+            set.removeItem(item2);
+            set.removeItem(item1);
+            size = set.getSize();
+            expect(size).to.exist;  // jshint ignore:line
+            expect(size).to.equal(3);
+            iterator.toStart();
+            value = 2;
+            while (iterator.hasNext()) {
+                value++;
+                item = iterator.getNext();
+                console.log('value: ' + item.value);
+                expect(item.value).to.equal(value);
+            }
+        });
+
     });
 
 });

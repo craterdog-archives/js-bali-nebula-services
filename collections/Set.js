@@ -53,7 +53,7 @@ Set.prototype.getSize = function() {
 
 Set.prototype.getItem = function(index) {
     index = this.normalizedIndex(index) - 1;  // convert to javascript zero based indexing
-    var item = this.tree.get(index);
+    var item = this.tree.value(index);
     return item;
 };
 
@@ -201,7 +201,7 @@ Set.xor = function(set1, set2) {
 
 function SetIterator(set) {
     this.set = set;
-    this.currentIndex = 0;  // before the first item
+    this.index = 0;  // before the first item
     this.next = this.set.tree.minimum(this.set.tree.root);
     return this;
 }
@@ -209,37 +209,37 @@ SetIterator.prototype.constructor = SetIterator;
 
 
 SetIterator.prototype.toStart = function() {
-    this.currentIndex = 0;
+    this.index = 0;
     this.next = this.set.tree.minimum(this.set.tree.root);
 };
 
 
 SetIterator.prototype.toIndex = function(index) {
-    this.currentIndex = index;
+    this.index = index;
     this.next = this.set.getItem(index);
 };
 
 
 SetIterator.prototype.toEnd = function() {
-    this.currentIndex = this.set.tree.size;
+    this.index = this.set.tree.size;
     this.next = undefined;
 };
 
 
 SetIterator.prototype.hasPrevious = function() {
-    return this.currentIndex > 0;
+    return this.index > 0;
 };
 
 
 SetIterator.prototype.hasNext = function() {
-    return this.currentIndex < this.set.tree.size;
+    return this.index < this.set.tree.size;
 };
 
 
 SetIterator.prototype.getPrevious = function() {
     if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the set.");
     this.next = this.set.tree.predecessor(this.next);
-    this.currentIndex--;
+    this.index--;
     return this.next.value;
 };
 
@@ -248,7 +248,7 @@ SetIterator.prototype.getNext = function() {
     if (!this.hasNext()) throw new Error("The iterator is at the end of the set.");
     var node = this.next;
     this.next = this.set.tree.successor(this.next);
-    this.currentIndex++;
+    this.index++;
     return node.value;
 };
 
@@ -273,22 +273,25 @@ RandomizedTree.prototype.contains = function(value) {
 };
 
 
-RandomizedTree.prototype.find = function(value) {
-    var candidate = this.root;
-    while (candidate && candidate.value) {
-        switch (candidate.value.compareTo(value)) {
-            case -1:
-                candidate = candidate.right;
-                break;
-            case 0:
-                return candidate;
-            case 1:
-                candidate = candidate.left;
-                break;
-        }
+RandomizedTree.prototype.index = function(value) {
+    var index = 0;
+    var candidate = this.minimum(this.root);
+    while (!candidate.value.equalTo(value)) {
+        candidate = this.successor(candidate);
     }
-    return candidate;
+    return index;
 };
+
+
+RandomizedTree.prototype.value = function(index) {
+    if (index > this.size) return this.maximum(this.root);
+    var candidate = this.minimum(this.root);
+    while (index-- > 0) {
+        candidate = this.successor(candidate);
+    }
+    return candidate.value;
+};
+
 
 RandomizedTree.prototype.insert = function(value) {
     // handle the empty tree case
@@ -384,20 +387,6 @@ RandomizedTree.prototype.remove = function(value) {
 };
 
 
-RandomizedTree.prototype.replace = function(old, replacement) {
-    if (old.parent === undefined) {
-        this.root = replacement;
-    } else if (old === old.parent.left) {
-        old.parent.left = replacement;
-    } else {
-        old.parent.right = replacement;
-    }
-    if (replacement) {
-        replacement.parent = old.parent;
-    }
-};
-
-
 RandomizedTree.prototype.clear = function() {
     this.root = undefined;
     this.size = 0;
@@ -417,10 +406,6 @@ RandomizedTree.prototype.maximum = function(node) {
         node = node.right;
     }
     return node;
-};
-
-
-RandomizedTree.prototype.predecessor = function(node) {
 };
 
 
@@ -454,6 +439,37 @@ RandomizedTree.prototype.successor = function(node) {
             parent = parent.parent;
         }
         return parent;
+    }
+};
+
+
+RandomizedTree.prototype.find = function(value) {
+    var candidate = this.root;
+    while (candidate && candidate.value) {
+        switch (candidate.value.compareTo(value)) {
+            case -1:
+                candidate = candidate.right;
+                break;
+            case 0:
+                return candidate;
+            case 1:
+                candidate = candidate.left;
+                break;
+        }
+    }
+    return candidate;
+};
+
+RandomizedTree.prototype.replace = function(old, replacement) {
+    if (old.parent === undefined) {
+        this.root = replacement;
+    } else if (old === old.parent.left) {
+        old.parent.left = replacement;
+    } else {
+        old.parent.right = replacement;
+    }
+    if (replacement) {
+        replacement.parent = old.parent;
     }
 };
 
