@@ -278,12 +278,12 @@ RandomizedTree.prototype.find = function(value) {
     while (candidate && candidate.value) {
         switch (candidate.value.compareTo(value)) {
             case -1:
-                candidate = candidate.left;
+                candidate = candidate.right;
                 break;
             case 0:
                 return candidate;
             case 1:
-                candidate = candidate.right;
+                candidate = candidate.left;
                 break;
         }
     }
@@ -306,11 +306,11 @@ RandomizedTree.prototype.insert = function(value) {
         var signum = candidate.value.compareTo(value);
         switch (signum) {
             case -1:
-                candidate = candidate.left;
-                break;
             case 0:
-            case 1:
                 candidate = candidate.right;
+                break;
+            case 1:
+                candidate = candidate.left;
                 break;
         }
     }
@@ -319,11 +319,11 @@ RandomizedTree.prototype.insert = function(value) {
     var child = { value: value, parent: parent, priority: Math.random()};
     switch (parent.value.compareTo(value)) {
         case -1:
-            parent.left = child;
-            break;
         case 0:
-        case 1:
             parent.right = child;
+            break;
+        case 1:
+            parent.left = child;
             break;
     }
     this.size++;

@@ -40,17 +40,23 @@ describe('Bali Virtual Machine™', function() {
             set.addItem(new Item(1));
             set.addItem(new Item(2));
             set.addItem(new Item(3));
+            set.addItem(new Item(4));
+            set.addItem(new Item(5));
             var size = set.getSize();
             expect(size).to.exist;  // jshint ignore:line
-            expect(size).to.equal(3);
+            expect(size).to.equal(5);
             set = new collections.Set(set);
             size = set.getSize();
             expect(size).to.exist;  // jshint ignore:line
-            expect(size).to.equal(3);
+            expect(size).to.equal(5);
             var iterator = set.iterator();
             expect(iterator).to.exist;  // jshint ignore:line
             expect(iterator.hasNext() === true);
             expect(iterator.hasPrevious() === false);
+            while (iterator.hasNext()) {
+                var item = iterator.getNext();
+                console.log('value: ' + item.value);
+            }
             set.removeAll();
             size = set.getSize();
             expect(size).to.exist;  // jshint ignore:line
