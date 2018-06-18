@@ -202,6 +202,7 @@ Set.xor = function(set1, set2) {
 function SetIterator(set) {
     this.set = set;
     this.index = 0;  // before the first item
+    this.previous = undefined;
     this.next = this.set.tree.minimum(this.set.tree.root);
     return this;
 }
@@ -210,18 +211,21 @@ SetIterator.prototype.constructor = SetIterator;
 
 SetIterator.prototype.toStart = function() {
     this.index = 0;
+    this.previous = undefined;
     this.next = this.set.tree.minimum(this.set.tree.root);
 };
 
 
 SetIterator.prototype.toIndex = function(index) {
-    this.index = index;
-    this.next = this.set.getItem(index);
+    this.index = this.set.normalizedIndex(index);
+    this.previous = this.set.getItem(index);
+    this.next = this.set.tree.successor(this.previous);
 };
 
 
 SetIterator.prototype.toEnd = function() {
     this.index = this.set.tree.size;
+    this.previous = this.set.tree.maximum(this.set.tree.root);
     this.next = undefined;
 };
 
@@ -238,18 +242,21 @@ SetIterator.prototype.hasNext = function() {
 
 SetIterator.prototype.getPrevious = function() {
     if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the set.");
-    this.next = this.set.tree.predecessor(this.next);
+    var value = this.previous.value;
+    this.next = this.previous;
+    this.previous = this.set.tree.predecessor(this.next);
     this.index--;
-    return this.next.value;
+    return value;
 };
 
 
 SetIterator.prototype.getNext = function() {
     if (!this.hasNext()) throw new Error("The iterator is at the end of the set.");
-    var node = this.next;
-    this.next = this.set.tree.successor(this.next);
+    var value = this.next.value;
+    this.previous = this.next;
+    this.next = this.set.tree.successor(this.previous);
     this.index++;
-    return node.value;
+    return value;
 };
 
 
@@ -278,6 +285,7 @@ RandomizedTree.prototype.index = function(value) {
     var candidate = this.minimum(this.root);
     while (!candidate.value.equalTo(value)) {
         candidate = this.successor(candidate);
+        index++;
     }
     return index;
 };

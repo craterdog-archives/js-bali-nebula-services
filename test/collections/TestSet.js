@@ -55,7 +55,6 @@ describe('Bali Virtual Machine™', function() {
             expect(iterator.hasPrevious() === false);
             while (iterator.hasNext()) {
                 var item = iterator.getNext();
-                console.log('value: ' + item.value);
             }
             set.removeAll();
             size = set.getSize();
@@ -79,7 +78,9 @@ describe('Bali Virtual Machine™', function() {
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(5);
             expect(set.getItem(2).value).to.equal(item2.value);
+            expect(set.getIndex(item1)).to.equal(1);
             expect(set.getItem(5).value).to.equal(item5.value);
+            expect(set.getIndex(item3)).to.equal(3);
             var iterator = set.iterator();
             expect(iterator).to.exist;  // jshint ignore:line
             var value = 0;
@@ -87,7 +88,6 @@ describe('Bali Virtual Machine™', function() {
             while (iterator.hasNext()) {
                 value++;
                 item = iterator.getNext();
-                console.log('value: ' + item.value);
                 expect(item.value).to.equal(value);
             }
             set.removeItem(item2);
@@ -100,9 +100,42 @@ describe('Bali Virtual Machine™', function() {
             while (iterator.hasNext()) {
                 value++;
                 item = iterator.getNext();
-                console.log('value: ' + item.value);
                 expect(item.value).to.equal(value);
             }
+        });
+
+        it('should iterate over a set forwards and backwards', function() {
+            var set = new collections.Set();
+            set.addItem(new Item(1));
+            set.addItem(new Item(2));
+            set.addItem(new Item(3));
+            set.addItem(new Item(4));
+            set.addItem(new Item(5));
+            var iterator = set.iterator();
+            expect(iterator).to.exist;  // jshint ignore:line
+            iterator.toEnd();
+            expect(iterator.hasNext() === false);
+            expect(iterator.hasPrevious() === true);
+            var item;
+            while (iterator.hasPrevious()) {
+                item = iterator.getPrevious();
+            }
+            expect(iterator.hasNext() === true);
+            expect(iterator.hasPrevious() === false);
+            item = iterator.getNext();
+            expect(item.value).to.equal(1);
+            item = iterator.getNext();
+            expect(item.value).to.equal(2);
+            item = iterator.getPrevious();
+            expect(item.value).to.equal(2);
+            item = iterator.getPrevious();
+            expect(item.value).to.equal(1);
+            while (iterator.hasNext()) {
+                item = iterator.getNext();
+            }
+            iterator.toStart();
+            expect(iterator.hasNext() === true);
+            expect(iterator.hasPrevious() === false);
         });
 
     });
