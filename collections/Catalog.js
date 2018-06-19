@@ -305,7 +305,7 @@ Catalog.reduction = function(catalog, keys) {
  * @returns {CatalogIterator} The new catalog iterator.
  */
 function CatalogIterator(catalog) {
-    this.currentIndex = 0;  // before the first association
+    this.slot = 0;  // the slot before the first association
     this.catalog = catalog;
     return this;
 }
@@ -313,40 +313,40 @@ CatalogIterator.prototype.constructor = CatalogIterator;
 
 
 CatalogIterator.prototype.toStart = function() {
-    this.currentIndex = 0;
+    this.slot = 0;  // the slot before the first association
 };
 
 
-CatalogIterator.prototype.toIndex = function(index) {
-    this.currentIndex = this.catalog.normalizedIndex(index);
+CatalogIterator.prototype.toSlot = function(slot) {
+    this.slot = slot;
 };
 
 
 CatalogIterator.prototype.toEnd = function() {
-    this.currentIndex = this.catalog.array.length;
+    this.slot = this.catalog.array.length;  // the slot after the last association
 };
 
 
 CatalogIterator.prototype.hasPrevious = function() {
-    return this.currentIndex > 0;
+    return this.slot > 0;
 };
 
 
 CatalogIterator.prototype.hasNext = function() {
-    return this.currentIndex < this.catalog.array.length;
+    return this.slot < this.catalog.array.length;
 };
 
 
 CatalogIterator.prototype.getPrevious = function() {
     if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the catalog.");
-    var association = this.catalog.array[--this.currentIndex];
+    var association = this.catalog.array[--this.slot];
     return association;
 };
 
 
 CatalogIterator.prototype.getNext = function() {
     if (!this.hasNext()) throw new Error("The iterator is at the end of the catalog.");
-    var association = this.catalog.array[this.currentIndex++];
+    var association = this.catalog.array[this.slot++];
     return association;
 };
 

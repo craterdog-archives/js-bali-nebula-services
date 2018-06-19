@@ -249,7 +249,7 @@ List.concatenation = function(list1, list2) {
  * @returns {ListIterator} The new list iterator.
  */
 function ListIterator(list) {
-    this.currentIndex = 0;  // before the first item
+    this.slot = 0;  // the slot before the first item
     this.list = list;
     return this;
 }
@@ -257,39 +257,40 @@ ListIterator.prototype.constructor = ListIterator;
 
 
 ListIterator.prototype.toStart = function() {
-    this.currentIndex = 0;
+    this.slot = 0;  // the slot before the first item
 };
 
 
-ListIterator.prototype.toIndex = function(index) {
-    this.currentIndex = this.list.array.normalizedIndex(index);
+ListIterator.prototype.toSlot = function(slot) {
+    this.slot = slot;
 };
 
 
 ListIterator.prototype.toEnd = function() {
-    this.currentIndex = this.list.array.length;
+    this.slot = this.list.array.length;
+    this.slot = this.list.array.length;  // the slot after the last item
 };
 
 
 ListIterator.prototype.hasPrevious = function() {
-    return this.currentIndex > 0;
+    return this.slot > 0;
 };
 
 
 ListIterator.prototype.hasNext = function() {
-    return this.currentIndex < this.list.array.length;
+    return this.slot < this.list.array.length;
 };
 
 
 ListIterator.prototype.getPrevious = function() {
     if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the list.");
-    var item = this.list.array[--this.currentIndex];
+    var item = this.list.array[--this.slot];
     return item;
 };
 
 
 ListIterator.prototype.getNext = function() {
     if (!this.hasNext()) throw new Error("The iterator is at the end of the list.");
-    var item = this.list.array[this.currentIndex++];
+    var item = this.list.array[this.slot++];
     return item;
 };

@@ -127,7 +127,7 @@ Stack.prototype.getTop = function() {
  * @returns {StackIterator} The new stack iterator.
  */
 function StackIterator(stack) {
-    this.currentIndex = 0;  // before the first item
+    this.slot = 0;  // the slot before the first item
     this.stack = stack;
     return this;
 }
@@ -135,39 +135,39 @@ StackIterator.prototype.constructor = StackIterator;
 
 
 StackIterator.prototype.toStart = function() {
-    this.currentIndex = 0;
+    this.slot = 0;  // the slot before the first item
 };
 
 
-StackIterator.prototype.toIndex = function(index) {
-    this.currentIndex = this.stack.array.normalizedIndex(index);
+StackIterator.prototype.toSlot = function(slot) {
+    this.slot = slot;
 };
 
 
 StackIterator.prototype.toEnd = function() {
-    this.currentIndex = this.stack.array.length;
+    this.slot = this.stack.array.length;  // the slot after the last item
 };
 
 
 StackIterator.prototype.hasPrevious = function() {
-    return this.currentIndex > 0;
+    return this.slot > 0;
 };
 
 
 StackIterator.prototype.hasNext = function() {
-    return this.currentIndex < this.stack.array.length;
+    return this.slot < this.stack.array.length;
 };
 
 
 StackIterator.prototype.getPrevious = function() {
     if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the stack.");
-    var item = this.stack.array[--this.currentIndex];
+    var item = this.stack.array[--this.slot];
     return item;
 };
 
 
 StackIterator.prototype.getNext = function() {
     if (!this.hasNext()) throw new Error("The iterator is at the end of the stack.");
-    var item = this.stack.array[this.currentIndex++];
+    var item = this.stack.array[this.slot++];
     return item;
 };

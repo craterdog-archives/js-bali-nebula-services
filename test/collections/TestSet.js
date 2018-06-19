@@ -53,22 +53,54 @@ describe('Bali Virtual Machine™', function() {
             expect(iterator).to.exist;  // jshint ignore:line
             expect(iterator.hasNext() === true);
             expect(iterator.hasPrevious() === false);
-            while (iterator.hasNext()) {
-                var item = iterator.getNext();
-            }
             set.removeAll();
             size = set.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(0);
         });
 
+        it('should be able to call the Collection class methods on the set', function() {
+            var item1 = new Item(1);
+            var item2 = new Item(2);
+            var item3 = new Item(3);
+            var item4 = new Item(4);
+            var item5 = new Item(5);
+            var set1 = new collections.Set();
+            set1.addItem(item1);
+            set1.addItem(item2);
+            set1.addItem(item4);
+            var set2 = new collections.Set();
+            set2.addItem(item5);
+            set2.addItem(item3);
+            set1.addItems(set2);
+            size = set1.getSize();
+            expect(size).to.equal(5);
+            expect(set1.containsAll(set2)).to.equal(true);
+            expect(set2.containsAll(set1)).to.equal(false);
+            expect(set2.containsAny(set1)).to.equal(true);
+            var set3 = set1.getItems(2, 4);
+            size = set3.getSize();
+            expect(size).to.equal(3);
+            expect(set3.containsItem(item4)).to.equal(true);
+            expect(set3.containsItem(item1)).to.equal(false);
+            expect(set3.getIndex(item3)).to.equal(2);
+            set2.addItems(set1);
+            size = set2.getSize();
+            expect(size).to.equal(5);
+            expect(set2.containsAll(set1)).to.equal(true);
+            set2.removeItems(set3);
+            size = set2.getSize();
+            expect(size).to.equal(2);
+            expect(set2.containsItem(item3)).to.equal(false);
+        });
+
         it('should be able to add and remove items from a set', function() {
             var set = new collections.Set();
-            var item2 = new Item(2);
-            var item5 = new Item(5);
-            var item3 = new Item(3);
             var item1 = new Item(1);
+            var item2 = new Item(2);
+            var item3 = new Item(3);
             var item4 = new Item(4);
+            var item5 = new Item(5);
             set.addItem(item2);
             set.addItem(item5);
             set.addItem(item3);

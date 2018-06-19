@@ -53,7 +53,7 @@ Set.prototype.getSize = function() {
 
 Set.prototype.getItem = function(index) {
     index = this.normalizedIndex(index) - 1;  // convert to javascript zero based indexing
-    var item = this.tree.value(index);
+    var item = this.tree.node(index).value;
     return item;
 };
 
@@ -65,8 +65,7 @@ Set.prototype.getIndex = function(item) {
 
 
 Set.prototype.addItem = function(item) {
-    var result = this.tree.insert(item);
-    return result;
+    this.tree.insert(item);
 };
 
 
@@ -201,7 +200,7 @@ Set.xor = function(set1, set2) {
 
 function SetIterator(set) {
     this.set = set;
-    this.index = 0;  // before the first item
+    this.slot = 0;  // the slot before the first item
     this.previous = undefined;
     this.next = this.set.tree.minimum(this.set.tree.root);
     return this;
@@ -210,33 +209,33 @@ SetIterator.prototype.constructor = SetIterator;
 
 
 SetIterator.prototype.toStart = function() {
-    this.index = 0;
+    this.slot = 0;  // the slot before the first item
     this.previous = undefined;
     this.next = this.set.tree.minimum(this.set.tree.root);
 };
 
 
-SetIterator.prototype.toIndex = function(index) {
-    this.index = this.set.normalizedIndex(index);
-    this.previous = this.set.getItem(index);
+SetIterator.prototype.toSlot = function(slot) {
+    this.slot = slot;
+    this.previous = this.set.tree.node(slot - 1);  // javascript index of item before the slot
     this.next = this.set.tree.successor(this.previous);
 };
 
 
 SetIterator.prototype.toEnd = function() {
-    this.index = this.set.tree.size;
+    this.slot = this.set.tree.size;  // the slot after the last item
     this.previous = this.set.tree.maximum(this.set.tree.root);
     this.next = undefined;
 };
 
 
 SetIterator.prototype.hasPrevious = function() {
-    return this.index > 0;
+    return this.slot > 0;
 };
 
 
 SetIterator.prototype.hasNext = function() {
-    return this.index < this.set.tree.size;
+    return this.slot < this.set.tree.size;
 };
 
 
@@ -245,7 +244,7 @@ SetIterator.prototype.getPrevious = function() {
     var value = this.previous.value;
     this.next = this.previous;
     this.previous = this.set.tree.predecessor(this.next);
-    this.index--;
+    this.slot--;
     return value;
 };
 
@@ -255,7 +254,7 @@ SetIterator.prototype.getNext = function() {
     var value = this.next.value;
     this.previous = this.next;
     this.next = this.set.tree.successor(this.previous);
-    this.index++;
+    this.slot++;
     return value;
 };
 
@@ -283,21 +282,25 @@ RandomizedTree.prototype.contains = function(value) {
 RandomizedTree.prototype.index = function(value) {
     var index = 0;
     var candidate = this.minimum(this.root);
-    while (!candidate.value.equalTo(value)) {
+    while (candidate && !candidate.value.equalTo(value)) {
         candidate = this.successor(candidate);
         index++;
     }
-    return index;
+    if (candidate) {
+        return index;
+    } else {
+        return -1;
+    }
 };
 
 
-RandomizedTree.prototype.value = function(index) {
-    if (index > this.size) return this.maximum(this.root);
+RandomizedTree.prototype.node = function(index) {
     var candidate = this.minimum(this.root);
-    while (index-- > 0) {
+    while (index > 0 && index < this.size) {
         candidate = this.successor(candidate);
+        index--;
     }
-    return candidate.value;
+    return candidate;
 };
 
 
@@ -314,14 +317,15 @@ RandomizedTree.prototype.insert = function(value) {
     var candidate = this.root;
     while (candidate && candidate.value) {
         parent = candidate;
-        var signum = candidate.value.compareTo(value);
-        switch (signum) {
-            case -1:
-            case 0:
-                candidate = candidate.right;
-                break;
+        switch (candidate.value.compareTo(value)) {
             case 1:
                 candidate = candidate.left;
+                break;
+            case 0:
+                // the value is already in the tree
+                return;
+            case -1:
+                candidate = candidate.right;
                 break;
         }
     }
@@ -329,12 +333,12 @@ RandomizedTree.prototype.insert = function(value) {
     // insert the new node as a child of the parent
     var child = { value: value, parent: parent, priority: Math.random()};
     switch (parent.value.compareTo(value)) {
-        case -1:
-        case 0:
-            parent.right = child;
-            break;
         case 1:
             parent.left = child;
+            break;
+        case 0:
+        case -1:
+            parent.right = child;
             break;
     }
     this.size++;
@@ -352,8 +356,6 @@ RandomizedTree.prototype.insert = function(value) {
             break;
         }
     }
-
-    return child;
 };
 
 

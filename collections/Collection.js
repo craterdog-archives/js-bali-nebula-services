@@ -62,11 +62,12 @@ Collection.prototype.getItems = function(firstIndex, lastIndex) {
     lastIndex = this.normalizedIndex(lastIndex);
     var result = this.emptyCopy();
     var iterator = this.iterator();
-    iterator.toIndex(firstIndex);
+    iterator.toSlot(firstIndex - 1);  // the slot before the first item
     var numberOfItems = lastIndex - firstIndex + 1;
-    while (numberOfItems-- > 0) {
+    while (numberOfItems > 0) {
         var item = iterator.getNext();
         result.addItem(item);
+        numberOfItems--;
     }
     return result;
 };
@@ -162,7 +163,8 @@ Collection.prototype.containsAll = function(items) {
 
 /**
  * This method converts negative indexes into their corresponding positive indexes and
- * then checks to make sure the index is in the range [1..size].
+ * then checks to make sure the index is in the range [1..size]. NOTE: if the collection
+ * is empty then the resulting index will be zero.
  *
  * The mapping between indexes is as follows:
  * <pre>
@@ -175,7 +177,8 @@ Collection.prototype.containsAll = function(items) {
  */
 Collection.prototype.normalizedIndex = function(index) {
     var size = this.getSize();
+    if (index > size) index = size;
+    if (index < -size) index = -size;
     if (index < 0) index = index + size + 1;
-    if (index < 1 || index > size) throw new Error('Index: ' + index + ', Size: ' + size);
     return index;
 };
