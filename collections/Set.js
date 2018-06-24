@@ -26,10 +26,18 @@ function Set(optionalItems) {
     OrderedCollection.call(this, false);
     this.tree = new RandomizedTree();
     if (optionalItems) {
-        var iterator = optionalItems.iterator();
-        while (iterator.hasNext()) {
-            var item = iterator.getNext();
-            this.tree.insert(item);
+        var item;
+        if (Array.isArray(optionalItems)) {
+            for (var i = 0; i < optionalItems.length; i++) {
+                item = optionalItems[i];
+                this.tree.insert(item);
+            }
+        } else {
+            var iterator = optionalItems.iterator();
+            while (iterator.hasNext()) {
+                item = iterator.getNext();
+                this.tree.insert(item);
+            }
         }
     }
     return this;

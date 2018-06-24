@@ -29,11 +29,20 @@ function Catalog(optionalAssociations) {
     this.map = new Map();
     this.array = [];
     if (optionalAssociations) {
-        var iterator = optionalAssociations.iterator();
-        while (iterator.hasNext()) {
-            var association = iterator.getNext();
-            this.map.addItem(association);
-            this.array.push(association);
+        var association;
+        if (Array.isArray(optionalAssociations)) {
+            this.array = optionalAssociations.slice();  // make a copy
+            for (var i = 0; i < optionalAssociations.length; i++) {
+                association = optionalAssociations[i];
+                this.map.set(association.key, association);
+            }
+        } else {
+            var iterator = optionalAssociations.iterator();
+            while (iterator.hasNext()) {
+                association = iterator.getNext();
+                this.map.set(association.key, association);
+                this.array.push(association);
+            }
         }
     }
     return this;
@@ -177,10 +186,16 @@ Catalog.prototype.setValue = function(key, value) {
  */
 Catalog.prototype.removeValue = function(key) {
     var value;
-    var association = this.map.remove(key);
-    if (association) {
-        this.array.remove(association);
-        value = association.value;
+    if (this.map.delete(key)) {
+        for (var i = 0; i < this.array.length; i++) {
+            var association = this.array[i];
+            var candidate = association.key;
+            if (candidate.equalTo(key)) {
+                value = association.value;
+                this.array.splice(i, 1);
+                break;
+            }
+        }
     }
     return value;
 };
@@ -402,7 +417,7 @@ Association.prototype.getHash = function() {
  * @returns {Boolean} Whether or not the two are equal.
  */
 Association.prototype.equalTo = function(that) {
-    if (that === undefined || that === null || that.prototype.constructor.name !== 'Association') return false;
+    if (that === undefined || that === null || that.constructor.name !== 'Association') return false;
     return this.key.equalTo(that.key) && this.value.equalTo(that.value);
 };
 

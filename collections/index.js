@@ -9,6 +9,7 @@
  ************************************************************************/
 'use strict';
 
+exports.Association = require('./Catalog').Association;
 exports.Catalog = require('./Catalog').Catalog;
 exports.List = require('./List').List;
 exports.Range = require('./Range').Range;
