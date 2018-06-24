@@ -16,7 +16,7 @@ var expect = require('chai').expect;
 
 describe('Bali Virtual Machine™', function() {
 
-    describe('Test the compiler and assembler', function() {
+    describe('Test the analysis and compilation of an example type.', function() {
 
         it('should compile source documents into assembly instructions.', function() {
             var testFolder = 'test/';

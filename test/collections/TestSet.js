@@ -59,6 +59,10 @@ describe('Bali Virtual Machine™', function() {
             expect(size).to.equal(0);
         });
 
+    });
+
+    describe('Test the set methods.', function() {
+
         it('should be able to call the Collection class methods on the set', function() {
             var item1 = new Item(1);
             var item2 = new Item(2);
@@ -171,6 +175,10 @@ describe('Bali Virtual Machine™', function() {
             set6.addItem(item5);
             expect(collections.Set.xor(set1, set2).equalTo(set6)).to.equal(true);
         });
+
+    });
+
+    describe('Test the set iterators.', function() {
 
         it('should iterate over a set forwards and backwards', function() {
             var set = new collections.Set();

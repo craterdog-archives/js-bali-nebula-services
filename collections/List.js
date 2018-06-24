@@ -32,10 +32,14 @@ function List(optionalItems) {
     SortableCollection.call(this);
     this.array = [];
     if (optionalItems) {
-        var iterator = optionalItems.iterator();
-        while (iterator.hasNext()) {
-            var item = iterator.getNext();
-            this.array.push(item);
+        if (Array.isArray(optionalItems)) {
+            this.array = optionalItems.slice();  // make a copy
+        } else {
+            var iterator = optionalItems.iterator();
+            while (iterator.hasNext()) {
+                var item = iterator.getNext();
+                this.array.push(item);
+            }
         }
     }
     return this;
@@ -267,7 +271,6 @@ ListIterator.prototype.toSlot = function(slot) {
 
 
 ListIterator.prototype.toEnd = function() {
-    this.slot = this.list.array.length;
     this.slot = this.list.array.length;  // the slot after the last item
 };
 

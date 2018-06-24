@@ -49,6 +49,10 @@ describe('Bali Virtual Machine™', function() {
             expect(size).to.equal(0);
         });
 
+    });
+
+    describe('Test the stack methods.', function() {
+
         it('should be able to push and pop items from a stack', function() {
             var stack = new collections.Stack();
             var item1 = new Item(1);
@@ -90,6 +94,10 @@ describe('Bali Virtual Machine™', function() {
             expect(top.equalTo(pop)).to.equal(true);
             expect(stack.getSize()).to.equal(0);
         });
+
+    });
+
+    describe('Test the stack iterators.', function() {
 
         it('should iterate over a stack forwards and backwards', function() {
             // REMEMBER: The iterator for a stack iterates through the items in LIFO order
