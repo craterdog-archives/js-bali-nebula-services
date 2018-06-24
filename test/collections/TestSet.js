@@ -136,6 +136,42 @@ describe('Bali Virtual Machine™', function() {
             }
         });
 
+        it('should be able to perform set operations on sets', function() {
+            var item1 = new Item(1);
+            var item2 = new Item(2);
+            var item3 = new Item(3);
+            var item4 = new Item(4);
+            var item5 = new Item(5);
+            var set1 = new collections.Set();
+            set1.addItem(item1);
+            set1.addItem(item2);
+            set1.addItem(item3);
+            var set2 = new collections.Set();
+            set2.addItem(item2);
+            set2.addItem(item3);
+            set2.addItem(item4);
+            set2.addItem(item5);
+            var set3 = new collections.Set();
+            set3.addItem(item2);
+            set3.addItem(item3);
+            expect(collections.Set.and(set1, set2).equalTo(set3)).to.equal(true);
+            var set4 = new collections.Set();
+            set4.addItem(item1);
+            expect(collections.Set.sans(set1, set2).equalTo(set4)).to.equal(true);
+            var set5 = new collections.Set();
+            set5.addItem(item1);
+            set5.addItem(item2);
+            set5.addItem(item3);
+            set5.addItem(item4);
+            set5.addItem(item5);
+            expect(collections.Set.or(set1, set2).equalTo(set5)).to.equal(true);
+            var set6 = new collections.Set();
+            set6.addItem(item1);
+            set6.addItem(item4);
+            set6.addItem(item5);
+            expect(collections.Set.xor(set1, set2).equalTo(set6)).to.equal(true);
+        });
+
         it('should iterate over a set forwards and backwards', function() {
             var set = new collections.Set();
             set.addItem(new Item(1));

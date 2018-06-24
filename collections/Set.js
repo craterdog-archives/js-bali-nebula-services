@@ -192,6 +192,14 @@ Set.xor = function(set1, set2) {
                 break;
         }
     }
+    while (iterator1.hasNext()) {
+        item1 = iterator1.getNext();
+        result.addItem(item1);
+    }
+    while (iterator2.hasNext()) {
+        item2 = iterator2.getNext();
+        result.addItem(item2);
+    }
     return result;
 };
 
