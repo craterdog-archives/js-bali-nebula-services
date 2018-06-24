@@ -248,7 +248,7 @@ SetIterator.prototype.hasNext = function() {
 
 
 SetIterator.prototype.getPrevious = function() {
-    if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the set.");
+    if (!this.hasPrevious()) throw new Error('The iterator is at the beginning of the set.');
     var value = this.previous.value;
     this.next = this.previous;
     this.previous = this.set.tree.predecessor(this.next);
@@ -258,7 +258,7 @@ SetIterator.prototype.getPrevious = function() {
 
 
 SetIterator.prototype.getNext = function() {
-    if (!this.hasNext()) throw new Error("The iterator is at the end of the set.");
+    if (!this.hasNext()) throw new Error('The iterator is at the end of the set.');
     var value = this.next.value;
     this.previous = this.next;
     this.next = this.set.tree.successor(this.previous);

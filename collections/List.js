@@ -63,18 +63,6 @@ List.prototype.getSize = function() {
 
 
 /**
- * This method returns the index for a specified item, or zero if it doesn't exist.
- * 
- * @param {Object} item The item to be searched for.
- * @returns {Number} The index of the desired item or zero if it doesn't exist.
- */
-List.prototype.getIndex = function(item) {
-    var index = this.array.indexOf(item) + 1;  // convert to Bali ordinal based indexing
-    return index;
-};
-
-
-/**
  * This method returns the item that is specified by the numeric index.
  * 
  * @param {Number} index The index of the desired item.
@@ -286,14 +274,14 @@ ListIterator.prototype.hasNext = function() {
 
 
 ListIterator.prototype.getPrevious = function() {
-    if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the list.");
+    if (!this.hasPrevious()) throw new Error('The iterator is at the beginning of the list.');
     var item = this.list.array[--this.slot];
     return item;
 };
 
 
 ListIterator.prototype.getNext = function() {
-    if (!this.hasNext()) throw new Error("The iterator is at the end of the list.");
+    if (!this.hasNext()) throw new Error('The iterator is at the end of the list.');
     var item = this.list.array[this.slot++];
     return item;
 };

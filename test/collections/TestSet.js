@@ -36,16 +36,8 @@ describe('Bali Virtual Machine™', function() {
         });
 
         it('should create a set with initial items in it', function() {
-            var set = new collections.Set();
-            set.addItem(new Item(1));
-            set.addItem(new Item(2));
-            set.addItem(new Item(3));
-            set.addItem(new Item(4));
-            set.addItem(new Item(5));
-            var size = set.getSize();
-            expect(size).to.exist;  // jshint ignore:line
-            expect(size).to.equal(5);
-            set = new collections.Set(set);
+            var list = new collections.List(items);
+            var set = new collections.Set(list);
             size = set.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(5);
@@ -64,14 +56,9 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the set methods.', function() {
 
         it('should be able to call the Collection class methods on the set', function() {
-            var item1 = new Item(1);
-            var item2 = new Item(2);
-            var item3 = new Item(3);
-            var item4 = new Item(4);
-            var item5 = new Item(5);
             var set1 = new collections.Set();
             set1.addItem(item1);
-            set1.addItem(item2);
+            set1.addItem(new Item(2));  // add a different object with the same attributes
             set1.addItem(item4);
             var set2 = new collections.Set();
             set2.addItem(item5);
@@ -100,11 +87,6 @@ describe('Bali Virtual Machine™', function() {
 
         it('should be able to add and remove items from a set', function() {
             var set = new collections.Set();
-            var item1 = new Item(1);
-            var item2 = new Item(2);
-            var item3 = new Item(3);
-            var item4 = new Item(4);
-            var item5 = new Item(5);
             set.addItem(item2);
             set.addItem(item5);
             set.addItem(item3);
@@ -141,11 +123,6 @@ describe('Bali Virtual Machine™', function() {
         });
 
         it('should be able to perform set operations on sets', function() {
-            var item1 = new Item(1);
-            var item2 = new Item(2);
-            var item3 = new Item(3);
-            var item4 = new Item(4);
-            var item5 = new Item(5);
             var set1 = new collections.Set();
             set1.addItem(item1);
             set1.addItem(item2);
@@ -181,12 +158,8 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the set iterators.', function() {
 
         it('should iterate over a set forwards and backwards', function() {
-            var set = new collections.Set();
-            set.addItem(new Item(1));
-            set.addItem(new Item(2));
-            set.addItem(new Item(3));
-            set.addItem(new Item(4));
-            set.addItem(new Item(5));
+            var list = new collections.List(items);
+            var set = new collections.Set(list);
             var iterator = set.iterator();
             expect(iterator).to.exist;  // jshint ignore:line
             iterator.toEnd();
@@ -235,4 +208,19 @@ Item.prototype.compareTo = function(that) {
     if (this.value === that.value) return 0;
     if (this.value > that.value) return 1;
 };
+
+
+var item1 = new Item(1);
+var item2 = new Item(2);
+var item3 = new Item(3);
+var item4 = new Item(4);
+var item5 = new Item(5);
+
+var items = [
+    item1,
+    item2,
+    item3,
+    item4,
+    item5
+];
 

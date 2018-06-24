@@ -35,15 +35,14 @@ describe('Bali Virtual Machine™', function() {
             var size = stack.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(0);
-            var item = new Item(1);
-            stack.pushItem(item);
+            stack.pushItem(new Item(1));  // use a different object with same attributes
             size = stack.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(1);
-            expect(function() {stack.pushItem(item);}).to.throw(Error, "Attempted to push an item onto a full stack.");
+            expect(function() {stack.pushItem(item2);}).to.throw(Error, 'Attempted to push an item onto a full stack.');
             var top = stack.popItem();
             expect(top).to.exist;  // jshint ignore:line
-            expect(item.equalTo(top)).to.equal(true);
+            expect(item1.equalTo(top)).to.equal(true);
             size = stack.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(0);
@@ -55,26 +54,21 @@ describe('Bali Virtual Machine™', function() {
 
         it('should be able to push and pop items from a stack', function() {
             var stack = new collections.Stack();
-            var item1 = new Item(1);
-            var item2 = new Item(2);
-            var item3 = new Item(3);
-            var item4 = new Item(4);
-            var item5 = new Item(5);
-            stack.pushItem(item2);
-            stack.pushItem(item5);
-            stack.pushItem(item3);
             stack.pushItem(item1);
+            stack.pushItem(item2);
+            stack.pushItem(item3);
             stack.pushItem(item4);
+            stack.pushItem(item5);
             var size = stack.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(5);
             var top = stack.getTop();
-            expect(item4.equalTo(top)).to.equal(true);
+            expect(item5.equalTo(top)).to.equal(true);
             var pop = stack.popItem();
             expect(top.equalTo(pop)).to.equal(true);
             expect(stack.getSize()).to.equal(4);
             top = stack.getTop();
-            expect(item1.equalTo(top)).to.equal(true);
+            expect(item4.equalTo(top)).to.equal(true);
             pop = stack.popItem();
             expect(top.equalTo(pop)).to.equal(true);
             expect(stack.getSize()).to.equal(3);
@@ -84,12 +78,12 @@ describe('Bali Virtual Machine™', function() {
             expect(top.equalTo(pop)).to.equal(true);
             expect(stack.getSize()).to.equal(2);
             top = stack.getTop();
-            expect(item5.equalTo(top)).to.equal(true);
+            expect(item2.equalTo(top)).to.equal(true);
             pop = stack.popItem();
             expect(top.equalTo(pop)).to.equal(true);
             expect(stack.getSize()).to.equal(1);
             top = stack.getTop();
-            expect(item2.equalTo(top)).to.equal(true);
+            expect(item1.equalTo(top)).to.equal(true);
             pop = stack.popItem();
             expect(top.equalTo(pop)).to.equal(true);
             expect(stack.getSize()).to.equal(0);
@@ -102,13 +96,6 @@ describe('Bali Virtual Machine™', function() {
         it('should iterate over a stack forwards and backwards', function() {
             // REMEMBER: The iterator for a stack iterates through the items in LIFO order
             var stack = new collections.Stack();
-            var items = [
-                new Item(0),
-                new Item(1),
-                new Item(2),
-                new Item(3),
-                new Item(4)
-            ];
             var index;
             var item;
             // place the items on the stack in order
@@ -167,3 +154,17 @@ Item.prototype.compareTo = function(that) {
     if (this.value > that.value) return 1;
 };
 
+
+var item1 = new Item(1);
+var item2 = new Item(2);
+var item3 = new Item(3);
+var item4 = new Item(4);
+var item5 = new Item(5);
+
+var items = [
+    item1,
+    item2,
+    item3,
+    item4,
+    item5
+];

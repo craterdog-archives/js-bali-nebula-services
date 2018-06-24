@@ -338,14 +338,14 @@ CatalogIterator.prototype.hasNext = function() {
 
 
 CatalogIterator.prototype.getPrevious = function() {
-    if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the catalog.");
+    if (!this.hasPrevious()) throw new Error('The iterator is at the beginning of the catalog.');
     var association = this.catalog.array[--this.slot];
     return association;
 };
 
 
 CatalogIterator.prototype.getNext = function() {
-    if (!this.hasNext()) throw new Error("The iterator is at the end of the catalog.");
+    if (!this.hasNext()) throw new Error('The iterator is at the end of the catalog.');
     var association = this.catalog.array[this.slot++];
     return association;
 };

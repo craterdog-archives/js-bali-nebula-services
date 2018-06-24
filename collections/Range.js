@@ -121,7 +121,7 @@ RangeIterator.prototype.hasNext = function() {
 
 
 RangeIterator.prototype.getPrevious = function() {
-    if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the range.");
+    if (!this.hasPrevious()) throw new Error('The iterator is at the beginning of the range.');
     this.slot--;
     var item = this.range.array ? this.range.array[this.slot] : this.range.first + this.slot;
     return item;
@@ -129,7 +129,7 @@ RangeIterator.prototype.getPrevious = function() {
 
 
 RangeIterator.prototype.getNext = function() {
-    if (!this.hasNext()) throw new Error("The iterator is at the end of the range.");
+    if (!this.hasNext()) throw new Error('The iterator is at the end of the range.');
     var item = this.range.array ? this.range.array[this.slot] : this.range.first + this.slot;
     this.slot++;
     return item;

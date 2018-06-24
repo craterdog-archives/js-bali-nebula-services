@@ -13,14 +13,6 @@ var mocha = require('mocha');
 var expect = require('chai').expect;
 
 
-var items = [
-    new Item(0),
-    new Item(1),
-    new Item(2),
-    new Item(3),
-    new Item(4)
-];
-
 describe('Bali Virtual Machine™', function() {
 
     describe('Test the range constructors.', function() {
@@ -49,7 +41,7 @@ describe('Bali Virtual Machine™', function() {
 
         it('should create a range with an associated collection', function() {
             var list = new collections.List(items);
-            var range = new collections.Range(items[1], items[3], list);
+            var range = new collections.Range(new Item(1), item3, list);
             expect(range).to.exist;  // jshint ignore:line
             var size = range.getSize();
             expect(size).to.exist;  // jshint ignore:line
@@ -58,9 +50,9 @@ describe('Bali Virtual Machine™', function() {
             expect(iterator).to.exist;  // jshint ignore:line
             expect(iterator.hasNext() === true);
             expect(iterator.hasPrevious() === false);
-            expect(iterator.getNext().equalTo(items[1])).to.equal(true);
-            expect(iterator.getNext().equalTo(items[2])).to.equal(true);
-            expect(iterator.getNext().equalTo(items[3])).to.equal(true);
+            expect(iterator.getNext().equalTo(item1)).to.equal(true);
+            expect(iterator.getNext().equalTo(item2)).to.equal(true);
+            expect(iterator.getNext().equalTo(item3)).to.equal(true);
             expect(iterator.hasNext() === false);
             expect(iterator.hasPrevious() === true);
         });
@@ -71,7 +63,7 @@ describe('Bali Virtual Machine™', function() {
 
         it('should iterate over a range forwards and backwards', function() {
             var list = new collections.List(items);
-            var range = new collections.Range(items[1], items[3], list);
+            var range = new collections.Range(item1, new Item(3), list);
             var index = list.length;
             var item;
             var iterator = range.iterator();
@@ -126,4 +118,19 @@ Item.prototype.compareTo = function(that) {
     if (this.value === that.value) return 0;
     if (this.value > that.value) return 1;
 };
+
+
+var item1 = new Item(1);
+var item2 = new Item(2);
+var item3 = new Item(3);
+var item4 = new Item(4);
+var item5 = new Item(5);
+
+var items = [
+    item1,
+    item2,
+    item3,
+    item4,
+    item5
+];
 

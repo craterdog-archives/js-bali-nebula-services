@@ -33,6 +33,12 @@ exports.Collection = Collection;
 
 /**
  * This method returns the index of the specified item in the collection.
+ * NOTE: It is tempting when dealing with a collection that uses an array
+ * as an underlying data structure to use the Array.indexOf() method to
+ * provide a faster implementation of this method. However, the indexOf()
+ * method uses strict equality checks which for items that are objects
+ * returns false even when all attributes on each item are the same. Therefore
+ * it is better not to override this method in that case.
  * 
  * @param {Object} item The item to be looked up.
  * @returns {Number} The index of the item in the collection.
@@ -43,9 +49,9 @@ Collection.prototype.getIndex = function(item) {
     while (iterator.hasNext()) {
         var candidate = iterator.getNext();
         index++;
-        if (item.equalTo(candidate)) break;
+        if (item.equalTo(candidate)) return index;
     }
-    return index;
+    return 0;  // not found
 };
 
 

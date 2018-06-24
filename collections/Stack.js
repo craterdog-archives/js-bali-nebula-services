@@ -77,7 +77,7 @@ Stack.prototype.pushItem = function(item) {
     if (this.array.length < this.capacity) {
         this.array.push(item);
     } else {
-        throw new Error("Attempted to push an item onto a full stack.");
+        throw new Error('Attempted to push an item onto a full stack.');
     }
 };
 
@@ -94,7 +94,7 @@ Stack.prototype.popItem = function() {
     if (size > 0) {
         item = this.array.pop();
     } else {
-        throw new Error("Attempted to pop the top item of an empty stack.");
+        throw new Error('Attempted to pop the top item of an empty stack.');
     }
     return item;
 };
@@ -112,7 +112,7 @@ Stack.prototype.getTop = function() {
     if (size > 0) {
         item = this.array.peek();
     } else {
-        throw new Error("Attempted to access the top item of an empty stack.");
+        throw new Error('Attempted to access the top item of an empty stack.');
     }
     return item;
 };
@@ -160,14 +160,14 @@ StackIterator.prototype.hasNext = function() {
 
 
 StackIterator.prototype.getPrevious = function() {
-    if (!this.hasPrevious()) throw new Error("The iterator is at the beginning of the stack.");
+    if (!this.hasPrevious()) throw new Error('The iterator is at the beginning of the stack.');
     var item = this.stack.array[--this.slot];
     return item;
 };
 
 
 StackIterator.prototype.getNext = function() {
-    if (!this.hasNext()) throw new Error("The iterator is at the end of the stack.");
+    if (!this.hasNext()) throw new Error('The iterator is at the end of the stack.');
     var item = this.stack.array[this.slot++];
     return item;
 };
