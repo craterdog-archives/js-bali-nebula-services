@@ -36,7 +36,7 @@ describe('Bali Virtual Machine™', function() {
         });
 
         it('should create a catalog with initial associations in it', function() {
-            var catalog = new collections.Catalog(associations);
+            var catalog = new collections.Catalog(seeds);
             var size = catalog.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(5);
@@ -89,35 +89,68 @@ describe('Bali Virtual Machine™', function() {
         });
 
         it('should be able to add and remove associations from a catalog', function() {
-            var catalog = new collections.Catalog(associations);
+            var list = new collections.List(seeds);
+            var catalog = new collections.Catalog(list);
             var size = catalog.getSize();
             expect(size).to.exist;  // jshint ignore:line
-            expect(size).to.equal(5);
+            expect(size).to.equal(seeds.length);
             expect(catalog.getItem(2).value).to.equal(association2.value);
             expect(catalog.getIndex(association1)).to.equal(1);
             expect(catalog.getItem(5).value).to.equal(association5.value);
             expect(catalog.getIndex(association3)).to.equal(3);
-            var iterator = catalog.iterator();
-            expect(iterator).to.exist;  // jshint ignore:line
-            var value = 0;
+            var actual = catalog.getValue(key3);
+            expect(value3.equalTo(actual)).to.equal(true);
+            var keys = catalog.getKeys();
+            size = keys.getSize();
+            expect(size).to.equal(seeds.length);
+            var keyIterator = keys.iterator();
+            expect(keyIterator).to.exist;  // jshint ignore:line
+            var values = catalog.getValues();
+            size = values.getSize();
+            expect(size).to.equal(seeds.length);
+            var valueIterator = values.iterator();
+            expect(valueIterator).to.exist;  // jshint ignore:line
+            var associations = catalog.getAssociations();
+            size = associations.getSize();
+            expect(size).to.equal(seeds.length);
+            expect(list.equalTo(associations)).to.equal(true);
+            var associationIterator = catalog.iterator();
+            expect(associationIterator).to.exist;  // jshint ignore:line
+            var key;
+            var value;
             var association;
-            while (iterator.hasNext()) {
-                value++;
-                association = iterator.getNext();
-                expect(association.value.value).to.equal(value);
+            var count = 0;
+            while (keyIterator.hasNext() && valueIterator.hasNext() && associationIterator.hasNext()) {
+                count++;
+                key = keyIterator.getNext();
+                value = valueIterator.getNext();
+                association = associationIterator.getNext();
+                expect(key.value).to.equal(count);
+                expect(value.value).to.equal(count);
+                expect(association.key.value).to.equal(count);
+                expect(association.value.value).to.equal(count);
             }
             catalog.removeItem(association2);
-            catalog.removeItem(association1);
+            catalog.removeValue(key1);
             size = catalog.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(3);
-            iterator.toStart();
+            associationIterator.toStart();
             value = 2;
-            while (iterator.hasNext()) {
+            while (associationIterator.hasNext()) {
                 value++;
-                association = iterator.getNext();
+                association = associationIterator.getNext();
                 expect(association.value.value).to.equal(value);
             }
+            catalog.setValue(key1, value5);
+            expect(catalog.getValue(key1).equalTo(value5)).to.equal(true);
+            catalog.setValue(key6, value6);
+            expect(catalog.getValue(key6).equalTo(value6)).to.equal(true);
+            catalog.removeAll();
+            expect(catalog.getValue(key6)).to.equal(undefined);
+            size = catalog.getSize();
+            expect(size).to.exist;  // jshint ignore:line
+            expect(size).to.equal(0);
         });
 
         it('should be able to perform catalog operations on catalogs', function() {
@@ -128,7 +161,7 @@ describe('Bali Virtual Machine™', function() {
             var catalog2 = new collections.Catalog();
             catalog2.addItem(association4);
             catalog2.addItem(association5);
-            var catalog3 = new collections.Catalog(associations);
+            var catalog3 = new collections.Catalog(seeds);
             expect(collections.Catalog.concatenation(catalog1, catalog2).equalTo(catalog3)).to.equal(true);
         });
 
@@ -137,7 +170,7 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the catalog iterators.', function() {
 
         it('should iterate over a catalog forwards and backwards', function() {
-            var catalog = new collections.Catalog(associations);
+            var catalog = new collections.Catalog(seeds);
             var iterator = catalog.iterator();
             expect(iterator).to.exist;  // jshint ignore:line
             iterator.toEnd();
@@ -191,6 +224,7 @@ var key2 = new Key(2);
 var key3 = new Key(3);
 var key4 = new Key(4);
 var key5 = new Key(5);
+var key6 = new Key(6);
 
 
 function Value(value) {
@@ -214,6 +248,7 @@ var value2 = new Value(2);
 var value3 = new Value(3);
 var value4 = new Value(4);
 var value5 = new Value(5);
+var value6 = new Value(6);
 
 
 var association1 = new collections.Association(key1, value1);
@@ -222,7 +257,7 @@ var association3 = new collections.Association(key3, value3);
 var association4 = new collections.Association(key4, value4);
 var association5 = new collections.Association(key5, value5);
 
-var associations = [
+var seeds = [
     association1,
     association2,
     association3,
