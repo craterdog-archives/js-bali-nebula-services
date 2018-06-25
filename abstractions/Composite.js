@@ -44,12 +44,13 @@ Composite.prototype.isEmpty = function() {
  * @returns {Number}
  */
 Composite.prototype.getHash = function() {
-    var hash = 5;
+    var hash = 1;
     var iterator = this.iterator();
     while (iterator.hasNext()) {
         var item = iterator.getNext();
-        hash = 11 * hash + item.getHash();
+        hash = 31 * hash + item.getHash();
     }
+    hash |= 0;  // truncate to 32 bits
     return hash;
 };
 

@@ -402,10 +402,7 @@ Association.prototype.isEmpty = function() {
  * @returns {Number} The unique hash value for this association.
  */
 Association.prototype.getHash = function() {
-    var hash = 7;
-    hash = 13 * hash + this.key.getHash();
-    hash = 13 * hash + this.value.getHash();
-    return hash;
+    return this.key.getHash() ^ this.value.getHash();  // bitwise xor
 };
 
 
