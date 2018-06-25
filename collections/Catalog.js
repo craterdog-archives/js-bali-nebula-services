@@ -54,6 +54,16 @@ exports.Catalog = Catalog;
 // PUBLIC METHODS
 
 /**
+ * This method accepts a visitor as part of the visitor pattern.
+ * 
+ * @param {Visitor} visitor The visitor that wants to visit this collection.
+ */
+Catalog.prototype.accept = function(visitor) {
+    visitor.visitCatalog(this);
+};
+
+
+/**
  * This method returns the number of associations that are currently in the catalog.
  * 
  * @returns {Number} The number of associations in the catalog.

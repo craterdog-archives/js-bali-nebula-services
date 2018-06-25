@@ -37,6 +37,15 @@ exports.Stack = Stack;
 // PUBLIC METHODS
 
 /**
+ * This method accepts a visitor as part of the visitor pattern.
+ * 
+ * @param {Visitor} visitor The visitor that wants to visit this collection.
+ */
+Stack.prototype.accept = function(visitor) {
+    visitor.visitStack(this);
+};
+
+
 /**
  * This method returns the number of items that are currently on the stack.
  * 

@@ -50,6 +50,16 @@ exports.Set = Set;
 // PUBLIC METHODS
 
 /**
+ * This method accepts a visitor as part of the visitor pattern.
+ * 
+ * @param {Visitor} visitor The visitor that wants to visit this collection.
+ */
+Set.prototype.accept = function(visitor) {
+    visitor.visitSet(this);
+};
+
+
+/**
  * This method returns the number of items that are currently in the set.
  * 
  * @returns {Number}

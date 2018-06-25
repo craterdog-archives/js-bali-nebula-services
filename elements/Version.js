@@ -39,7 +39,7 @@ exports.Version = Version;
 /**
  * This method accepts a visitor as part of the visitor pattern.
  * 
- * @param {ObjectVisitor} visitor The visitor that wants to visit this element.
+ * @param {Visitor} visitor The visitor that wants to visit this element.
  */
 Version.prototype.accept = function(visitor) {
     visitor.visitVersion(this);

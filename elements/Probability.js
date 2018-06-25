@@ -67,7 +67,7 @@ exports.Probability = Probability;
 /**
  * This method accepts a visitor as part of the visitor pattern.
  * 
- * @param {ObjectVisitor} visitor The visitor that wants to visit this element.
+ * @param {Visitor} visitor The visitor that wants to visit this element.
  */
 Probability.prototype.accept = function(visitor) {
     visitor.visitProbability(this);

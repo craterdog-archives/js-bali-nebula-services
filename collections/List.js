@@ -52,6 +52,16 @@ exports.List = List;
 // PUBLIC METHODS
 
 /**
+ * This method accepts a visitor as part of the visitor pattern.
+ * 
+ * @param {Visitor} visitor The visitor that wants to visit this collection.
+ */
+List.prototype.accept = function(visitor) {
+    visitor.visitList(this);
+};
+
+
+/**
  * This method returns the number of items that are currently in the list.
  * 
  * @returns {Number} The number of items in the list.
