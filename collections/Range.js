@@ -14,7 +14,7 @@
  * provides an iterator to iterate over the range of items. A range, once formed, remains
  * static.
  */
-var Composite = require('./Composite').Composite;
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -27,7 +27,7 @@ var Composite = require('./Composite').Composite;
  * @param {Collection} optionalCollection The collection that the items belong to.
  */
 function Range(first, last, optionalCollection) {
-    Composite.call(this);
+    abstractions.Composite.call(this);
     this.first = first;
     this.last = last;
     if (optionalCollection) {
@@ -48,7 +48,7 @@ function Range(first, last, optionalCollection) {
     }
     return this;
 }
-Range.prototype = Object.create(Composite.prototype);
+Range.prototype = Object.create(abstractions.Composite.prototype);
 Range.prototype.constructor = Range;
 exports.Range = Range;
 

@@ -20,7 +20,7 @@
  *       -N        -(N-1)     -(N-2)        -1
  * </pre>
  */
-var SortableCollection = require('./SortableCollection').SortableCollection;
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -29,7 +29,7 @@ var SortableCollection = require('./SortableCollection').SortableCollection;
  * @param {Collection} optionalItems A collection of items to use to seed the list.
  */
 function List(optionalItems) {
-    SortableCollection.call(this);
+    abstractions.SortableCollection.call(this);
     this.array = [];
     if (optionalItems) {
         if (Array.isArray(optionalItems)) {
@@ -44,7 +44,7 @@ function List(optionalItems) {
     }
     return this;
 }
-List.prototype = Object.create(SortableCollection.prototype);
+List.prototype = Object.create(abstractions.SortableCollection.prototype);
 List.prototype.constructor = List;
 exports.List = List;
 

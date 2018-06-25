@@ -15,7 +15,7 @@
  * is thrown.  The implementation dynamically scales up and down the size of the underlying
  * data structures as the number items changes over time.
  */
-var Composite = require('./Composite').Composite;
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -24,12 +24,12 @@ var Composite = require('./Composite').Composite;
  * @param {Number} optionalCapacity The maximum number of items that can be on the stack.
  */
 function Stack(optionalCapacity) {
-    Composite.call(this);
+    abstractions.Composite.call(this);
     this.capacity = optionalCapacity ? optionalCapacity : 1024;
     this.array = [];
     return this;
 }
-Stack.prototype = Object.create(Composite.prototype);
+Stack.prototype = Object.create(abstractions.Composite.prototype);
 Stack.prototype.constructor = Stack;
 exports.Stack = Stack;
 

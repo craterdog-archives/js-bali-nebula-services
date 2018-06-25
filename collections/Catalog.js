@@ -14,9 +14,8 @@
  * their key.  The implementation also dynamically scales up and down the number of buckets as the
  * number of associations changes over time.
  */
-var Composite = require('./Composite').Composite;
-var SortableCollection = require('./SortableCollection').SortableCollection;
-var List = require('./List').List;
+var abstractions = require('../abstractions/');
+var collections = require('../collections/');
 
 
 /**
@@ -25,7 +24,7 @@ var List = require('./List').List;
  * @param {Collection} optionalAssociations A collection of associations to use to seed the catalog.
  */
 function Catalog(optionalAssociations) {
-    SortableCollection.call(this);
+    abstractions.SortableCollection.call(this);
     this.map = new Map();
     this.array = [];
     if (optionalAssociations) {
@@ -47,7 +46,7 @@ function Catalog(optionalAssociations) {
     }
     return this;
 }
-Catalog.prototype = Object.create(SortableCollection.prototype);
+Catalog.prototype = Object.create(abstractions.SortableCollection.prototype);
 Catalog.prototype.constructor = Catalog;
 exports.Catalog = Catalog;
 
@@ -207,7 +206,7 @@ Catalog.prototype.removeValue = function(key) {
  * @returns {SortableCollection} A sortable collection of the keys for this catalog.
  */
 Catalog.prototype.getKeys = function() {
-    var keys = new List();
+    var keys = new collections.List();
     for (var i = 0; i < this.array.length; i++) {
         var association = this.array[i];
         var key = association.key;
@@ -223,7 +222,7 @@ Catalog.prototype.getKeys = function() {
  * @returns {SortableCollection} A sortable collection of the values for this catalog.
  */
 Catalog.prototype.getValues = function() {
-    var values = new List();
+    var values = new collections.List();
     for (var i = 0; i < this.array.length; i++) {
         var association = this.array[i];
         var value = association.value;
@@ -239,7 +238,7 @@ Catalog.prototype.getValues = function() {
  * @returns {SortableCollection} A sortable collection of the associations for this catalog.
  */
 Catalog.prototype.getAssociations = function() {
-    var associations = new List();
+    var associations = new collections.List();
     for (var i = 0; i < this.array.length; i++) {
         var association = this.array[i];
         associations.addItem(association);
@@ -375,12 +374,12 @@ CatalogIterator.prototype.getNext = function() {
  * @param {Object} value The value associated with the key.
  */
 function Association(key, value) {
-    Composite.call(this);
+    abstractions.Composite.call(this);
     this.key = key;
     this.value = value;
     return this;
 }
-Association.prototype = Object.create(Composite.prototype);
+Association.prototype = Object.create(abstractions.Composite.prototype);
 Association.prototype.constructor = Association;
 exports.Association = Association;
 

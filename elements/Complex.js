@@ -13,6 +13,7 @@
  * This element class captures the state and methods associated with a
  * complex number element.
  */
+var abstractions = require('../abstractions/');
 var antlr = require('antlr4');
 var grammar = require('bali-language/grammar');
 var Angle = require('./Angle').Angle;
@@ -36,6 +37,7 @@ var Angle = require('./Angle').Angle;
  * @returns {Complex}
  */
 function Complex(numberOrString, optionalNumberOrAngle) {
+    abstractions.Element.call(this);
     this.format = 'rectangular';  // rectangular coordinates by default
     var number;
     var real;
@@ -148,6 +150,7 @@ function Complex(numberOrString, optionalNumberOrAngle) {
     if (this.isInfinite() && typeof Complex.INFINITY !== 'undefined') return Complex.INFINITY;
     return this;
 }
+Complex.prototype = Object.create(abstractions.Element.prototype);
 Complex.prototype.constructor = Complex;
 exports.Complex = Complex;
 
@@ -256,6 +259,23 @@ Complex.prototype.getAngle = function() {
         this.angle = new Angle(angle);
     }
     return this.angle;
+};
+
+
+/**
+ * This method compares two complex numbers for ordering.
+ * 
+ * @param {Complex} that The other complex number to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Complex.prototype.comparedWith = function(that) {
+    if (this.real < that.real) return -1;
+    if (this.real > that.real) return 1;
+    // the real parts are equal, check the imaginary parts
+    if (this.imaginary < that.imaginary) return -1;
+    if (this.imaginary > that.imaginary) return 1;
+    // they are also equal
+    return 0;
 };
 
 

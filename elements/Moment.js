@@ -14,6 +14,7 @@
  * This element class captures the state and methods associated with a
  * moment element.
  */
+var abstractions = require('../abstractions/');
 var moment = require('moment');
 var FORMATS = [
     '<Y>',
@@ -35,6 +36,7 @@ var FORMATS = [
  * @returns {Moment} The new moment element.
  */
 function Moment(value) {
+    abstractions.Element.call(this);
     if (value) {
         for (var i = 0; i < FORMATS.length; i++) {
             var attempt = moment(value, FORMATS[i], true);  // true means strict mode
@@ -51,6 +53,7 @@ function Moment(value) {
     }
     return this;
 }
+Moment.prototype = Object.create(abstractions.Element.prototype);
 Moment.prototype.constructor = Moment;
 exports.Moment = Moment;
 
@@ -62,6 +65,19 @@ exports.Moment = Moment;
  */
 Moment.prototype.accept = function(visitor) {
     visitor.visitMoment(this);
+};
+
+
+/**
+ * This method compares two moments for ordering.
+ * 
+ * @param {Moment} that The other moment to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Moment.prototype.comparedWith = function(that) {
+    if (this.value.isBefore(that.value)) return -1;
+    if (this.value.isAfter(that.value)) return 1;
+    return 0;
 };
 
 

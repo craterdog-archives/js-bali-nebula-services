@@ -13,6 +13,7 @@
  * This element class captures the state and methods associated with a
  * binary string element.
  */
+var abstractions = require('../abstractions/');
 var codex = require('../utilities/EncodingUtilities');
 
 
@@ -33,6 +34,7 @@ var codex = require('../utilities/EncodingUtilities');
  * @returns {Binary} The new binary string.
  */
 function Binary(valueOrEncoded, optionalBase) {
+    abstractions.Element.call(this);
     valueOrEncoded = valueOrEncoded || '';  // default to empty byte string
     if (optionalBase) {  // base zero not allowed so this is ok
         // decode the value
@@ -86,6 +88,7 @@ function Binary(valueOrEncoded, optionalBase) {
     }
     return this;
 }
+Binary.prototype = Object.create(abstractions.Element.prototype);
 Binary.prototype.constructor = Binary;
 exports.Binary = Binary;
 
@@ -97,6 +100,17 @@ exports.Binary = Binary;
  */
 Binary.prototype.accept = function(visitor) {
     visitor.visitBinary(this);
+};
+
+
+/**
+ * This method compares two binaries for ordering.
+ * 
+ * @param {Binary} that The other binary to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Binary.prototype.comparedWith = function(that) {
+    return this.value.localeCompare(that.value);
 };
 
 

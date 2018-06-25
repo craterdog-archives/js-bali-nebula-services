@@ -13,6 +13,7 @@
  * This element class captures the state and methods associated with a
  * tag element.
  */
+var abstractions = require('../abstractions/');
 var codex = require('../utilities/EncodingUtilities');
 var random = require('../utilities/RandomUtilities');
 
@@ -32,6 +33,7 @@ var random = require('../utilities/RandomUtilities');
  * @returns {Tag} The new tag element.
  */
 function Tag(optionalSizeOrValue) {
+    abstractions.Element.call(this);
     var bytes;
 
     var type = typeof optionalSizeOrValue;
@@ -57,6 +59,7 @@ function Tag(optionalSizeOrValue) {
     this.hash = codex.bytesToInteger(bytes);  // the first four bytes work perfectly
     return this;
 }
+Tag.prototype = Object.create(abstractions.Element.prototype);
 Tag.prototype.constructor = Tag;
 exports.Tag = Tag;
 
@@ -68,6 +71,19 @@ exports.Tag = Tag;
  */
 Tag.prototype.accept = function(visitor) {
     visitor.visitTag(this);
+};
+
+
+/**
+ * This method compares two tags for ordering.
+ * 
+ * @param {Tag} that The other tag to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Tag.prototype.comparedWith = function(that) {
+    var thisBytes = this.value.getBytes();
+    var thatBytes = that.value.getBytes();
+    return thisBytes.localeCompare(thatBytes);
 };
 
 

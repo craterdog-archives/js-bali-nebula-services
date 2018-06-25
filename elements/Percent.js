@@ -13,6 +13,7 @@
  * This element class captures the state and methods associated with a
  * percent element.
  */
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -22,6 +23,7 @@
  * @returns {Percent} The new percent element.
  */
 function Percent(value) {
+    abstractions.Element.call(this);
     var type = typeof value;
     switch (type) {
         case 'undefined':
@@ -38,6 +40,7 @@ function Percent(value) {
     }
     return this;
 }
+Percent.prototype = Object.create(abstractions.Element.prototype);
 Percent.prototype.constructor = Percent;
 exports.Percent = Percent;
 
@@ -49,6 +52,19 @@ exports.Percent = Percent;
  */
 Percent.prototype.accept = function(visitor) {
     visitor.visitPercent(this);
+};
+
+
+/**
+ * This method compares two percents for ordering.
+ * 
+ * @param {Percent} that The other percent to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Percent.prototype.comparedWith = function(that) {
+    if (this.value < that.value) return -1;
+    if (this.value > that.value) return 1;
+    return 0;
 };
 
 

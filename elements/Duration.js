@@ -14,6 +14,7 @@
  * This element class captures the state and methods associated with a
  * duration element.
  */
+var abstractions = require('../abstractions/');
 var duration = require('moment').duration;
 
 
@@ -24,6 +25,7 @@ var duration = require('moment').duration;
  * @returns {Duration} The new duration element.
  */
 function Duration(value) {
+    abstractions.Element.call(this);
     if (value) {
         var raw = value.slice(1);  // remove leading '~'
         this.value = duration(raw);
@@ -32,6 +34,7 @@ function Duration(value) {
     }
     return this;
 }
+Duration.prototype = Object.create(abstractions.Element.prototype);
 Duration.prototype.constructor = Duration;
 exports.Duration = Duration;
 
@@ -43,6 +46,21 @@ exports.Duration = Duration;
  */
 Duration.prototype.accept = function(visitor) {
     visitor.visitDuration(this);
+};
+
+
+/**
+ * This method compares two durations for ordering.
+ * 
+ * @param {Duration} that The other duration to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Duration.prototype.comparedWith = function(that) {
+    var thisMilliseconds = this.value.asMilliseconds();
+    var thatMilliseconds = that.value.asMilliseconds();
+    if (thisMilliseconds < thatMilliseconds) return -1;
+    if (thisMilliseconds > thatMilliseconds) return 1;
+    return 0;
 };
 
 

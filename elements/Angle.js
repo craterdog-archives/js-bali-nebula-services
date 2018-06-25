@@ -12,6 +12,7 @@
 /*
  * This class captures the state and methods associated with an angle.
  */
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -22,6 +23,7 @@
  * @returns {Angle}
  */
 function Angle(value) {
+    abstractions.Element.call(this);
     if (typeof value === 'undefined' || value === null) value = 0;  // default value
     var type = typeof value;
     switch (type) {
@@ -48,6 +50,7 @@ function Angle(value) {
     this.value = value;
     return this;
 }
+Angle.prototype = Object.create(abstractions.Element.prototype);
 Angle.prototype.constructor = Angle;
 exports.Angle = Angle;
 
@@ -69,6 +72,19 @@ Angle.prototype.accept = function(visitor) {
  */
 Angle.prototype.toString = function() {
     return this.value.toString();
+};
+
+
+/**
+ * This method compares two angles for ordering.
+ * 
+ * @param {Angle} that The other angle to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Angle.prototype.comparedWith = function(that) {
+    if (this.value < that.value) return -1;
+    if (this.value > that.value) return 1;
+    return 0;
 };
 
 

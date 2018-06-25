@@ -13,6 +13,7 @@
  * This element class captures the state and methods associated with an
  * template element.
  */
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -23,6 +24,7 @@
  * @returns {Template} The new template element.
  */
 function Template(value) {
+    abstractions.Element.call(this);
     if (!value) value = 'none';  // default value
     switch (value) {
         case 'none':
@@ -36,6 +38,7 @@ function Template(value) {
     this.value = value;
     return this;
 }
+Template.prototype = Object.create(abstractions.Element.prototype);
 Template.prototype.constructor = Template;
 exports.Template = Template;
 
@@ -47,6 +50,17 @@ exports.Template = Template;
  */
 Template.prototype.accept = function(visitor) {
     visitor.visitTemplate(this);
+};
+
+
+/**
+ * This method compares two templates for ordering.
+ * 
+ * @param {Template} that The other template to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Template.prototype.comparedWith = function(that) {
+    return this.value.localeCompare(that.value);
 };
 
 

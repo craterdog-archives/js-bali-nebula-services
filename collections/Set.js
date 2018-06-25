@@ -13,7 +13,7 @@
  * The implementation dynamically scales up and down the size of the underlying data structures as
  * the number items changes over time.
  */
-var OrderedCollection = require('./OrderedCollection').OrderedCollection;
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -23,7 +23,7 @@ var OrderedCollection = require('./OrderedCollection').OrderedCollection;
  * @param {Collection} optionalItems A collection of items that should be used to seed the set.
  */
 function Set(optionalItems) {
-    OrderedCollection.call(this, false);
+    abstractions.OrderedCollection.call(this, false);
     this.tree = new RandomizedTree();
     if (optionalItems) {
         var item;
@@ -42,7 +42,7 @@ function Set(optionalItems) {
     }
     return this;
 }
-Set.prototype = Object.create(OrderedCollection.prototype);
+Set.prototype = Object.create(abstractions.OrderedCollection.prototype);
 Set.prototype.constructor = Set;
 exports.Set = Set;
 

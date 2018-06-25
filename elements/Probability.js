@@ -13,6 +13,7 @@
  * This element class captures the state and methods associated with a
  * probability element.
  */
+var abstractions = require('../abstractions/');
 var random = require('../utilities/RandomUtilities');
 
 
@@ -23,6 +24,7 @@ var random = require('../utilities/RandomUtilities');
  * @returns {Probability} The new probability element.
  */
 function Probability(value) {
+    abstractions.Element.call(this);
     if (!value) value = false;  // default value
 
     var type = typeof value;
@@ -57,6 +59,7 @@ function Probability(value) {
     return this;
 
 }
+Probability.prototype = Object.create(abstractions.Element.prototype);
 Probability.prototype.constructor = Probability;
 exports.Probability = Probability;
 
@@ -68,6 +71,19 @@ exports.Probability = Probability;
  */
 Probability.prototype.accept = function(visitor) {
     visitor.visitProbability(this);
+};
+
+
+/**
+ * This method compares two probabilities for ordering.
+ * 
+ * @param {Probability} that The other probability to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Probability.prototype.comparedWith = function(that) {
+    if (this.value < that.value) return -1;
+    if (this.value > that.value) return 1;
+    return 0;
 };
 
 

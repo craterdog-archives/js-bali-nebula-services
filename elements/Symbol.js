@@ -14,6 +14,7 @@
  * This element class captures the state and methods associated with a
  * symbol element.
  */
+var abstractions = require('../abstractions/');
 
 
 /**
@@ -23,6 +24,7 @@
  * @returns {Symbol} The new symbol element.
  */
 function Symbol(value) {
+    abstractions.Element.call(this);
     if (!value) {
         throw new Error('SYMBOL: A symbol cannot be null.');
     }
@@ -32,6 +34,7 @@ function Symbol(value) {
     this.value = value;
     return this;
 }
+Symbol.prototype = Object.create(abstractions.Element.prototype);
 Symbol.prototype.constructor = Symbol;
 exports.Symbol = Symbol;
 
@@ -43,6 +46,17 @@ exports.Symbol = Symbol;
  */
 Symbol.prototype.accept = function(visitor) {
     visitor.visitSymbol(this);
+};
+
+
+/**
+ * This method compares two symbols for ordering.
+ * 
+ * @param {Symbol} that The other symbol to be compared with. 
+ * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
+ */
+Symbol.prototype.comparedWith = function(that) {
+    return this.value.localeCompare(that.value);
 };
 
 

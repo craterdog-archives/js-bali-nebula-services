@@ -61,23 +61,16 @@ Composite.prototype.getHash = function() {
  * @returns {Boolean}
  */
 Composite.prototype.equalTo = function(that) {
-    var result = false;
-    if (that && this.prototype === that.prototype) {
-        if (this.getSize() === that.getSize()) {
-            result = true;  // so far anyway...
-            var thisIterator = this.iterator();
-            var thatIterator = that.iterator();
-            while (thisIterator.hasNext()) {
-                var thisItem = thisIterator.getNext();
-                var thatItem = thatIterator.getNext();
-                if (!thisItem.equalTo(thatItem)) {
-                    result = false;  // oops, found a difference
-                    break;
-                }
-            }
-        }
+    if (that && this.prototype !== that.prototype) return false;
+    if (this.getSize() !== that.getSize()) return false;
+    var thisIterator = this.iterator();
+    var thatIterator = that.iterator();
+    while (thisIterator.hasNext()) {
+        var thisItem = thisIterator.getNext();
+        var thatItem = thatIterator.getNext();
+        if (!thisItem.equalTo(thatItem)) return false;
     }
-    return result;
+    return true;
 };
 
 
