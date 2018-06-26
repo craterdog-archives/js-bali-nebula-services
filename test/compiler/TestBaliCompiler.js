@@ -9,8 +9,8 @@
  ************************************************************************/
 
 var language = require('bali-language/BaliLanguage');
-var analyzer = require('../..//compiler/Analyzer');
-var compiler = require('../..//compiler/Compiler');
+var analyzer = require('../../compiler/Analyzer');
+var compiler = require('../../compiler/Compiler');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;

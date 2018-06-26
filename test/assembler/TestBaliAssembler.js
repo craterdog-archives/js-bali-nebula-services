@@ -9,8 +9,8 @@
  ************************************************************************/
 
 var parser = require('bali-instruction-set/BaliInstructionSet');
-var scanner = require('../..//assembler/Scanner');
-var assembler = require('../..//assembler/Assembler');
+var scanner = require('../../assembler/Scanner');
+var assembler = require('../../assembler/Assembler');
 var utilities = require('../../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');

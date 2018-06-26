@@ -53,6 +53,7 @@ Element.prototype.getHash = function() {
  * @returns {Boolean}
  */
 Element.prototype.equalTo = function(that) {
+    console.log('this: ' +this.constructor.name + ' that: ' + that.constructor.name);
     if (that && this.constructor.name !== that.constructor.name) return false;
     var thisString = this.toString();
     var thatString = that.toString();

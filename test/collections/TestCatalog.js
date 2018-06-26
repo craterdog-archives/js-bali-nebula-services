@@ -219,6 +219,10 @@ Key.prototype.compareTo = function(that) {
     if (this.value > that.value) return 1;
 };
 
+Key.prototype.toString = function() {
+    return this.value.toString();
+};
+
 var key1 = new Key(1);
 var key2 = new Key(2);
 var key3 = new Key(3);

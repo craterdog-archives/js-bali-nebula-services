@@ -161,7 +161,7 @@ exports.Complex = Complex;
  * @param {Visitor} visitor The visitor that wants to visit this element.
  */
 Complex.prototype.accept = function(visitor) {
-    visitor.visitComplex(this);
+    visitor.visitNumber(this);
 };
 
 

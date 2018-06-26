@@ -1,0 +1,71 @@
+[
+    $status: $active
+    $singleStep: false
+    $cycles: 137
+    $componentStack: [
+        $sort
+        1
+        [
+            2
+            1
+            3
+        ]
+    ]($type: <bali:/?name=bali/types/collections/Stack>)
+    $handlerStack: [
+        52
+        12
+        126
+    ]($type: <bali:/?name=bali/types/collections/Stack>)
+    $procedureStack: [
+        [
+            $target: [
+                'JzAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eic='
+                (3, 4i)
+                (1 e^pi i)
+                ~P3M7DT8H29M54.321S
+                <2017-12-30T17:38:35.726>
+                50%
+                true
+                .75
+                false
+                <bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYMv3.1>
+                $symbol
+                #NT5PG2BXZGBGV5JTNPCP2HTM4JP6CS4X
+                none
+                any
+                "This is a text string."
+                v1.2.3
+                [
+                    1
+                    2
+                    3
+                ]
+                [
+                    $alpha
+                    $beta
+                    $gamma
+                ]($type: <bali:/?name=bali/types/collections/Set>)
+                [
+                    "top"
+                    "middle"
+                    "bottom"
+                ]($type: <bali:/?name=bali/types/collections/Stack>)
+                [
+                    $first: 1
+                    $second: 2
+                    $third: 3
+                ]
+            ]
+            $type: <bali:/?name=acme/examples/Stages>
+            $procedure: $getSize
+            $arguments: []
+            $instructionPointer: 2
+            $instructions: [
+                3081
+                2200
+                5731
+                9624
+            ]
+        ]
+    ]($type: <bali:/?name=bali/types/collections/Stack>)
+]

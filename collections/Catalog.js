@@ -25,21 +25,24 @@ var collections = require('../collections/');
  */
 function Catalog(optionalAssociations) {
     abstractions.SortableCollection.call(this);
-    this.map = new Map();
-    this.array = [];
+    this.map = {};  // maps key strings to associations
+    this.array = [];  // records the associations in the order that they were added
     if (optionalAssociations) {
+        var key;
         var association;
         if (Array.isArray(optionalAssociations)) {
             this.array = optionalAssociations.slice();  // make a copy
             for (var i = 0; i < optionalAssociations.length; i++) {
                 association = optionalAssociations[i];
-                this.map.set(association.key, association);
+                key = association.key.toString();
+                this.map[key] = association;
             }
         } else {
             var iterator = optionalAssociations.iterator();
             while (iterator.hasNext()) {
                 association = iterator.getNext();
-                this.map.set(association.key, association);
+                key = association.key.toString();
+                this.map[key] = association;
                 this.array.push(association);
             }
         }
@@ -81,8 +84,12 @@ Catalog.prototype.getSize = function() {
  * @param {Association} association The association to be searched for in the catalog.
  */
 Catalog.prototype.containsItem = function(association) {
-    var candidate = this.map.get(association.key);
-    var result = association.equalTo(candidate);
+    var result = false;
+    var key = association.key.toString();
+    var candidate = this.map[key];
+    if (candidate) {
+        result = candidate.equalTo(association);
+    }
     return result;
 };
 
@@ -111,10 +118,10 @@ Catalog.prototype.getItem = function(index) {
  * @returns {Boolean} Whether or not a new association was added.
  */
 Catalog.prototype.addItem = function(association) {
-    var key = association.key;
-    var value = association.value;
-    if (!this.map.has(key)) {
-        this.setValue(key, value);
+    var key = association.key.toString();
+    if (!this.map[key]) {
+        this.map[key] = association;
+        this.array.push(association);
         return true;
     }
     return false;
@@ -131,11 +138,14 @@ Catalog.prototype.addItem = function(association) {
  * @returns {Boolean} Whether or not the association was removed.
  */
 Catalog.prototype.removeItem = function(association) {
-    var key = association.key;
-    var value = association.value;
-    var candidate = this.map.get(key);
-    if (candidate.value.equalTo(value)) {
-        this.removeValue(key);
+    var key = association.key.toString();
+    var candidate = this.map[key];
+    if (candidate && candidate.equalTo(association)) {
+        delete this.map[key];
+        var index = this.array.findIndex(function(item) {
+            return item.equalTo(association);
+        });
+        this.array.splice(index, 1);
         return true;
     }
     return false;
@@ -146,7 +156,7 @@ Catalog.prototype.removeItem = function(association) {
  * This method removes all associations from the catalog.
  */
 Catalog.prototype.removeAll = function() {
-    this.map.clear();
+    Object.keys(this.map).forEach(function(key) {delete this.map[key];}, this);  // ummm HACK!
     this.array.splice(0);
 };
 
@@ -159,10 +169,8 @@ Catalog.prototype.removeAll = function() {
  */
 Catalog.prototype.getValue = function(key) {
     var value;
-    var association = this.map.get(key);
-    if (association) {
-        value = association.value;
-    }
+    var association = this.map[key.toString()];
+    if (association) value = association.value;
     return value;
 };
 
@@ -175,13 +183,14 @@ Catalog.prototype.getValue = function(key) {
  * @param {Object} value The new value to be associated with the key.
  */
 Catalog.prototype.setValue = function(key, value) {
-    var association = this.map.get(key);
+    var string = key.toString();
+    var association = this.map[string];
     if (association) {
         association.value = value;
     } else {
         association = new Association(key, value);
+        this.map[string] = association;
         this.array.push(association);
-        this.map.set(key, association);
     }
 };
 
@@ -194,17 +203,16 @@ Catalog.prototype.setValue = function(key, value) {
  * @returns {Object} The value associated with the key.
  */
 Catalog.prototype.removeValue = function(key) {
+    key = key.toString();
     var value;
-    if (this.map.delete(key)) {
-        for (var i = 0; i < this.array.length; i++) {
-            var association = this.array[i];
-            var candidate = association.key;
-            if (candidate.equalTo(key)) {
-                value = association.value;
-                this.array.splice(i, 1);
-                break;
-            }
-        }
+    var association = this.map[key];
+    if (association) {
+        delete this.map[key];
+        var index = this.array.findIndex(function(item) {
+            return item.equalTo(association);
+        });
+        this.array.splice(index, 1);
+        value = association.value;
     }
     return value;
 };
@@ -395,6 +403,16 @@ exports.Association = Association;
 
 
 // PUBLIC METHODS
+
+/**
+ * This method accepts a visitor as part of the visitor pattern.
+ * 
+ * @param {Visitor} visitor The visitor that wants to visit this association.
+ */
+Association.prototype.accept = function(visitor) {
+    visitor.visitAssociation(this);
+};
+
 
 /**
  * This method returns whether or not this association is empty.
