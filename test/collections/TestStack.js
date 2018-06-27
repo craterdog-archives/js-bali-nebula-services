@@ -31,7 +31,8 @@ describe('Bali Virtual Machine™', function() {
         });
 
         it('should create a stack with small capacity', function() {
-            var stack = new collections.Stack(1);
+            var stack = new collections.Stack();
+            stack.capacity = 1;
             var size = stack.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(0);
@@ -53,12 +54,7 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the stack methods.', function() {
 
         it('should be able to push and pop items from a stack', function() {
-            var stack = new collections.Stack();
-            stack.pushItem(item1);
-            stack.pushItem(item2);
-            stack.pushItem(item3);
-            stack.pushItem(item4);
-            stack.pushItem(item5);
+            var stack = new collections.Stack(items);
             var size = stack.getSize();
             expect(size).to.exist;  // jshint ignore:line
             expect(size).to.equal(5);

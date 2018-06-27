@@ -1,8 +1,8 @@
 [
     $status: $active
-    $singleStep: false
-    $cycles: 137
-    $componentStack: [
+    $clock: 137
+    $stepping: false
+    $components: [
         $sort
         1
         [
@@ -11,12 +11,7 @@
             3
         ]
     ]($type: <bali:/?name=bali/types/collections/Stack>)
-    $handlerStack: [
-        52
-        12
-        126
-    ]($type: <bali:/?name=bali/types/collections/Stack>)
-    $procedureStack: [
+    $procedures: [
         [
             $target: [
                 'JzAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eic='
@@ -58,14 +53,19 @@
             ]
             $type: <bali:/?name=acme/examples/Stages>
             $procedure: $getSize
-            $arguments: []
-            $instructionPointer: 2
+            $parameters: []
             $instructions: [
                 3081
                 2200
                 5731
                 9624
             ]
-        ]
+            $address: 2
+        ]($type: <bali:/?name=bali/types/vm/ProcedureContext>)
     ]($type: <bali:/?name=bali/types/collections/Stack>)
-]
+    $handlers: [
+        52
+        12
+        126
+    ]($type: <bali:/?name=bali/types/collections/Stack>)
+]($type: <bali:/?name=bali/types/vm/TaskContext>)

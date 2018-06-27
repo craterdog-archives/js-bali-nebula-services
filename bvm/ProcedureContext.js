@@ -19,20 +19,24 @@
  * This constructor creates a procedure context for a function or document message.
  * 
  * @constructor
- * @param {object} target The optional target on which the procedure operates.
- * @param {object} type The type containing the procedure definition.
- * @param {string} procedure The name of the procedure to be executed.
- * @param {object} parameters The list or catalog of parameters that were passed to the procedure.
+ * @param {Catalog} catalog The catalog containing the procedure context attributes. 
  * @returns {ProcedureContext} The new procedure context.
  */
-function ProcedureContext(target, type, procedure, parameters) {
-    this.target = target;
-    this.type = type;
-    this.procedure = procedure;
-    this.parameters = parameters;
-    this.instructions = null;  // TODO: pull from type definition
-    this.instructionPointer = 1;  // points to next instruction using Bali unit based indexing
+function ProcedureContext(catalog) {
+    if (catalog) {
+        this.target = catalog.getValue('$target');
+        this.type = catalog.getValue('$type');
+        this.procedure = catalog.getValue('$procedure');
+        this.parameters = catalog.getValue('$parameters');
+        this.instructions = catalog.getValue('$instructions');
+        this.address = catalog.getValue('$address').toNumber();
+    }
     return this;
 }
 ProcedureContext.prototype.constructor = ProcedureContext;
 exports.ProcedureContext = ProcedureContext;
+
+
+ProcedureContext.prototype.accept = function(visitor) {
+    visitor.visitProcedureContext(this);
+};

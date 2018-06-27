@@ -19,14 +19,30 @@ var abstractions = require('../abstractions/');
 
 
 /**
- * The constructor for the Stack class takes an optional capacity.
+ * The constructor for the Stack class takes an optional collection of items to be used to
+ * seed the set with initial values.
  * 
- * @param {Number} optionalCapacity The maximum number of items that can be on the stack.
+ * @param {Collection} optionalItems A collection of items that should be used to seed the set.
  */
-function Stack(optionalCapacity) {
+function Stack(optionalItems) {
     abstractions.Composite.call(this);
-    this.capacity = optionalCapacity ? optionalCapacity : 1024;
-    this.array = [];
+    this.capacity = 1024;
+    this.array =[];
+    if (optionalItems) {
+        var item;
+        if (Array.isArray(optionalItems)) {
+            for (var i = 0; i < optionalItems.length; i++) {
+                item = optionalItems[i];
+                this.array.push(item);
+            }
+        } else {
+            var iterator = optionalItems.iterator();
+            while (iterator.hasNext()) {
+                item = iterator.getNext();
+                this.array.push(item);
+            }
+        }
+    }
     return this;
 }
 Stack.prototype = Object.create(abstractions.Composite.prototype);

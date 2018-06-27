@@ -15,7 +15,9 @@
 var language = require('bali-language/BaliLanguage');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
 var elements = require('../elements');
+var collections = require('../collections');
 var bytecode = require('../utilities/BytecodeUtilities');
+var generator = require('../transformers/ParseTreeGenerator');
 var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./ProcedureContext');
 // var cloud = require('bali-cloud-api');
@@ -56,13 +58,24 @@ var cloud = {
  * @returns {VirtualMachine} The new virtual machine.
  */
 function VirtualMachine(taskReference) {
-    this.taskReference = taskReference;
-    this.taskContext = cloud.readDraft(taskReference);
-    this.procedureContext = this.taskContext.procedureStack.peek();
+    if (taskReference) {
+        this.taskReference = taskReference;
+        this.taskContext = cloud.readDraft(taskReference);
+        this.procedureContext = this.taskContext.procedures.getTop();
+    } else {
+        this.taskReference = new elements.Reference('bali:/' + new elements.Tag());
+        this.taskContext = new TaskContext();
+    }
     return this;
 }
 VirtualMachine.prototype.constructor = VirtualMachine;
 exports.VirtualMachine = VirtualMachine;
+
+
+// machine states
+VirtualMachine.ACTIVE = new elements.Symbol('$active');
+VirtualMachine.WAITING = new elements.Symbol('$waiting');
+VirtualMachine.DONE = new elements.Symbol('$done');
 
 
 /**
@@ -73,20 +86,18 @@ exports.VirtualMachine = VirtualMachine;
  */
 VirtualMachine.prototype.processInstructions = function() {
     // process the instructions
-    while (this.taskContext.status === TaskContext.ACTIVE) {
+    while (this.taskContext.status === VirtualMachine.ACTIVE) {
         // fetch the next instruction
         var instruction = this.fetchNextInstruction();
         // execute the next instruction
         this.executeNextInstruction(instruction);
         // check for single step mode
-        if (this.taskContext.singleStep) break;  // after a each instruction
+        if (this.taskContext.singleStep === elements.Probability.TRUE) break;  // after a each instruction
     }
-
     // determine the outcome of the processing
-    if (this.taskContext.status === TaskContext.DONE) {
+    if (this.taskContext.status === VirtualMachine.DONE) {
         // the task completed successfully or with an exception so notify any interested parties
         this.publishCompletionEvent();
-
     } else {
         // waiting on a message from a queue or single stepping so save the task state in the
         // cloud document repository
@@ -95,25 +106,40 @@ VirtualMachine.prototype.processInstructions = function() {
 };
 
 
+/**
+ * This method fetches the next bytecode instruction from the current procedure context.
+ * 
+ * @returns {Number} The next 16 bit bytecode instruction.
+ */
 VirtualMachine.prototype.fetchNextInstruction = function() {
-    // load the next instruction into the current procedure context
-    var instruction = this.procedureContext.instructions[this.procedureContext.instructionPointer++ - 1];  // JS zero based indexing
+    // increment the address pointer
+    var address = new elements.Complex(this.procedureContext.address.real + 1);
+    this.procedureContext.address = address;
+    // load the next instruction from the current procedure context
+    var instruction = this.procedureContext.instructions.getItem(address).real;
     return instruction;
 };
 
 
+/**
+ * This method executes the next bytecode instruction.
+ * 
+ * @param {Number} instruction The 16 bit bytecode instruction to be executed.
+ */
 VirtualMachine.prototype.executeNextInstruction = function(instruction) {
+    // decode the bytecode instruction
     var operation = bytecode.decodeOperation(instruction);
     var modifier = bytecode.decodeModifier(instruction);
     var operand = bytecode.decodeOperand(instruction);
-    // pass execution off to the correct handler
-    this.instructionHandlers[(operation << 2) | modifier](operand);
-    if (this.procedureContext.instructionPointer > this.procedureContext.instructions.length) {
-        this.taskContext.status = TaskContext.DONE;
-    }
+    // pass execution off to the correct operation handler
+    var index = (operation << 2) | modifier;
+    this.instructionHandlers[index](operand);
 };
 
 
+/**
+ * This method publishes a task completion event to the global event queue.
+ */
 VirtualMachine.prototype.publishCompletionEvent = function() {
     var event = '[\n' +
         '    $type: $completion\n' +
@@ -126,8 +152,12 @@ VirtualMachine.prototype.publishCompletionEvent = function() {
 
 
 VirtualMachine.prototype.saveTaskState = function() {
-    var state = this.taskContext.asDocument();
-    cloud.writeDraft(this.taskReference, state);
+    // generate a parse tree from the task context
+    var tree = generator.generateParseTree(this.taskContext);
+    // format the parse tree into a document
+    var context = language.formatParseTree(tree);
+    // save the document in the cloud
+    cloud.writeDraft(this.taskReference, context);
 };
 
 
@@ -138,7 +168,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // if the address is not zero then use it as the next instruction to be executed,
         // otherwise it is a SKIP INSTRUCTION (aka NOOP)
         if (address > 0) {
-            this.procedureContext.instructionPointer = address;
+            this.procedureContext.address = new elements.Complex(address);
         }
     },
 
@@ -146,10 +176,10 @@ VirtualMachine.prototype.instructionHandlers = [
     function(operand) {
         var address = operand;
         // pop the condition component off the component stack
-        var component = this.procedureContext.componentStack.pop();
+        var component = this.procedureContext.components.popItem();
         // if the condition is 'none' then use the address as the next instruction to be executed
         if (component === elements.Template.NONE) {
-            this.procedureContext.instructionPointer = address;
+            this.procedureContext.address = new elements.Complex(address);
         }
     },
 
@@ -157,10 +187,10 @@ VirtualMachine.prototype.instructionHandlers = [
     function(operand) {
         var address = operand;
         // pop the condition component off the component stack
-        var component = this.procedureContext.componentStack.pop();
+        var component = this.procedureContext.components.popItem();
         // if the condition is 'true' then use the address as the next instruction to be executed
-        if (component === elements.Template.TRUE) {
-            this.procedureContext.instructionPointer = address;
+        if (component === elements.Probability.TRUE) {
+            this.procedureContext.address = new elements.Complex(address);
         }
     },
 
@@ -168,18 +198,18 @@ VirtualMachine.prototype.instructionHandlers = [
     function(operand) {
         var address = operand;
         // pop the condition component off the component stack
-        var component = this.procedureContext.componentStack.pop();
+        var component = this.procedureContext.components.popItem();
         // if the condition is 'false' then use the address as the next instruction to be executed
-        if (component === elements.Template.FALSE) {
-            this.procedureContext.instructionPointer = address;
+        if (component === elements.Probability.FALSE) {
+            this.procedureContext.address = new elements.Complex(address);
         }
     },
 
     // PUSH HANDLER label
     function(operand) {
-        var address = operand;
+        var address = new elements.Complex(operand);
         // push the address of the current exception handlers onto the handlers stack
-        this.procedureContext.handlerStack.push(address);
+        this.procedureContext.handlers.pushItem(address);
     },
 
     // PUSH ELEMENT literal
@@ -189,7 +219,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var literal = this.procedureContext.symbols.literals[index];
         // create a new element from the literal and push it on top of the component stack
         var element = language.parseElement(literal);
-        this.procedureContext.componentStack.push(element);
+        this.procedureContext.components.pushItem(element);
     },
 
     // PUSH CODE literal
@@ -199,20 +229,35 @@ VirtualMachine.prototype.instructionHandlers = [
         var literal = this.procedureContext.symbols.literals[index];
         // create a new code parse tree from the literal and push it on top of the component stack
         var code = language.parseProcedure(literal);
-        this.procedureContext.componentStack.push(code);
+        this.procedureContext.components.pushItem(code);
+    },
+
+    // UNIMPLEMENTED PUSH OPERATION
+    function(operand) {
+        throw new Error('An unimplemented PUSH operation was attempted: 13');
     },
 
     // POP HANDLER
     function(operand) {
         // remove the current exception handler address from the top of the handlers stack
         // since it is no longer in scope
-        this.procedureContext.handlerStack.pop();
+        this.procedureContext.handlers.popItem();
     },
 
     // POP COMPONENT
     function(operand) {
         // remove the component that is on top of the component stack since it was not used
-        this.procedureContext.componentStack.pop();
+        this.procedureContext.components.popItem();
+    },
+
+    // UNIMPLEMENTED POP OPERATION
+    function(operand) {
+        throw new Error('An unimplemented POP operation was attempted: 22');
+    },
+
+    // UNIMPLEMENTED POP OPERATION
+    function(operand) {
+        throw new Error('An unimplemented POP operation was attempted: 23');
     },
 
     // LOAD VARIABLE symbol
@@ -221,7 +266,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var index = operand;
         var variable = this.procedureContext.symbols.variables[index];
         // push the value of the variable on top of the component stack
-        this.procedureContext.componentStack.push(variable);
+        this.procedureContext.components.pushItem(variable);
     },
 
     // LOAD DOCUMENT symbol
@@ -232,7 +277,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // read the referenced document from the cloud repository
         var document = cloud.readDocument(reference);
         // push the document on top of the component stack
-        this.procedureContext.componentStack.push(document);
+        this.procedureContext.components.pushItem(document);
     },
 
     // LOAD DRAFT symbol
@@ -243,7 +288,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // read the referenced draft from the cloud repository
         var draft = cloud.readDraft(reference);
         // push the document on top of the component stack
-        this.procedureContext.componentStack.push(draft);
+        this.procedureContext.components.pushItem(draft);
     },
 
     // LOAD MESSAGE symbol
@@ -254,19 +299,19 @@ VirtualMachine.prototype.instructionHandlers = [
         // attempt to receive a message from the referenced queue in the cloud
         var message = cloud.receiveMessage(queue);
         if (message) {
-            this.procedureContext.componentStack.push(message);
+            this.procedureContext.components.pushItem(message);
         } else {
             // set the task status to 'waiting'
-            this.procedureContext.status = TaskContext.WAITING;
+            this.procedureContext.status = VirtualMachine.WAITING;
             // make sure that the same instruction will be tried again
-            this.procedureContext.instructionPointer--;
+            this.procedureContext.address--;
         }
     },
 
     // STORE VARIABLE symbol
     function(operand) {
         // pop the component that is on top of the component stack off the stack
-        var component = this.procedureContext.componentStack.pop();
+        var component = this.procedureContext.components.popItem();
         // and store the component in the variable associated with the index operand
         var index = operand;
         this.procedureContext.symbols.variables[index] = component;
@@ -275,7 +320,7 @@ VirtualMachine.prototype.instructionHandlers = [
     // STORE DOCUMENT symbol
     function(operand) {
         // pop the document that is on top of the component stack off the stack
-        var document = this.procedureContext.componentStack.pop();
+        var document = this.procedureContext.components.popItem();
         // lookup the reference associated with the index operand
         var index = operand;
         var reference = this.procedureContext.symbols.references[index];
@@ -286,7 +331,7 @@ VirtualMachine.prototype.instructionHandlers = [
     // STORE DRAFT symbol
     function(operand) {
         // pop the draft that is on top of the component stack off the stack
-        var draft = this.procedureContext.componentStack.pop();
+        var draft = this.procedureContext.components.popItem();
         // lookup the reference associated with the index operand
         var index = operand;
         var reference = this.procedureContext.symbols.references[index];
@@ -297,7 +342,7 @@ VirtualMachine.prototype.instructionHandlers = [
     // STORE MESSAGE symbol
     function(operand) {
         // pop the message that is on top of the component stack off the stack
-        var message = this.procedureContext.componentStack.pop();
+        var message = this.procedureContext.components.popItem();
         // lookup the referenced queue associated with the index operand
         var index = operand;
         var queue = this.procedureContext.symbols.references[index];
@@ -313,46 +358,46 @@ VirtualMachine.prototype.instructionHandlers = [
         var index = operand;
         var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
-        this.procedureContext.componentStack.push(result);
+        this.procedureContext.components.pushItem(result);
     },
 
     // INVOKE symbol WITH PARAMETER
     function(operand) {
         // pop the parameters to the intrinsic function call off of the component stack
         var parameters = [];
-        parameters.push(this.procedureContext.componentStack.pop());
+        parameters.pushItem(this.procedureContext.components.popItem());
         // call the intrinsic function associated with the index operand
         var index = operand;
         var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
-        this.procedureContext.componentStack.push(result);
+        this.procedureContext.components.pushItem(result);
     },
 
     // INVOKE symbol WITH 2 PARAMETERS
     function(operand) {
         // pop the parameters to the intrinsic function call off of the component stack
         var parameters = [];
-        parameters.push(this.procedureContext.componentStack.pop());
-        parameters.push(this.procedureContext.componentStack.pop());
+        parameters.pushItem(this.procedureContext.components.popItem());
+        parameters.pushItem(this.procedureContext.components.popItem());
         // call the intrinsic function associated with the index operand
         var index = operand;
         var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
-        this.procedureContext.componentStack.push(result);
+        this.procedureContext.components.pushItem(result);
     },
 
     // INVOKE symbol WITH 3 PARAMETERS
     function(operand) {
         // pop the parameters to the intrinsic function call off of the component stack
         var parameters = [];
-        parameters.push(this.procedureContext.componentStack.pop());
-        parameters.push(this.procedureContext.componentStack.pop());
-        parameters.push(this.procedureContext.componentStack.pop());
+        parameters.pushItem(this.procedureContext.components.popItem());
+        parameters.pushItem(this.procedureContext.components.popItem());
+        parameters.pushItem(this.procedureContext.components.popItem());
         // call the intrinsic function associated with the index operand
         var index = operand;
         var result = intrinsics.intrinsicFunctions[index - 1].apply(this, parameters);  // js zero based indexing
         // push the result of the function call onto the top of the component stack
-        this.procedureContext.componentStack.push(result);
+        this.procedureContext.components.pushItem(result);
     },
 
     // EXECUTE symbol
@@ -360,7 +405,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // set the target component to null since there isn't one
         var target = null;
         // pop the type reference for the procedure call off of the component stack
-        var reference = this.procedureContext.componentStack.pop();
+        var reference = this.procedureContext.components.popItem();
         // read the referenced type from the cloud repository
         var type = cloud.readDocument(reference);
         // lookup the procedure associated with the index operand
@@ -372,7 +417,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var context = new ProcedureContext(target, type, procedure, parameters);
         // make the new context the current context for this VM
         this.procedureContext = context;
-        this.taskContext.procedureStack.push(context);
+        this.taskContext.procedures.pushItem(context);
     },
 
     // EXECUTE symbol WITH PARAMETERS
@@ -380,25 +425,25 @@ VirtualMachine.prototype.instructionHandlers = [
         // set the target component to null since there isn't one
         var target = null;
         // pop the type reference for the procedure call off of the component stack
-        var reference = this.procedureContext.componentStack.pop();
+        var reference = this.procedureContext.components.popItem();
         // read the referenced type from the cloud repository
         var type = cloud.readDocument(reference);
         // lookup the procedure associated with the index operand
         var index = operand;
         var procedure = this.procedureContext.symbols.procedures[index];
         // pop the parameters to the procedure call off of the component stack
-        var parameters = this.procedureContext.componentStack.pop();
+        var parameters = this.procedureContext.components.popItem();
         // create a new context for the procedure call
         var context = new ProcedureContext(target, type, procedure, parameters);
         // make the new context the current context for this VM
         this.procedureContext = context;
-        this.taskContext.procedureStack.push(context);
+        this.taskContext.procedures.pushItem(context);
     },
 
     // EXECUTE symbol ON TARGET
     function(operand) {
         // pop the target component for the procedure call off of the component stack
-        var target = this.procedureContext.componentStack.pop();
+        var target = this.procedureContext.components.popItem();
         // retrieve a reference to the type of the target component
         var parameters = [target];
         var reference = intrinsics.intrinsicFunctions[intrinsics.GET_TYPE].apply(this, parameters);
@@ -413,13 +458,13 @@ VirtualMachine.prototype.instructionHandlers = [
         var context = new ProcedureContext(target, type, procedure, parameters);
         // make the new context the current context for this VM
         this.procedureContext = context;
-        this.taskContext.procedureStack.push(context);
+        this.taskContext.procedures.pushItem(context);
     },
 
     // EXECUTE symbol ON TARGET WITH PARAMETERS
     function(operand) {
         // pop the target component for the procedure call off of the component stack
-        var target = this.procedureContext.componentStack.pop();
+        var target = this.procedureContext.components.popItem();
         // retrieve a reference to the type of the target component
         var parameters = [target];
         var reference = intrinsics.intrinsicFunctions[intrinsics.GET_TYPE].apply(this, parameters);
@@ -429,41 +474,52 @@ VirtualMachine.prototype.instructionHandlers = [
         var index = operand;
         var procedure = this.procedureContext.symbols.procedures[index];
         // pop the parameters to the procedure call off of the component stack
-        parameters = this.procedureContext.componentStack.pop();
+        parameters = this.procedureContext.components.popItem();
         // create a new context for the procedure call
         var context = new ProcedureContext(target, type, procedure, parameters);
         // make the new context the current context for this VM
         this.procedureContext = context;
-        this.taskContext.procedureStack.push(context);
+        this.taskContext.procedures.pushItem(context);
     },
 
     // HANDLE EXCEPTION
     function(operand) {
         // pop the current exception off of the component stack
-        var exception = this.procedureContext.componentStack.pop();
-        while (this.taskContext.procedureStack.length > 0 &&
-                this.procedureContext.handlerStack.length === 0) {
+        var exception = this.procedureContext.components.popItem();
+        while (this.taskContext.procedures.length > 0 &&
+                this.procedureContext.handlers.length === 0) {
             // pop the current context off of the context stack since it has no handlers
-            this.taskContext.procedureStack.pop();
-            this.procedureContext = this.taskContext.procedureStack.peek();
+            this.taskContext.procedures.popItem();
+            this.procedureContext = this.taskContext.procedures.getTop();
         }
         // TODO: need to check for no more contexts
         // push the current exception onto the top of the component stack
-        this.procedureContext.componentStack.push(exception);
+        this.procedureContext.components.pushItem(exception);
         // retrieve the address of the current exception handlers
-        var address = this.procedureContext.handlerStack.pop();
+        var address = this.procedureContext.handlers.popItem();
         // use that address as the next instruction to be executed
-        this.procedureContext.instructionPointer = address;
+        this.procedureContext.address = address;
     },
 
     // HANDLE RESULT
     function(operand) {
         // pop the result of the procedure call off of the component stack
-        var result = this.procedureContext.componentStack.pop();
+        var result = this.procedureContext.components.popItem();
         // pop the current context off of the context stack since it is now out of scope
-        this.taskContext.procedureStack.pop();
-        this.procedureContext = this.taskContext.procedureStack.peek();
+        this.taskContext.procedures.popItem();
+        this.procedureContext = this.taskContext.procedures.getTop();
         // push the result of the procedure call onto the top of the component stack
-        this.procedureContext.componentStack.push(result);
+        this.procedureContext.components.pushItem(result);
+    },
+
+    // UNIMPLEMENTED HANDLE OPERATION
+    function(operand) {
+        throw new Error('An unimplemented HANDLE operation was attempted: 72');
+    },
+
+    // UNIMPLEMENTED HANDLE OPERATION
+    function(operand) {
+        throw new Error('An unimplemented HANDLE operation was attempted: 73');
     }
+
 ];

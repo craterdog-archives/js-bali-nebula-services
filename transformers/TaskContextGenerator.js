@@ -17,6 +17,8 @@ var language = require('bali-language/BaliLanguage');
 var types = require('bali-language/syntax/NodeTypes');
 var elements = require('../elements/');
 var collections = require('../collections/');
+var TaskContext = require('../bvm/TaskContext').TaskContext;
+var ProcedureContext = require('../bvm/ProcedureContext').ProcedureContext;
 
 
 /**
@@ -114,13 +116,13 @@ TreeVisitor.prototype.replaceCollectionType = function(collection) {
             collection = new collections.Set(collection);
             break;
         case '<bali:/?name=bali/types/collections/Stack>':
-            var stack = new collections.Stack();
-            var iterator = collection.iterator();
-            while (iterator.hasNext()) {
-                var item = iterator.getNext();
-                stack.pushItem(item);
-            }
-            collection = stack;
+            collection = new collections.Stack(collection);
+            break;
+        case '<bali:/?name=bali/types/vm/TaskContext>':
+            collection = new TaskContext(collection);
+            break;
+        case '<bali:/?name=bali/types/vm/ProcedureContext>':
+            collection = new ProcedureContext(collection);
             break;
         default:
             throw new Error('Found an illegal collection type in the parameter list: ' + type);

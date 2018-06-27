@@ -200,3 +200,127 @@ ContextVisitor.prototype.visitStack = function(stack) {
     component.addChild(parameters);
     this.result = component;
 };
+
+
+ContextVisitor.prototype.visitTaskContext = function(context) {
+    var tree = new syntax.TreeNode(types.CATALOG);
+
+    // generate the status attribute
+    var association = new syntax.TreeNode(types.ASSOCIATION);
+    var symbol = new syntax.TerminalNode(types.SYMBOL, '$status');
+    association.addChild(symbol);
+    context.status.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the clock attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$clock');
+    association.addChild(symbol);
+    var value = new syntax.TerminalNode(types.NUMBER, context.clock);
+    association.addChild(value);
+    tree.addChild(association);
+
+    // generate the stepping attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$stepping');
+    association.addChild(symbol);
+    value = new syntax.TerminalNode(types.PROBABILITY, context.stepping);
+    association.addChild(value);
+    tree.addChild(association);
+
+    // generate the component stack
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$components');
+    association.addChild(symbol);
+    context.components.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the procedure stack
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$procedures');
+    association.addChild(symbol);
+    context.procedures.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the handler stack
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$handlers');
+    association.addChild(symbol);
+    context.handlers.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the parameters
+    var structure = new syntax.TreeNode(types.STRUCTURE);
+    structure.addChild(tree);
+    var component = new syntax.TreeNode(types.COMPONENT);
+    component.addChild(structure);
+    var parameters = language.parseParameters('($type: <bali:/?name=bali/types/vm/TaskContext>)');
+    component.addChild(parameters);
+    this.result = component;
+};
+
+
+ContextVisitor.prototype.visitProcedureContext = function(context) {
+    var tree = new syntax.TreeNode(types.CATALOG);
+
+    // generate the target attribute
+    var association = new syntax.TreeNode(types.ASSOCIATION);
+    var symbol = new syntax.TerminalNode(types.SYMBOL, '$target');
+    association.addChild(symbol);
+    context.target.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the type attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$type');
+    association.addChild(symbol);
+    context.type.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the procedure attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$procedure');
+    association.addChild(symbol);
+    context.procedure.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the parameters attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$parameters');
+    association.addChild(symbol);
+    context.parameters.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the instructions attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$instructions');
+    association.addChild(symbol);
+    context.instructions.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the address attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$address');
+    association.addChild(symbol);
+    var value = new syntax.TerminalNode(types.NUMBER, context.address);
+    association.addChild(value);
+    tree.addChild(association);
+
+    // generate the parameters
+    var structure = new syntax.TreeNode(types.STRUCTURE);
+    structure.addChild(tree);
+    var component = new syntax.TreeNode(types.COMPONENT);
+    component.addChild(structure);
+    var parameters = language.parseParameters('($type: <bali:/?name=bali/types/vm/ProcedureContext>)');
+    component.addChild(parameters);
+    this.result = component;
+};

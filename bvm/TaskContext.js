@@ -7,40 +7,50 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
-'use strict';
 
 /*
  * This class defines the context for a task that is being executed by the
  * the Bali Virtual Machine™.
  */
+var elements = require('../elements');
+var collections = require('../collections');
 
 
 // machine states
-exports.ACTIVE = 0;
-exports.WAITING = 1;
-exports.DONE = 2;
+exports.ACTIVE = new elements.Symbol('$active');
+exports.WAITING = new elements.Symbol('$waiting');
+exports.DONE = new elements.Symbol('$done');
 
 
 /**
  * This constructor creates a task context.
  * 
  * @constructor
+ * @param {Catalog} catalog The catalog containing the task context attributes. 
  * @returns {TaskContext} The new task context.
  */
-function TaskContext() {
-    this.status = exports.ACTIVE;
-    this.singleStep = false;
-    this.componentStack = [];
-    this.procedureStack = [];
-    this.handlerStack = [];
-    this.cycles = 0;
+function TaskContext(catalog) {
+    if (catalog) {
+        this.status = catalog.getValue('$status');
+        this.clock = catalog.getValue('$clock').toNumber();
+        this.stepping = catalog.getValue('$stepping').toBoolean();
+        this.components = catalog.getValue('$components');
+        this.procedures = catalog.getValue('$procedures');
+        this.handlers = catalog.getValue('$handlers');
+    } else {
+        this.status = exports.ACTIVE;
+        this.clock = 0;
+        this.stepping = false;
+        this.components = new collections.Stack();
+        this.procedures = new collections.Stack();
+        this.handlers = new collections.Stack();
+    }
     return this;
 }
 TaskContext.prototype.constructor = TaskContext;
 exports.TaskContext = TaskContext;
 
 
-// define the missing stack function for Array
-Array.prototype.peek = function() {
-    return this[this.length - 1];
+TaskContext.prototype.accept = function(visitor) {
+    visitor.visitTaskContext(this);
 };
