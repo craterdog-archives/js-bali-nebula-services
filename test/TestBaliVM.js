@@ -32,10 +32,7 @@ describe('Bali Virtual Machine™', function() {
                 var tree = vm.compileType(type);
                 expect(type).to.exist;  // jshint ignore:line
                 var formatted = vm.formatType(tree);
-                fs.writeFileSync(baliFile, formatted, 'utf8');
-                var expected = fs.readFileSync(baliFile, 'utf8');
-                expect(expected).to.exist;  // jshint ignore:line
-                expect(formatted).to.equal(expected);
+                expect(formatted).to.equal(type);
             }
         });
 
