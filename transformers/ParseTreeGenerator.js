@@ -299,11 +299,27 @@ ContextVisitor.prototype.visitProcedureContext = function(context) {
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the instructions attribute
+    // generate the literals attribute
     association = new syntax.TreeNode(types.ASSOCIATION);
-    symbol = new syntax.TerminalNode(types.SYMBOL, '$instructions');
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$literals');
     association.addChild(symbol);
-    context.instructions.accept(this);
+    context.literals.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the variables attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$variables');
+    association.addChild(symbol);
+    context.variables.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the bytecode attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$bytecode');
+    association.addChild(symbol);
+    context.bytecode.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 

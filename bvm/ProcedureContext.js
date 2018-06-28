@@ -28,7 +28,9 @@ function ProcedureContext(catalog) {
         this.type = catalog.getValue('$type');
         this.procedure = catalog.getValue('$procedure');
         this.parameters = catalog.getValue('$parameters');
-        this.instructions = catalog.getValue('$instructions');
+        this.literals = catalog.getValue('$literals');
+        this.variables = catalog.getValue('$variables');
+        this.bytecode = catalog.getValue('$bytecode');
         this.address = catalog.getValue('$address').toNumber();
     }
     return this;

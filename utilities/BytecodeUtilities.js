@@ -223,25 +223,27 @@ exports.instructionAsString = function(instruction, optionalOperand) {
         operand = indexAsString(operand);
     }
 
-    var string = types.OPERATIONS[operation] + ' ';
+    var string = types.OPERATION_TYPES[operation] + ' ';
     switch (operation) {
         case types.JUMP:
             if (modifier === 0 && operand === 0) {
                 string = 'SKIP INSTRUCTION';
             } else {
                 string += 'TO ' + operand;
-                if (modifier > 0) string += ' ' + types.CONDITIONS[modifier];
+                if (modifier > 0) string += ' ' + types.JUMP_MODIFIERS[modifier];
             }
             break;
         case types.PUSH:
-            string += types.TYPES[modifier] + ' ' + operand;
+            string += types.PUSH_MODIFIERS[modifier] + ' ' + operand;
             break;
         case types.POP:
-            string += types.TYPES[modifier];
+            string += types.POP_MODIFIERS[modifier];
             break;
         case types.LOAD:
+            string += types.LOAD_MODIFIERS[modifier] + ' ' + operand;
+            break;
         case types.STORE:
-            string += types.COMPONENTS[modifier] + ' ' + operand;
+            string += types.STORE_MODIFIERS[modifier] + ' ' + operand;
             break;
         case types.INVOKE:
             string += operand;
@@ -250,10 +252,10 @@ exports.instructionAsString = function(instruction, optionalOperand) {
             break;
         case types.EXECUTE:
             string += operand;
-            if (modifier > 0) string += ' ' + types.PARAMETERS[modifier];
+            if (modifier > 0) string += ' ' + types.EXECUTE_MODIFIERS[modifier];
             break;
         case types.HANDLE:
-            string += types.CONTEXTS[modifier];
+            string += types.HANDLE_MODIFIERS[modifier];
             break;
     }
     return string;

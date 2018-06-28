@@ -53,8 +53,16 @@
             ]
             $type: <bali:/?name=acme/examples/Stages>
             $procedure: $getSize
-            $parameters: []
-            $instructions: [
+            $parameters: [:]
+            $literals: [
+                "This is a text string."
+                v1.2.3
+            ]
+            $variables: [
+                $index: 5
+                $result: none
+            ]
+            $bytecode: [
                 3081
                 2200
                 5731

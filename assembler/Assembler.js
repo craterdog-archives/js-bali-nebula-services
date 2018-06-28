@@ -108,13 +108,26 @@ function lookupSymbol(symbols, operation, modifier, index) {
             }
             break;
         case types.LOAD:
+            switch (modifier) {
+                case types.VARIABLE:
+                    type = 'variables';
+                    break;
+                case types.PARAMETER:
+                    type = 'parameters';
+                    break;
+                case types.DOCUMENT:
+                case types.MESSAGE:
+                    type = 'references';
+                    break;
+            }
+            break;
         case types.STORE:
             switch (modifier) {
                 case types.VARIABLE:
                     type = 'variables';
                     break;
-                case types.DOCUMENT:
                 case types.DRAFT:
+                case types.DOCUMENT:
                 case types.MESSAGE:
                     type = 'references';
                     break;
@@ -208,8 +221,8 @@ AssemblingVisitor.prototype.visitPopInstruction = function(instruction) {
 
 // loadInstruction:
 //     'LOAD' 'VARIABLE' SYMBOL |
+//     'LOAD' 'PARAMETER' SYMBOL |
 //     'LOAD' 'DOCUMENT' SYMBOL |
-//     'LOAD' 'DRAFT' SYMBOL |
 //     'LOAD' 'MESSAGE' SYMBOL
 AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
     var modifier = instruction.modifier;
@@ -219,8 +232,10 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
         case types.VARIABLE:
             type = 'variables';
             break;
+        case types.PARAMETER:
+            type = 'parameters';
+            break;
         case types.DOCUMENT:
-        case types.DRAFT:
         case types.MESSAGE:
             type = 'references';
             break;
@@ -244,8 +259,8 @@ AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
         case types.VARIABLE:
             type = 'variables';
             break;
-        case types.DOCUMENT:
         case types.DRAFT:
+        case types.DOCUMENT:
         case types.MESSAGE:
             type = 'references';
             break;
