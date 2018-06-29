@@ -34,7 +34,7 @@ var cloud = require('bali-cloud-api');
 function VirtualMachine(taskReference) {
     if (taskReference) {
         this.taskReference = taskReference;
-        this.taskContext = cloud.readDraft(taskReference);
+        this.taskContext = cloud.retrieveDocument(taskReference);
         this.procedureContext = this.taskContext.procedures.getTop();
     } else {
         this.taskReference = new elements.Reference('bali:/' + new elements.Tag());
@@ -125,7 +125,7 @@ VirtualMachine.prototype.saveTaskState = function() {
     // format the parse tree into a document
     var context = language.formatParseTree(tree);
     // save the document in the cloud
-    cloud.writeDraft(this.taskReference, context);
+    cloud.saveDraft(this.taskReference, context);
 };
 
 
@@ -245,8 +245,8 @@ VirtualMachine.prototype.instructionHandlers = [
         var index = operand;
         // lookup the reference associated with the index
         var reference = this.procedureContext.variables.getItem(index).value;
-        // read the referenced document from the cloud repository
-        var document = cloud.readDocument(reference);
+        // retrieve the referenced document from the cloud repository
+        var document = cloud.retrieveDocument(reference);
         // push the document on top of the component stack
         this.procedureContext.components.pushItem(document);
     },
@@ -285,7 +285,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // lookup the reference associated with the index operand
         var reference = this.procedureContext.variables.getItem(index).value;
         // write the referenced draft to the cloud repository
-        cloud.writeDraft(reference, draft);
+        cloud.saveDraft(reference, draft);
     },
 
     // STORE DOCUMENT symbol
@@ -296,7 +296,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // lookup the reference associated with the index operand
         var reference = this.procedureContext.variables.getItem(index).value;
         // write the referenced document to the cloud repository
-        cloud.writeDocument(reference, document);
+        cloud.commitDocument(reference, document);
     },
 
     // STORE MESSAGE symbol
@@ -372,7 +372,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var context = new ProcedureContext();
         context.target = elements.Template.NONE;
         context.type = this.procedureContext.components.popItem();
-        var type = cloud.readDocument(context.type);
+        var type = cloud.retrieveDocument(context.type);
         var procedures = type.getValue('$procedures');
         var association = procedures.getItem(index);
         context.procedure = association.key;
@@ -393,7 +393,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var context = new ProcedureContext();
         context.target = elements.Template.NONE;
         context.type = this.procedureContext.components.popItem();
-        var type = cloud.readDocument(context.type);
+        var type = cloud.retrieveDocument(context.type);
         var procedures = type.getValue('$procedures');
         var association = procedures.getItem(index);
         context.procedure = association.key;
@@ -415,7 +415,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var context = new ProcedureContext();
         context.target = this.procedureContext.components.popItem();
         context.type = this.extractType(context.target);
-        var type = cloud.readDocument(context.type);
+        var type = cloud.retrieveDocument(context.type);
         var procedures = type.getValue('$procedures');
         var association = procedures.getItem(index);
         context.procedure = association.key;
@@ -436,7 +436,7 @@ VirtualMachine.prototype.instructionHandlers = [
         var context = new ProcedureContext();
         context.target = this.procedureContext.components.popItem();
         context.type = this.extractType(context.target);
-        var type = cloud.readDocument(context.type);
+        var type = cloud.retrieveDocument(context.type);
         var procedures = type.getValue('$procedures');
         var association = procedures.getItem(index);
         context.procedure = association.key;
