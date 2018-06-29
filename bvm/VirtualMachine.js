@@ -17,6 +17,7 @@ var intrinsics = require('../intrinsics/IntrinsicFunctions');
 var elements = require('../elements');
 var collections = require('../collections');
 var bytecode = require('../utilities/BytecodeUtilities');
+var codex = require('../utilities/EncodingUtilities');
 var generator = require('../transformers/ParseTreeGenerator');
 var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./ProcedureContext');
@@ -399,13 +400,15 @@ VirtualMachine.prototype.instructionHandlers = [
         context.target = elements.Template.NONE;
         context.type = this.procedureContext.components.popItem();
         var type = cloud.readDocument(context.type);
-        var association = type.procedures.getItem(index);
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getItem(index);
         context.procedure = association.key;
         var procedure = association.value;
-        context.parameters = type.parameters;
         context.literals = type.literals;
-        context.variables = this.extractVariables(type);
-        context.bytecode = procedure.getValue('$bytecode');
+        context.parameters = new collections.List();
+        context.variables = this.extractVariables(procedure);
+        var bytes = procedure.getValue('$bytecode').value;
+        context.bytecode = codex.bytesToBytecode(bytes);
         context.address = 1;
         this.procedureContext = context;
         this.taskContext.procedures.pushItem(context);
@@ -414,21 +417,21 @@ VirtualMachine.prototype.instructionHandlers = [
     // EXECUTE symbol WITH PARAMETERS
     function(operand) {
         var index = operand;
-        // set the target component to null since there isn't one
-        var target = elements.Template.NONE;
-        // pop the type reference for the procedure call off of the component stack
-        var reference = this.procedureContext.components.popItem();
-        // read the referenced type from the cloud repository
-        var type = cloud.readDocument(reference);
-        // lookup the procedure associated with the index operand
-        var symbols = this.procedureContext.symbols;
-        var procedures = symbols.getValue('$procedures');
-        var procedure = procedures.getItem(index);
-        // pop the parameters to the procedure call off of the component stack
+        var context = new ProcedureContext();
+        context.target = elements.Template.NONE;
+        context.type = this.procedureContext.components.popItem();
+        var type = cloud.readDocument(context.type);
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getItem(index);
+        context.procedure = association.key;
+        var procedure = association.value;
+        context.literals = type.literals;
         var parameters = this.procedureContext.components.popItem();
-        // create a new context for the procedure call
-        var context = new ProcedureContext(target, type, procedure, parameters);
-        // make the new context the current context for this VM
+        context.parameters = this.extractParameters(procedure, parameters);
+        context.variables = this.extractVariables(procedure);
+        var bytes = procedure.getValue('$bytecode').value;
+        context.bytecode = codex.bytesToBytecode(bytes);
+        context.address = 1;
         this.procedureContext = context;
         this.taskContext.procedures.pushItem(context);
     },
@@ -436,22 +439,20 @@ VirtualMachine.prototype.instructionHandlers = [
     // EXECUTE symbol ON TARGET
     function(operand) {
         var index = operand;
-        // pop the target component for the procedure call off of the component stack
-        var target = this.procedureContext.components.popItem();
-        // retrieve a reference to the type of the target component
-        var parameters = new collections.List([target]);
-        var reference = intrinsics.intrinsicFunctions[intrinsics.GET_TYPE].apply(this, parameters);
-        // read the referenced type from the cloud repository
-        var type = cloud.readDocument(reference);
-        // lookup the procedure associated with the index operand
-        var symbols = this.procedureContext.symbols;
-        var procedures = symbols.getValue('$procedures');
-        var procedure = procedures.getItem(index);
-        // create an empty parameters list for the procedure call
-        parameters = new collections.List();
-        // create a new context for the procedure call
-        var context = new ProcedureContext(target, type, procedure, parameters);
-        // make the new context the current context for this VM
+        var context = new ProcedureContext();
+        context.target = this.procedureContext.components.popItem();
+        context.type = this.extractType(context.target);
+        var type = cloud.readDocument(context.type);
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getItem(index);
+        context.procedure = association.key;
+        var procedure = association.value;
+        context.literals = type.literals;
+        context.parameters = new collections.List();
+        context.variables = this.extractVariables(procedure);
+        var bytes = procedure.getValue('$bytecode').value;
+        context.bytecode = codex.bytesToBytecode(bytes);
+        context.address = 1;
         this.procedureContext = context;
         this.taskContext.procedures.pushItem(context);
     },
@@ -471,7 +472,8 @@ VirtualMachine.prototype.instructionHandlers = [
         var parameters = this.procedureContext.components.popItem();
         context.parameters = this.extractParameters(procedure, parameters);
         context.variables = this.extractVariables(procedure);
-        context.bytecode = procedure.getValue('$bytecode');
+        var bytes = procedure.getValue('$bytecode').value;
+        context.bytecode = codex.bytesToBytecode(bytes);
         context.address = 1;
         this.procedureContext = context;
         this.taskContext.procedures.pushItem(context);
