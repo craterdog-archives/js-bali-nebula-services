@@ -210,19 +210,15 @@ VirtualMachine.prototype.instructionHandlers = [
     function(operand) {
         var index = operand;
         // lookup the literal associated with the index
-        var symbols = this.procedureContext.symbols;
-        var literals = symbols.getValue('$literals');
-        var element = literals.getItem(index);
-        this.procedureContext.components.pushItem(element);
+        var literal = this.procedureContext.literals.getItem(index);
+        this.procedureContext.components.pushItem(literal);
     },
 
     // PUSH CODE literal
     function(operand) {
         var index = operand;
         // lookup the literal associated with the index
-        var symbols = this.procedureContext.symbols;
-        var literals = symbols.getValue('$literals');
-        var code = literals.getItem(index);
+        var code = this.procedureContext.literals.getItem(index);
         this.procedureContext.components.pushItem(code);
     },
 
@@ -274,9 +270,7 @@ VirtualMachine.prototype.instructionHandlers = [
     function(operand) {
         var index = operand;
         // lookup the reference associated with the index
-        var symbols = this.procedureContext.symbols;
-        var references = symbols.getValue('$references');
-        var reference = references.getItem(index);
+        var reference = this.procedureContext.variables.getItem(index).value;
         // read the referenced document from the cloud repository
         var document = cloud.readDocument(reference);
         // push the document on top of the component stack
@@ -287,9 +281,7 @@ VirtualMachine.prototype.instructionHandlers = [
     function(operand) {
         var index = operand;
         // lookup the referenced queue associated with the index
-        var symbols = this.procedureContext.symbols;
-        var references = symbols.getValue('$references');
-        var queue = references.getItem(index);
+        var queue = this.procedureContext.variables.getItem(index).value;
         // attempt to receive a message from the referenced queue in the cloud
         var message = cloud.receiveMessage(queue);
         if (message) {
@@ -308,7 +300,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // pop the component that is on top of the component stack off the stack
         var component = this.procedureContext.components.popItem();
         // and store the component in the variable associated with the index
-        this.procedureContext.variables.replaceItem(component, index);
+        this.procedureContext.variables.replaceItem(index, component);
     },
 
     // STORE DRAFT symbol
@@ -317,9 +309,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // pop the draft that is on top of the component stack off the stack
         var draft = this.procedureContext.components.popItem();
         // lookup the reference associated with the index operand
-        var symbols = this.procedureContext.symbols;
-        var references = symbols.getValue('$references');
-        var reference = references.getItem(index);
+        var reference = this.procedureContext.variables.getItem(index).value;
         // write the referenced draft to the cloud repository
         cloud.writeDraft(reference, draft);
     },
@@ -330,9 +320,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // pop the document that is on top of the component stack off the stack
         var document = this.procedureContext.components.popItem();
         // lookup the reference associated with the index operand
-        var symbols = this.procedureContext.symbols;
-        var references = symbols.getValue('$references');
-        var reference = references.getItem(index);
+        var reference = this.procedureContext.variables.getItem(index).value;
         // write the referenced document to the cloud repository
         cloud.writeDocument(reference, document);
     },
@@ -343,9 +331,7 @@ VirtualMachine.prototype.instructionHandlers = [
         // pop the message that is on top of the component stack off the stack
         var message = this.procedureContext.components.popItem();
         // lookup the referenced queue associated with the index operand
-        var symbols = this.procedureContext.symbols;
-        var references = symbols.getValue('$references');
-        var queue = references.getItem(index);
+        var queue = this.procedureContext.variables.getItem(index).value;
         // send the message to the referenced queue in the cloud
         cloud.sendMessage(queue, message);
     },
@@ -411,17 +397,15 @@ VirtualMachine.prototype.instructionHandlers = [
         var index = operand;
         var context = new ProcedureContext();
         context.target = elements.Template.NONE;
-        var reference = this.procedureContext.components.popItem();
-        context.type = cloud.readDocument(reference);
-        var procedures = context.type.getValue('$procedures');
-        var association = procedures.getItem(index);
+        context.type = this.procedureContext.components.popItem();
+        var type = cloud.readDocument(context.type);
+        var association = type.procedures.getItem(index);
         context.procedure = association.key;
         var procedure = association.value;
-        context.parameters = new collections.List();
-        var typeSymbols = context.type.getValue('$symbols');
-        var procedureSymbols = procedure.getValue('$symbols');
-        context.symbols = collections.Catalog.concatenation(typeSymbols, procedureSymbols);
-        context.instructions = procedure.getValue('$instructions');
+        context.parameters = type.parameters;
+        context.literals = type.literals;
+        context.variables = this.extractVariables(type);
+        context.bytecode = procedure.getValue('$bytecode');
         context.address = 1;
         this.procedureContext = context;
         this.taskContext.procedures.pushItem(context);
@@ -475,22 +459,20 @@ VirtualMachine.prototype.instructionHandlers = [
     // EXECUTE symbol ON TARGET WITH PARAMETERS
     function(operand) {
         var index = operand;
-        // pop the target component for the procedure call off of the component stack
-        var target = this.procedureContext.components.popItem();
-        // retrieve a reference to the type of the target component
-        var parameters = new collections.List([target]);
-        var reference = intrinsics.intrinsicFunctions[intrinsics.GET_TYPE].apply(this, parameters);
-        // read the referenced type from the cloud repository
-        var type = cloud.readDocument(reference);
-        // lookup the procedure associated with the index operand
-        var symbols = this.procedureContext.symbols;
-        var procedures = symbols.getValue('$procedures');
-        var procedure = procedures.getItem(index);
-        // pop the parameters to the procedure call off of the component stack
-        parameters = this.procedureContext.components.popItem();
-        // create a new context for the procedure call
-        var context = new ProcedureContext(target, type, procedure, parameters);
-        // make the new context the current context for this VM
+        var context = new ProcedureContext();
+        context.target = this.procedureContext.components.popItem();
+        context.type = this.extractType(context.target);
+        var type = cloud.readDocument(context.type);
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getItem(index);
+        context.procedure = association.key;
+        var procedure = association.value;
+        var parameters = this.procedureContext.components.popItem();
+        context.parameters = this.extractParameters(procedure, parameters);
+        context.literals = type.literals;
+        context.variables = this.extractVariables(procedure);
+        context.bytecode = procedure.getValue('$bytecode');
+        context.address = 1;
         this.procedureContext = context;
         this.taskContext.procedures.pushItem(context);
     },

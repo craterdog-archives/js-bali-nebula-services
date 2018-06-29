@@ -30,8 +30,10 @@ describe('Bali Virtual Machine™', function() {
                 var type = fs.readFileSync(baliFile, 'utf8');
                 expect(type).to.exist;  // jshint ignore:line
                 var tree = vm.compileType(type);
+                //var tree = vm.compileType(type, true);  // includes assembly instructions
                 expect(type).to.exist;  // jshint ignore:line
                 var formatted = vm.formatType(tree);
+                //fs.writeFileSync(baliFile, formatted, 'utf8');
                 expect(formatted).to.equal(type);
             }
         });

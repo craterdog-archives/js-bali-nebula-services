@@ -35,10 +35,11 @@ var cloud = {
 /**
  * This function compiles a Bali Document Language™ type.
  * 
- * @param {string} source The Bali source code for the type to be compiled.
+ * @param {String} source The Bali source code for the type to be compiled.
+ * @param {Boolean} verbose Whether or not the assembly instructions should be included.
  * @returns {TreeNode} The full parse tree for the Bali type.
  */
-exports.compileType = function(source) {
+exports.compileType = function(source, verbose) {
     var type = language.parseDocument(source);
     analyzer.analyzeType(type);
     var procedures = language.getValueForKey(type, '$procedures');
@@ -53,10 +54,15 @@ exports.compileType = function(source) {
         var symbols = scanner.extractSymbols(instructions);
         var bytecode = assembler.assembleBytecode(instructions, symbols);
 
-        // add instructions to procedure catalog
         var catalog = component.children[1];
-        var value = language.parseExpression('"' + source + '"' + '($mediatype: "application/basm")');
-        language.setValueForKey(catalog, '$instructions', value);
+        var value;
+        language.deleteKey(catalog, '$instructions');
+        language.deleteKey(catalog, '$bytecode');
+        if (verbose) {
+            // add instructions to procedure catalog
+            value = language.parseExpression('"\n' + source.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
+            language.setValueForKey(catalog, '$instructions', value);
+        }
     
         // add bytecode to procedure catalog
         var bytes = "";

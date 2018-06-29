@@ -25,8 +25,8 @@ var types = require('bali-language/syntax/NodeTypes');
  * Machine™.
  * 
  * @param {TreeNode} procedure The parse tree structure for the procedure.
- * @param {object} type The type defining the procedure.
- * @returns {string} The assembly instructions.
+ * @param {Object} type The type defining the procedure.
+ * @returns {String} The assembly instructions.
  */
 exports.compileProcedure = function(procedure, type) {
     var visitor = new CompilingVisitor(type);
