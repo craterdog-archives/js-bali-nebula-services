@@ -16,7 +16,6 @@
 var language = require('bali-language/BaliLanguage');
 var syntax = require('bali-language/syntax');
 var types = require('bali-language/syntax/NodeTypes');
-var elements = require('../elements');
 var codex = require('../utilities/EncodingUtilities');
 
 
@@ -293,19 +292,19 @@ ContextVisitor.prototype.visitProcedureContext = function(context) {
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the parameters attribute
-    association = new syntax.TreeNode(types.ASSOCIATION);
-    symbol = new syntax.TerminalNode(types.SYMBOL, '$parameters');
-    association.addChild(symbol);
-    context.parameters.accept(this);
-    association.addChild(this.result);
-    tree.addChild(association);
-
     // generate the literals attribute
     association = new syntax.TreeNode(types.ASSOCIATION);
     symbol = new syntax.TerminalNode(types.SYMBOL, '$literals');
     association.addChild(symbol);
     context.literals.accept(this);
+    association.addChild(this.result);
+    tree.addChild(association);
+
+    // generate the parameters attribute
+    association = new syntax.TreeNode(types.ASSOCIATION);
+    symbol = new syntax.TerminalNode(types.SYMBOL, '$parameters');
+    association.addChild(symbol);
+    context.parameters.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 

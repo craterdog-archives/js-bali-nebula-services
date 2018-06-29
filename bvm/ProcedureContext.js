@@ -28,8 +28,8 @@ function ProcedureContext(catalog) {
         this.target = catalog.getValue('$target');
         this.type = catalog.getValue('$type');
         this.procedure = catalog.getValue('$procedure');
-        this.parameters = catalog.getValue('$parameters');
         this.literals = catalog.getValue('$literals');
+        this.parameters = catalog.getValue('$parameters');
         this.variables = catalog.getValue('$variables');
         this.bytecode = codex.bytesToBytecode(catalog.getValue('$bytecode').value);
         this.address = catalog.getValue('$address').toNumber();
