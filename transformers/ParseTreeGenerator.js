@@ -321,12 +321,9 @@ ContextVisitor.prototype.visitProcedureContext = function(context) {
     association = new syntax.TreeNode(types.ASSOCIATION);
     symbol = new syntax.TerminalNode(types.SYMBOL, '$bytecode');
     association.addChild(symbol);
-    var bytes = "";
-    for (var i = 0; i < context.bytecode.length; i++) {
-        bytes += codex.shortToBytes(context.bytecode[i]);
-    }
-    var binary = codex.base16Encode(bytes, '                ');
-    var bytecode = language.parseExpression("'" + binary + "'" + '($mediatype: "application/bcod")');
+    var bytes = codex.bytecodeToBytes(context.bytecode);
+    var base16 = codex.base16Encode(bytes, '                ');
+    var bytecode = language.parseExpression("'" + base16 + "'" + '($mediatype: "application/bcod")');
     association.addChild(bytecode);
     tree.addChild(association);
 
