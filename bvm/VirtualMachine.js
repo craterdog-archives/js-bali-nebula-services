@@ -21,34 +21,7 @@ var codex = require('../utilities/EncodingUtilities');
 var generator = require('../transformers/ParseTreeGenerator');
 var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./ProcedureContext');
-// var cloud = require('bali-cloud-api');
-var cloud = {
-    readDocument: function(reference) {
-        console.log('readDocument(' + reference + ')');
-    },
-    checkoutDocument: function(reference) {
-        console.log('checkoutDocument(' + reference + ')');
-    },
-    saveDraft: function(reference, document) {
-        console.log('saveDraft(' + reference + ', ' +  document + ')');
-    },
-    discardDraft: function(reference) {
-        console.log('discardDraft(' + reference + ')');
-    },
-    commitDocument: function(reference, document) {
-        console.log('commitDocument(' + reference + ', ' +  document + ')');
-    },
-    receiveMessage: function(reference) {
-        console.log('receiveMessage(' + reference + ')');
-    },
-    sendMessage: function(reference, message) {
-        console.log('sendMessage(' + reference + ', ' +  message + ')');
-    },
-    publishEvent: function(event) {
-        console.log('publishEvent(' + event + ')');
-    }
-};
-
+var cloud = require('bali-cloud-api');
 
 
 /**
