@@ -13,6 +13,7 @@
  * This class defines the context for a procedure that is being executed by the
  * the Bali Virtual Machine™.
  */
+var codex = require('../utilities/EncodingUtilities');
 
 
 /**
@@ -30,7 +31,7 @@ function ProcedureContext(catalog) {
         this.parameters = catalog.getValue('$parameters');
         this.literals = catalog.getValue('$literals');
         this.variables = catalog.getValue('$variables');
-        this.bytecode = catalog.getValue('$bytecode');
+        this.bytecode = codex.bytesToBytecode(catalog.getValue('$bytecode').value);
         this.address = catalog.getValue('$address').toNumber();
     }
     return this;

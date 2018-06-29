@@ -20,7 +20,7 @@ var analyzer = require('./compiler/Analyzer');
 var compiler = require('./compiler/Compiler');
 var scanner = require('./assembler/Scanner');
 var assembler = require('./assembler/Assembler');
-var utilities = require('./utilities/EncodingUtilities');
+var codex = require('./utilities/EncodingUtilities');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
 
@@ -65,13 +65,10 @@ exports.compileType = function(source, verbose) {
         }
     
         // add bytecode to procedure catalog
-        var bytes = "";
-        for (var i = 0; i < bytecode.length; i++) {
-            bytes += utilities.shortToBytes(bytecode[i]);
-        }
-        var binary = utilities.base16Encode(bytes, '                ');
-        value = language.parseExpression("'" + binary + "'" + '($mediatype: "application/bcod")');
-        language.setValueForKey(catalog, '$bytecode', value);
+        var bytes = codex.bytecodeToBytes(bytecode);
+        var base16 = codex.base16Encode(bytes, '                ');
+        var binary = language.parseExpression("'" + base16 + "'" + '($mediatype: "application/bcod")');
+        language.setValueForKey(catalog, '$bytecode', binary);
     }
     return type;
 };

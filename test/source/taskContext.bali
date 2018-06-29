@@ -62,12 +62,10 @@
                 $index: 5
                 $result: none
             ]
-            $bytecode: [
-                3081
-                2200
-                5731
-                9624
-            ]
+            $bytecode: '
+                2801800100006002D001183260032802A80F6002D0022803D002B007B0016004B0016005B0016006
+                B001D803800760032804A80F6004B0016006B001D804800760032802A80F6002D0022803D002B007
+                B0016005B0016006B0016004B001D803800700006001E8006007E800'($mediatype: "application/bcod")
             $address: 2
         ]($type: <bali:/?name=bali/types/vm/ProcedureContext>)
     ]($type: <bali:/?name=bali/types/collections/Stack>)

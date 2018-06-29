@@ -404,6 +404,37 @@ exports.bytesToInteger = function(bytes) {
 };
 
 
+/**
+ * This function converts a byte string into a bytecode array.
+ * 
+ * @param {String} bytes The byte string to be converted.
+ * @returns {Array} The corresponding bytecode array.
+ */
+exports.bytesToBytecode = function(bytes) {
+    var bytecode = [];
+    for (var i = 0; i < bytes.length; i += 2) {
+        var word = exports.bytesToShort(bytes.slice(i));
+        bytecode.push(word);
+    }
+    return bytecode;
+};
+
+
+/**
+ * This function converts a bytecode array into a byte string.
+ * 
+ * @param {Array} bytecode The bytecode array to be converted.
+ * @returns {String} bytes The corresponding byte string.
+ */
+exports.bytecodeToBytes = function(bytecode) {
+    var bytes = '';
+    for (var i = 0; i < bytecode.length; i++) {
+        bytes += exports.shortToBytes(bytecode[i]);
+    }
+    return bytes;
+};
+
+
 // offset:    0        1        2        3        4        0
 // byte:  00000111|11222223|33334444|45555566|66677777|...
 // mask:   F8  07  C0 3E  01 F0  0F 80  7C 03  E0  1F   F8  07

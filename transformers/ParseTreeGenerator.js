@@ -16,6 +16,8 @@
 var language = require('bali-language/BaliLanguage');
 var syntax = require('bali-language/syntax');
 var types = require('bali-language/syntax/NodeTypes');
+var elements = require('../elements');
+var codex = require('../utilities/EncodingUtilities');
 
 
 /**
@@ -319,8 +321,13 @@ ContextVisitor.prototype.visitProcedureContext = function(context) {
     association = new syntax.TreeNode(types.ASSOCIATION);
     symbol = new syntax.TerminalNode(types.SYMBOL, '$bytecode');
     association.addChild(symbol);
-    context.bytecode.accept(this);
-    association.addChild(this.result);
+    var bytes = "";
+    for (var i = 0; i < context.bytecode.length; i++) {
+        bytes += codex.shortToBytes(context.bytecode[i]);
+    }
+    var binary = codex.base16Encode(bytes, '                ');
+    var bytecode = language.parseExpression("'" + binary + "'" + '($mediatype: "application/bcod")');
+    association.addChild(bytecode);
     tree.addChild(association);
 
     // generate the address attribute
