@@ -9,5 +9,5 @@
  ************************************************************************/
 'use strict';
 
-exports.Analyzer = require('./Analyzer').Analyzer;
-exports.Compiler = require('./Compiler').Compiler;
+exports.LanguageAnalyzer = require('./LanguageAnalyzer').LanguageAnalyzer;
+exports.LanguageCompiler = require('./LanguageCompiler').LanguageCompiler;

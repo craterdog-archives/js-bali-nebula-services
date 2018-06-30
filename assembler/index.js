@@ -9,5 +9,5 @@
  ************************************************************************/
 'use strict';
 
-exports.Assembler = require('./Assembler').Assembler;
-exports.Scanner = require('./Scanner').Scanner;
+exports.InstructionAssembler = require('./InstructionAssembler').InstructionAssembler;
+exports.InstructionScanner = require('./InstructionScanner').InstructionScanner;

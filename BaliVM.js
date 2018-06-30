@@ -16,10 +16,10 @@
  */
 var language = require('bali-language/BaliLanguage');
 var instructionSet = require('bali-instruction-set/BaliInstructionSet');
-var analyzer = require('./compiler/Analyzer');
-var compiler = require('./compiler/Compiler');
-var scanner = require('./assembler/Scanner');
-var assembler = require('./assembler/Assembler');
+var analyzer = require('./compiler/LanguageAnalyzer');
+var compiler = require('./compiler/LanguageCompiler');
+var scanner = require('./assembler/InstructionScanner');
+var assembler = require('./assembler/InstructionAssembler');
 var codex = require('./utilities/EncodingUtilities');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
