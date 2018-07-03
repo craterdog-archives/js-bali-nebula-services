@@ -20,22 +20,20 @@ describe('Bali Virtual Machine™', function() {
 
         it('should construct and equal zero', function() {
             expect(new Complex().toString()).to.equal(Complex.ZERO.toString());
-            expect(new Complex(0).toNumber()).to.equal(Complex.ZERO.toNumber());
-            expect(new Complex(-0).toNumber()).to.equal(Complex.ZERO.toNumber());
+            expect(new Complex('0').toNumber()).to.equal(Complex.ZERO.toNumber());
         });
 
         it('should construct and equal five', function() {
-            expect(new Complex(5).toNumber()).to.equal(5);
-            expect(new Complex(-5).toNumber()).to.equal(-5);
+            expect(new Complex('5').toNumber()).to.equal(5);
+            expect(new Complex('-5').toNumber()).to.equal(-5);
         });
 
         it('should construct and equal infinity', function() {
-            expect(new Complex(Infinity).toNumber()).to.equal(Complex.INFINITY.toNumber());
-            expect(new Complex(-Infinity).toNumber()).to.equal(Complex.INFINITY.toNumber());
+            expect(new Complex('infinity').toNumber()).to.equal(Complex.INFINITY.toNumber());
         });
 
         it('should construct and equal undefined', function() {
-            expect(new Complex(NaN).toString()).to.equal(Complex.UNDEFINED.toString());
+            expect(new Complex('undefined').toString()).to.equal(Complex.UNDEFINED.toString());
         });
 
     });
@@ -68,12 +66,8 @@ var testValues = [
     Complex.ZERO,
     Complex.INFINITY,
     new Complex(),
-    new Complex(-5),
-    new Complex(5),
-    new Complex(-3, 4),
-    new Complex(-1, 1),
-    new Complex(1, new Angle(1)),
-    new Complex(5, Angle.PI),
+    new Complex('-5'),
+    new Complex('5'),
     new Complex('1'),
     new Complex('-1'),
     new Complex('i'),
@@ -83,10 +77,6 @@ var testValues = [
 ];
 var isUndefinedValues = [
     true,
-    false,
-    false,
-    false,
-    false,
     false,
     false,
     false,
@@ -111,20 +101,12 @@ var isZeroValues = [
     false,
     false,
     false,
-    false,
-    false,
-    false,
-    false,
     false
 ];
 var isInfiniteValues = [
     false,
     false,
     true,
-    false,
-    false,
-    false,
-    false,
     false,
     false,
     false,
@@ -142,10 +124,6 @@ var realValues = [
     0,
     -5,
     5,
-    -3,
-    -1,
-    0.5403023058681398,
-    -5,
     1,
     -1,
     0,
@@ -159,10 +137,6 @@ var imaginaryValues = [
     Infinity,
     0,
     0,
-    0,
-    4,
-    1,
-    0.8414709848078965,
     0,
     0,
     0,
@@ -178,10 +152,6 @@ var magnitudeValues = [
     0,
     5,
     5,
-    5,
-    1.4142135623730951,
-    1,
-    5,
     1,
     1,
     1,
@@ -196,10 +166,6 @@ var angleValues = [
     0,
     3.141592653589793,
     0,
-    2.214297435588181,
-    2.356194490192345,
-    1,
-    3.141592653589793,
     0,
     3.141592653589793,
     1.5707963267948966,
@@ -214,10 +180,6 @@ var stringValues = [
     '0',
     '-5',
     '5',
-    '(-3, 4i)',
-    '(-1, i)',
-    '(1 e^i)',
-    '(5 e^pi i)',
     '1',
     '-1',
     'i',
@@ -232,10 +194,6 @@ var rectangularValues = [
     '0',
     '-5',
     '5',
-    '(-3, 4i)',
-    '(-1, i)',
-    '(0.5403023058681398, 0.8414709848078965i)',
-    '-5',
     '1',
     '-1',
     'i',
@@ -250,10 +208,6 @@ var polarValues = [
     '0',
     '(5 e^pi i)',
     '5',
-    '(5 e^2.214297435588181i)',
-    '(1.4142135623730951 e^2.356194490192345i)',
-    '(1 e^i)',
-    '(5 e^pi i)',
     '1',
     '(1 e^pi i)',
     '(1 e^1.5707963267948966i)',

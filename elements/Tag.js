@@ -28,7 +28,7 @@ var random = require('../utilities/RandomUtilities');
  * </code></pre>
  * 
  * 
- * @param {number|string} optionalSizeOrValue An optional parameter defining
+ * @param {Number|String} optionalSizeOrValue An optional parameter defining
  * the size of the new tag or the value it should represent.
  * @returns {Tag} The new tag element.
  */
@@ -90,7 +90,7 @@ Tag.prototype.comparedWith = function(that) {
 /**
  * This method returns a string representation of the tag element.
  * 
- * @returns {string} The string representation of the tag element.
+ * @returns {String} The string representation of the tag element.
  */
 Tag.prototype.toString = function() {
     return this.value;
@@ -100,7 +100,7 @@ Tag.prototype.toString = function() {
 /**
  * This method returns the raw byte string for the tag element.
  * 
- * @returns {string} The raw byte string for the tag element.
+ * @returns {String} The raw byte string for the tag element.
  */
 Tag.prototype.getBytes = function() {
     // not called very often so do it on demand
@@ -111,7 +111,7 @@ Tag.prototype.getBytes = function() {
 /**
  * This method returns number of bytes in the tag element.
  * 
- * @returns {string} The number of bytes in the tag element.
+ * @returns {Number} The number of bytes in the tag element.
  */
 Tag.prototype.getNumberOfBytes = function() {
     return this.size;
@@ -121,7 +121,7 @@ Tag.prototype.getNumberOfBytes = function() {
 /**
  * This method returns the hash value for the tag element.
  * 
- * @returns {string} The the hash value for the tag element.
+ * @returns {Number} The the hash value for the tag element.
  */
 Tag.prototype.getHash = function() {
     return this.hash;

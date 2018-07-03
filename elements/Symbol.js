@@ -20,7 +20,7 @@ var abstractions = require('../abstractions/');
 /**
  * This constructor creates a new symbol element.
  * 
- * @param {string} value The value of the symbol.
+ * @param {String} value The value of the symbol.
  * @returns {Symbol} The new symbol element.
  */
 function Symbol(value) {
@@ -63,7 +63,7 @@ Symbol.prototype.comparedWith = function(that) {
 /**
  * This method returns a string representation of the symbol element.
  * 
- * @returns {string} The string representation of the symbol element.
+ * @returns {String} The string representation of the symbol element.
  */
 Symbol.prototype.toString = function() {
     return this.value;
@@ -73,7 +73,7 @@ Symbol.prototype.toString = function() {
 /**
  * This method returns the identifier part of the symbol element.
  * 
- * @returns {string} The the identifier part of the symbol element.
+ * @returns {String} The the identifier part of the symbol element.
  */
 Symbol.prototype.getIdentifier = function() {
     return this.value.substring(1);

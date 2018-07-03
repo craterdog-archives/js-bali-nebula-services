@@ -19,8 +19,8 @@ var abstractions = require('../abstractions/');
  * This constructor creates an immutable instance of an angle in radians.
  * 
  * @constructor
- * @param {number|string} value
- * @returns {Angle}
+ * @param {Number|String} value The value of the angle.
+ * @returns {Angle} The new angle element.
  */
 function Angle(value) {
     abstractions.Element.call(this);
@@ -68,7 +68,7 @@ Angle.prototype.accept = function(visitor) {
 /**
  * This method returns a string version of the angle.
  * 
- * @returns {string}
+ * @returns {String}
  */
 Angle.prototype.toString = function() {
     return this.value.toString();

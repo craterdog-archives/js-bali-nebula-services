@@ -20,7 +20,7 @@ var abstractions = require('../abstractions/');
  * This constructor creates a new text string element.
  * 
  * @constructor
- * @param {string} value The value of the text string (embedded in double quotes).
+ * @param {String} value The value of the text string (embedded in double quotes).
  * @returns {Text} The new text string.
  */
 function Text(value) {
@@ -57,7 +57,7 @@ Text.prototype.comparedWith = function(that) {
 /**
  * This method returns the text string embedded in double quotes.
  * 
- * @returns {string} The text string embedded in double quotes.
+ * @returns {String} The text string embedded in double quotes.
  */
 Text.prototype.toString = function() {
     return this.value;
@@ -67,7 +67,7 @@ Text.prototype.toString = function() {
 /**
  * This method returns the raw javascript string.
  * 
- * @returns {string} The raw javascript string.
+ * @returns {String} The raw javascript string.
  */
 Text.prototype.getRawString = function() {
     return this.value.slice(1, -1);  // strip off the double quotes

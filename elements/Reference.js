@@ -21,7 +21,7 @@ var URL = require('url').URL;
 /**
  * This constructor creates a new reference element.
  * 
- * @param {string} value The value of the reference.
+ * @param {String} value The value of the reference.
  * @returns {Reference} The new reference element.
  */
 function Reference(value) {
@@ -60,7 +60,7 @@ Reference.prototype.comparedWith = function(that) {
 /**
  * This method returns a string representation of the reference element.
  * 
- * @returns {string} The string representation of the reference element.
+ * @returns {String} The string representation of the reference element.
  */
 Reference.prototype.toString = function() {
     return '<' + this.value + '>';  // embed in angle brackets

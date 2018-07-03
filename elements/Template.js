@@ -20,7 +20,7 @@ var abstractions = require('../abstractions/');
  * This constructor creates a new template element.
  * 
  * @constructor
- * @param {string} value The value of the template element.
+ * @param {String} value The value of the template element.
  * @returns {Template} The new template element.
  */
 function Template(value) {
@@ -67,7 +67,7 @@ Template.prototype.comparedWith = function(that) {
 /**
  * This method returns the string value of the template type.
  * 
- * @returns {string} The string value of the template type.
+ * @returns {String} The string value of the template type.
  */
 Template.prototype.toString = function() {
     return this.value;

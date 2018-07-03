@@ -24,127 +24,70 @@ var Angle = require('./Angle').Angle;
  * This constructor creates an immutable instance of a complex number element.
  * The allowed ways to call it include:
  * <pre><code>
- * new Complex()
- * new Complex(realPart, imaginaryPart)
- * new Complex(magnitude, angle)
+ * new Complex()  // defaults to zero
  * new Complex('(3, 4i)')  // rectangular form
  * new Complex('(12.3e-45 e^3.1415926i)')  // polar form
  * </code></pre>
  * 
  * @constructor
- * @param {number|string} numberOrString
- * @param {number|Angle} optionalNumberOrAngle
- * @returns {Complex}
+ * @param {String} value The string value of the complex number.
+ * @returns {Complex} The new complex element.
  */
-function Complex(numberOrString, optionalNumberOrAngle) {
+function Complex(value) {
     abstractions.Element.call(this);
+    value = value || '0';  // default to zero
     this.format = 'rectangular';  // rectangular coordinates by default
     var number;
     var real;
     var imaginary;
-
-    if (typeof numberOrString === 'undefined' || numberOrString === null) {
-        // Complex(): constructor generates the default complex value of zero
-        numberOrString = 0;
-    }
-
-    if (typeof numberOrString === 'number' && !optionalNumberOrAngle) {
-        // Complex(real): constructor generates a complex number with only a real part
-        number = numberOrString;
-        if (isNaN(number)) {
+    // Complex(value): constructor generates a complex number from a string
+    var chars = new antlr.InputStream(value);
+    var lexer = new grammar.BaliLanguageLexer(chars);
+    var tokens = new antlr.CommonTokenStream(lexer);
+    var parser = new grammar.BaliLanguageParser(tokens);
+    parser.buildParseTrees = true;
+    number = parser.number();
+    var nodeType = number.constructor.name;
+    switch (nodeType) {
+        case 'UndefinedNumberContext':
             this.real = NaN;
             this.imaginary = NaN;
             this.magnitude = NaN;
             this.angle = new Angle(0);
-        } else if (isZero(number)) {  // handles -0 too
-            this.real = 0;
-            this.imaginary = 0;
-            this.magnitude = 0;
-            this.angle = new Angle(0);
-        } else if (isInfinite(number)) {
+            break;
+        case 'InfiniteNumberContext':
             this.real = Infinity;
             this.imaginary = Infinity;
             this.magnitude = Infinity;
             this.angle = new Angle(0);
-        } else {
-            this.real = number;
+            break;
+        case 'RealNumberContext':
+            real = number.real();
+            this.real = realToNumber(real);
             this.imaginary = 0;
-        }
-
-    } else if (typeof numberOrString === 'string' && !optionalNumberOrAngle) {
-        // Complex(string): constructor generates a complex number from a string
-        var string = numberOrString;
-        var chars = new antlr.InputStream(string);
-        var lexer = new grammar.BaliLanguageLexer(chars);
-        var tokens = new antlr.CommonTokenStream(lexer);
-        var parser = new grammar.BaliLanguageParser(tokens);
-        parser.buildParseTrees = true;
-        number = parser.number();
-        var nodeType = number.constructor.name;
-        switch (nodeType) {
-            case 'UndefinedNumberContext':
-                this.real = NaN;
-                this.imaginary = NaN;
-                this.magnitude = NaN;
-                this.angle = new Angle(0);
-                break;
-            case 'InfiniteNumberContext':
-                this.real = Infinity;
-                this.imaginary = Infinity;
-                this.magnitude = Infinity;
-                this.angle = new Angle(0);
-                break;
-            case 'RealNumberContext':
-                real = number.real();
+            break;
+        case 'ImaginaryNumberContext':
+            imaginary = number.imaginary();
+            this.real = 0;
+            this.imaginary = imaginaryToNumber(imaginary);
+            break;
+        case 'ComplexNumberContext':
+            real = number.real();
+            imaginary = number.imaginary();
+            var delimiter = number.del.text;
+            if (delimiter === ',') {
                 this.real = realToNumber(real);
-                this.imaginary = 0;
-                break;
-            case 'ImaginaryNumberContext':
-                imaginary = number.imaginary();
-                this.real = 0;
                 this.imaginary = imaginaryToNumber(imaginary);
-                break;
-            case 'ComplexNumberContext':
-                real = number.real();
-                imaginary = number.imaginary();
-                var delimiter = number.del.text;
-                if (delimiter === ',') {
-                    this.real = realToNumber(real);
-                    this.imaginary = imaginaryToNumber(imaginary);
-                } else {
-                    this.format = 'polar';
-                    this.magnitude = realToNumber(real);
-                    this.angle = new Angle(imaginaryToNumber(imaginary));
-                    this.normalize();
-                }
-                break;
-            default:
-                throw new Error('COMPLEX: An invalid string was passed to the constructor : ' + string);
-        }
-    } else if (typeof numberOrString === 'number' && typeof optionalNumberOrAngle === 'number') {
-        // Complex(real, imaginary): constructor generates a complex number with a real part and imaginary part
-        real = numberOrString;
-        imaginary = optionalNumberOrAngle;
-        if (isNaN(real) || isNaN(imaginary)) return Complex.UNDEFINED;
-        if (isZero(real) && isZero(imaginary)) return Complex.ZERO;
-        if (isInfinite(real) || isInfinite(imaginary)) return Complex.INFINITY;
-        this.real = real;
-        this.imaginary = imaginary;
-    } else if (typeof numberOrString === 'number' && optionalNumberOrAngle && optionalNumberOrAngle.constructor.name === 'Angle') {
-        // Complex(magnitude, angle): constructor generates a complex number with a magnitude and angle
-        this.format = 'polar';
-        var magnitude = numberOrString;
-        var angle = optionalNumberOrAngle;
-        if (isNaN(magnitude)) return Complex.UNDEFINED;
-        if (isZero(magnitude)) return Complex.ZERO;
-        if (isInfinite(magnitude)) return Complex.INFINITY;
-        this.magnitude = magnitude;
-        this.angle = angle;
-        this.normalize();
-    } else {
-        throw new Error('COMPLEX: An invalid value was passed to the constructor: ' + numberOrString + ', ' + optionalNumberOrAngle);
+            } else {
+                this.format = 'polar';
+                this.magnitude = realToNumber(real);
+                this.angle = new Angle(imaginaryToNumber(imaginary));
+                this.normalize();
+            }
+            break;
+        default:
+            throw new Error('COMPLEX: An invalid string was passed to the constructor : ' + value);
     }
-
     if (this.isUndefined() && typeof Complex.UNDEFINED !== 'undefined') return Complex.UNDEFINED;
     if (this.isZero() && typeof Complex.ZERO !== 'undefined') return Complex.ZERO;
     if (this.isInfinite() && typeof Complex.INFINITY !== 'undefined') return Complex.INFINITY;
@@ -282,7 +225,7 @@ Complex.prototype.comparedWith = function(that) {
 /**
  * This method returns a string version of the complex number.
  * 
- * @returns {string}
+ * @returns {String}
  */
 Complex.prototype.toString = function() {
     if (this.format === 'rectangular') {
@@ -296,7 +239,7 @@ Complex.prototype.toString = function() {
 /**
  * This method returns a string version of the complex number in retangular form.
  * 
- * @returns {string}
+ * @returns {String}
  */
 Complex.prototype.toRectangular = function() {
     if (this.isUndefined()) return 'undefined';
@@ -316,7 +259,7 @@ Complex.prototype.toRectangular = function() {
 /**
  * This method returns a string version of the complex number in polar form.
  * 
- * @returns {string}
+ * @returns {String}
  */
 Complex.prototype.toPolar = function() {
     if (this.isUndefined()) return 'undefined';
@@ -342,9 +285,9 @@ Complex.prototype.toNumber = function() {
 };
 
 
-Complex.UNDEFINED = new Complex(NaN);
-Complex.ZERO = new Complex(0);
-Complex.INFINITY = new Complex(Infinity);
+Complex.UNDEFINED = new Complex('undefined');
+Complex.ZERO = new Complex('0');
+Complex.INFINITY = new Complex('infinity');
 
 
 function lockOnPole(number) {
@@ -370,7 +313,7 @@ function isInfinite(number) {
  * This function returns the Bali string representation of a real number.
  * 
  * @param {number} real The real number.
- * @returns {string} The Bali string for that number.
+ * @returns {String} The Bali string for that number.
  */
 function realToString(real) {
     var string = real.toString();
@@ -412,7 +355,7 @@ function realToString(real) {
  * This function returns the Bali string representation of an imaginary number.
  * 
  * @param {number} imaginary The imaginary number.
- * @returns {string} The Bali string for that number.
+ * @returns {String} The Bali string for that number.
  */
 function imaginaryToString(imaginary) {
     var string = realToString(imaginary);

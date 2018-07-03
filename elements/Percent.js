@@ -19,7 +19,7 @@ var abstractions = require('../abstractions/');
 /**
  * This constructor creates a new percent element.
  * 
- * @param {number|string} value The value of the percent.
+ * @param {Number|String} value The value of the percent.
  * @returns {Percent} The new percent element.
  */
 function Percent(value) {

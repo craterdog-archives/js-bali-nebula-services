@@ -153,7 +153,7 @@ TreeVisitor.prototype.visitDocument = function(tree) {
 TreeVisitor.prototype.visitElement = function(terminal) {
     switch (terminal.type) {
         case types.BINARY:
-            this.result = new elements.Binary(terminal.value, 'autodetect');
+            this.result = new elements.Binary(terminal.value);
             break;
         case types.DURATION:
             this.result = new elements.Duration(terminal.value);

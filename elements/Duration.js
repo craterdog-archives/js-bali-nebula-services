@@ -21,7 +21,7 @@ var duration = require('moment').duration;
 /**
  * This constructor creates a new duration element.
  * 
- * @param {string} value The value of the duration.
+ * @param {String} value The value of the duration.
  * @returns {Duration} The new duration element.
  */
 function Duration(value) {
@@ -67,7 +67,7 @@ Duration.prototype.comparedWith = function(that) {
 /**
  * This method returns a string representation of the duration element.
  * 
- * @returns {string} The string representation of the duration element.
+ * @returns {String} The string representation of the duration element.
  */
 Duration.prototype.toString = function() {
     return '~' + this.value.toISOString();

@@ -20,7 +20,7 @@ var random = require('../utilities/RandomUtilities');
 /**
  * This constructor creates a new probability element.
  * 
- * @param {number|string|boolean} value The value of the probability.
+ * @param {Number|String|boolean} value The value of the probability.
  * @returns {Probability} The new probability element.
  */
 function Probability(value) {
@@ -90,7 +90,7 @@ Probability.prototype.comparedWith = function(that) {
 /**
  * This method returns a string representation of the probability element.
  * 
- * @returns {string} The string representation of the probability element.
+ * @returns {S{Sing} The string representation of the probability element.
  */
 Probability.prototype.toString = function () {
     if (this.value === 1) return 'true';

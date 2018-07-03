@@ -32,7 +32,7 @@ var FORMATS = [
 /**
  * This constructor creates a new moment element.
  * 
- * @param {string} value The value of the moment.
+ * @param {String} value The value of the moment.
  * @returns {Moment} The new moment element.
  */
 function Moment(value) {
@@ -84,7 +84,7 @@ Moment.prototype.comparedWith = function(that) {
 /**
  * This method returns a string representation of the moment element.
  * 
- * @returns {string} The string representation of the moment element.
+ * @returns {String} The string representation of the moment element.
  */
 Moment.prototype.toString = function() {
     return this.value.format(this.format);
