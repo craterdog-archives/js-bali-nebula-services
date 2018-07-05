@@ -13,9 +13,9 @@
  * This element class captures the state and methods associated with a
  * tag element.
  */
+var codex = require('bali-utilities/EncodingUtilities');
+var random = require('bali-utilities/RandomUtilities');
 var abstractions = require('../abstractions/');
-var codex = require('../utilities/EncodingUtilities');
-var random = require('../utilities/RandomUtilities');
 
 
 /**

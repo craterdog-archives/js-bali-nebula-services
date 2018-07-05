@@ -8,9 +8,9 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
+var codex = require('bali-utilities/EncodingUtilities');
+var random = require('bali-utilities/RandomUtilities');
 var Binary = require('../../elements/Binary').Binary;
-var random = require('../../utilities/RandomUtilities');
-var codex = require('../../utilities/EncodingUtilities');
 var mocha = require('mocha');
 var expect = require('chai').expect;
 

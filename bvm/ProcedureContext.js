@@ -13,7 +13,7 @@
  * This class defines the context for a procedure that is being executed by the
  * the Bali Virtual Machine™.
  */
-var codex = require('../utilities/EncodingUtilities');
+var codex = require('../utilities/BytecodeUtilities');
 
 
 /**

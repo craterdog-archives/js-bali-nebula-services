@@ -13,15 +13,15 @@
  * This class defines the Bali Virtual Machine™.
  */
 var language = require('bali-language/BaliLanguage');
+var codex = require('bali-utilities/EncodingUtilities');
+var cloud = require('bali-cloud-api');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
 var elements = require('../elements');
 var collections = require('../collections');
 var bytecode = require('../utilities/BytecodeUtilities');
-var codex = require('../utilities/EncodingUtilities');
 var generator = require('../transformers/ParseTreeGenerator');
 var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./ProcedureContext');
-var cloud = require('bali-cloud-api');
 
 
 /**

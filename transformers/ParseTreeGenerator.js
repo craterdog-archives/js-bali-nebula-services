@@ -16,7 +16,8 @@
 var language = require('bali-language/BaliLanguage');
 var syntax = require('bali-language/syntax');
 var types = require('bali-language/syntax/NodeTypes');
-var codex = require('../utilities/EncodingUtilities');
+var codex = require('bali-utilities/EncodingUtilities');
+var utilities = require('../utilities/BytecodeUtilities');
 
 
 /**
@@ -320,7 +321,7 @@ ContextVisitor.prototype.visitProcedureContext = function(context) {
     association = new syntax.TreeNode(types.ASSOCIATION);
     symbol = new syntax.TerminalNode(types.SYMBOL, '$bytecode');
     association.addChild(symbol);
-    var bytes = codex.bytecodeToBytes(context.bytecode);
+    var bytes = utilities.bytecodeToBytes(context.bytecode);
     var base16 = codex.base16Encode(bytes, '                ');
     var bytecode = language.parseExpression("'" + base16 + "'" + '($mediatype: "application/bcod")');
     association.addChild(bytecode);

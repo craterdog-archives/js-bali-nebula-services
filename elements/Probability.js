@@ -13,8 +13,8 @@
  * This element class captures the state and methods associated with a
  * probability element.
  */
+var random = require('bali-utilities/RandomUtilities');
 var abstractions = require('../abstractions/');
-var random = require('../utilities/RandomUtilities');
 
 
 /**

@@ -24,6 +24,7 @@
  * invalid index or address.
  */
 var types = require('bali-instruction-set/syntax/InstructionTypes');
+var codex = require('bali-utilities/EncodingUtilities');
 
 
 // PUBLIC FUNCTIONS
@@ -180,6 +181,37 @@ exports.instructionIsValid = function(instruction) {
         default:
             return false;
     }
+};
+
+
+/**
+ * This function converts a byte string into a bytecode array.
+ * 
+ * @param {String} bytes The byte string to be converted.
+ * @returns {Array} The corresponding bytecode array.
+ */
+exports.bytesToBytecode = function(bytes) {
+    var bytecode = [];
+    for (var i = 0; i < bytes.length; i += 2) {
+        var word = codex.bytesToShort(bytes.slice(i));
+        bytecode.push(word);
+    }
+    return bytecode;
+};
+
+
+/**
+ * This function converts a bytecode array into a byte string.
+ * 
+ * @param {Array} bytecode The bytecode array to be converted.
+ * @returns {String} bytes The corresponding byte string.
+ */
+exports.bytecodeToBytes = function(bytecode) {
+    var bytes = '';
+    for (var i = 0; i < bytecode.length; i++) {
+        bytes += codex.shortToBytes(bytecode[i]);
+    }
+    return bytes;
 };
 
 

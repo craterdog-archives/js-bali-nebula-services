@@ -16,11 +16,12 @@
  */
 var language = require('bali-language/BaliLanguage');
 var instructionSet = require('bali-instruction-set/BaliInstructionSet');
+var codex = require('bali-utilities/EncodingUtilities');
 var analyzer = require('./compiler/LanguageAnalyzer');
 var compiler = require('./compiler/LanguageCompiler');
 var scanner = require('./assembler/InstructionScanner');
 var assembler = require('./assembler/InstructionAssembler');
-var codex = require('./utilities/EncodingUtilities');
+var utilities = require('./utilities/BytecodeUtilities');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
 
@@ -65,7 +66,7 @@ exports.compileType = function(source, verbose) {
         }
     
         // add bytecode to procedure catalog
-        var bytes = codex.bytecodeToBytes(bytecode);
+        var bytes = utilities.bytecodeToBytes(bytecode);
         var base16 = codex.base16Encode(bytes, '                ');
         var binary = language.parseExpression("'" + base16 + "'" + '($mediatype: "application/bcod")');
         language.setValueForKey(catalog, '$bytecode', binary);

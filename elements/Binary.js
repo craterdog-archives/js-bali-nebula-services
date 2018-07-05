@@ -13,8 +13,8 @@
  * This element class captures the state and methods associated with a
  * binary string element.
  */
+var codex = require('bali-utilities/EncodingUtilities');
 var abstractions = require('../abstractions/');
-var codex = require('../utilities/EncodingUtilities');
 
 
 /**
