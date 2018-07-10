@@ -26,20 +26,15 @@ var ProcedureContext = require('./ProcedureContext');
 
 /**
  * This constructor creates a new Bali Virtual Machine™ using a reference to an existing
- * task context if possible.
+ * task context.
  * 
  * @param {Reference} taskReference A reference to an existing task context.
  * @returns {VirtualMachine} The new virtual machine.
  */
 function VirtualMachine(taskReference) {
-    if (taskReference) {
-        this.taskReference = taskReference;
-        this.taskContext = cloud.retrieveDocument(taskReference);
-        this.procedureContext = this.taskContext.procedures.getTop();
-    } else {
-        this.taskReference = new elements.Reference('bali:/' + new elements.Tag());
-        this.taskContext = new TaskContext();
-    }
+    this.taskReference = taskReference;
+    this.taskContext = cloud.retrieveDocument(taskReference);
+    this.procedureContext = this.taskContext.procedures.getTop();
     return this;
 }
 VirtualMachine.prototype.constructor = VirtualMachine;
