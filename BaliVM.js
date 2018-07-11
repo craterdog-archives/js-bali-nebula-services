@@ -68,7 +68,7 @@ exports.compileType = function(source, verbose) {
         // add bytecode to procedure catalog
         var bytes = utilities.bytecodeToBytes(bytecode);
         var base16 = codex.base16Encode(bytes, '                ');
-        var binary = language.parseExpression("'" + base16 + "'" + '($mediatype: "application/bcod")');
+        var binary = language.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
         language.setValueForKey(catalog, '$bytecode', binary);
     }
     return type;

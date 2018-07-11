@@ -97,7 +97,8 @@ The output should be:
                 280A2803A80F2804A803280528062804A80F280728042808B017B01AB001B01AB81BB01AB81B8001
                 2803A80F800260032804B017D001D00280046004D00318576004D00480056001D0012802B00B2804
                 A80F6005B001D8058006004600006007280BA80F6003B0012802B001280AB0012809B001D8068006
-                6002D007E8006006E800'($mediatype: "application/bcod")
+                6002D007E8006006E800
+            '($mediatype: "application/bcod")
         ]
         $moveTower: [
             $source: {
@@ -112,7 +113,8 @@ The output should be:
             $bytecode: '
                 2801800100006002D001183260032802A80F6002D0022803D002B007B0016004B0016005B0016006
                 B001D803800760032804A80F6004B0016006B001D804800760032802A80F6002D0022803D002B007
-                B0016005B0016006B0016004B001D803800700006001E8006007E800'($mediatype: "application/bcod")
+                B0016005B0016006B0016004B001D803800700006001E8006007E800
+            '($mediatype: "application/bcod")
         ]
         $moveDisk: [
             $source: {
@@ -122,7 +124,8 @@ The output should be:
             }
             $bytecode: '
                 6001D0016002B00BD00280036001D0016004B00B2801A80F6003B001D803800560062801A80F2802
-                B001D80480056005E800'($mediatype: "application/bcod")
+                B001D80480056005E800
+            '($mediatype: "application/bcod")
         ]
     ]
 ]($type: $Class)
