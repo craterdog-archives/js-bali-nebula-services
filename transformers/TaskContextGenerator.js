@@ -14,7 +14,7 @@
  * task context from its associated Bali parse tree.
  */
 var documents = require('bali-document-notation/BaliDocuments');
-var types = require('bali-document-notation/syntax/NodeTypes');
+var types = require('bali-document-notation/nodes/Types');
 var elements = require('../elements/');
 var collections = require('../collections/');
 var TaskContext = require('../bvm/TaskContext').TaskContext;
@@ -25,12 +25,12 @@ var ProcedureContext = require('../bvm/ProcedureContext').ProcedureContext;
  * This function takes a Bali parse tree and uses it to generate a
  * corresponding Bali Virtual Machine™ task context.
  * 
- * @param {TreeNode} tree The parse tree for the task context.
+ * @param {Document} document The Bali parse tree for the task context.
  * @returns {Object} The generated task context.
  */
-exports.generateTaskContext = function(tree) {
+exports.generateTaskContext = function(document) {
     var visitor = new TreeVisitor();
-    tree.accept(visitor);
+    document.accept(visitor);
     var taskContext = visitor.result;
     return taskContext;
 };
@@ -132,14 +132,9 @@ TreeVisitor.prototype.replaceCollectionType = function(collection) {
 
 
 // document: NEWLINE* (reference NEWLINE)? body (NEWLINE seal)* NEWLINE* EOF
-TreeVisitor.prototype.visitDocument = function(tree) {
-    if (tree.previousReference) {
-        tree.previousReference.accept(this);
-    }
-    tree.body.accept(this);
-    for (var i = 0; i < tree.seals.length; i++) {
-        tree.seals[i].accept(this);
-    }
+TreeVisitor.prototype.visitDocument = function(document) {
+    // we only care about the body of the document
+    document.body.accept(this);
 };
 
 

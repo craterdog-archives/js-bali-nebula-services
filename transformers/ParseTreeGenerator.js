@@ -11,13 +11,13 @@
 
 /**
  * This library provides functions that transform a Bali Virtual Machine™
- * task context into its corresponding parse tree structure.
+ * task context into its corresponding Bali parse tree structure.
  */
 var documents = require('bali-document-notation/BaliDocuments');
-var RootNode = require('bali-document-notation/syntax/RootNode').RootNode;
-var TreeNode = require('bali-document-notation/syntax/TreeNode').TreeNode;
-var TerminalNode = require('bali-document-notation/syntax/TerminalNode').TerminalNode;
-var types = require('bali-document-notation/syntax/NodeTypes');
+var Document = require('bali-document-notation/nodes/Document').Document;
+var Tree = require('bali-document-notation/nodes/Tree').Tree;
+var Terminal = require('bali-document-notation/nodes/Terminal').Terminal;
+var types = require('bali-document-notation/nodes/Types');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var utilities = require('../utilities/BytecodeUtilities');
 
@@ -27,13 +27,15 @@ var utilities = require('../utilities/BytecodeUtilities');
  * transforms it into its corresponding Bali parse tree.
  * 
  * @param {Object} context The task context to be transformed.
- * @returns {DocumentContext} The corresponding parse tree structure.
+ * @returns {Document} The corresponding parse tree structure.
  */
 exports.generateParseTree = function(context) {
     var visitor = new ContextVisitor();
     context.accept(visitor);
-    var parseTree = visitor.result;
-    return parseTree;
+    var body = visitor.result;
+    // must turn it into a document
+    var document = new Document(types.DOCUMENT, body);
+    return document;
 };
 
 
@@ -46,72 +48,72 @@ ContextVisitor.prototype.constructor = ContextVisitor;
 
 
 ContextVisitor.prototype.visitAngle = function(angle) {
-    this.result = new TerminalNode(types.ANGLE, angle.toString());
+    this.result = new Terminal(types.ANGLE, angle.toString());
 };
 
 
 ContextVisitor.prototype.visitBinary = function(binary) {
-    this.result = new TerminalNode(types.BINARY, binary.toString());
+    this.result = new Terminal(types.BINARY, binary.toString());
 };
 
 
 ContextVisitor.prototype.visitDuration = function(duration) {
-    this.result = new TerminalNode(types.DURATION, duration.toString());
+    this.result = new Terminal(types.DURATION, duration.toString());
 };
 
 
 ContextVisitor.prototype.visitMoment = function(moment) {
-    this.result = new TerminalNode(types.MOMENT, moment.toString());
+    this.result = new Terminal(types.MOMENT, moment.toString());
 };
 
 
 ContextVisitor.prototype.visitNumber = function(number) {
-    this.result = new TerminalNode(types.NUMBER, number.toString());
+    this.result = new Terminal(types.NUMBER, number.toString());
 };
 
 
 ContextVisitor.prototype.visitPercent = function(percent) {
-    this.result = new TerminalNode(types.PERCENT, percent.toString());
+    this.result = new Terminal(types.PERCENT, percent.toString());
 };
 
 
 ContextVisitor.prototype.visitProbability = function(probability) {
-    this.result = new TerminalNode(types.PROBABILITY, probability.toString());
+    this.result = new Terminal(types.PROBABILITY, probability.toString());
 };
 
 
 ContextVisitor.prototype.visitReference = function(reference) {
-    this.result = new TerminalNode(types.REFERENCE, reference.toString());
+    this.result = new Terminal(types.REFERENCE, reference.toString());
 };
 
 
 ContextVisitor.prototype.visitSymbol = function(symbol) {
-    this.result = new TerminalNode(types.SYMBOL, symbol.toString());
+    this.result = new Terminal(types.SYMBOL, symbol.toString());
 };
 
 
 ContextVisitor.prototype.visitTag = function(tag) {
-    this.result = new TerminalNode(types.TAG, tag.toString());
+    this.result = new Terminal(types.TAG, tag.toString());
 };
 
 
 ContextVisitor.prototype.visitTemplate = function(template) {
-    this.result = new TerminalNode(types.TEMPLATE, template.toString());
+    this.result = new Terminal(types.TEMPLATE, template.toString());
 };
 
 
 ContextVisitor.prototype.visitText = function(text) {
-    this.result = new TerminalNode(types.TEXT, text.toString());
+    this.result = new Terminal(types.TEXT, text.toString());
 };
 
 
 ContextVisitor.prototype.visitVersion = function(version) {
-    this.result = new TerminalNode(types.VERSION, version.toString());
+    this.result = new Terminal(types.VERSION, version.toString());
 };
 
 
 ContextVisitor.prototype.visitAssociation = function(association) {
-    var tree = new TreeNode(types.ASSOCIATION);
+    var tree = new Tree(types.ASSOCIATION);
     association.key.accept(this);
     tree.addChild(this.result);
     association.value.accept(this);
@@ -121,64 +123,64 @@ ContextVisitor.prototype.visitAssociation = function(association) {
 
 
 ContextVisitor.prototype.visitCatalog = function(catalog) {
-    var tree = new TreeNode(types.CATALOG);
+    var tree = new Tree(types.CATALOG);
     var iterator = catalog.iterator();
     while (iterator.hasNext()) {
         var association = iterator.getNext();
         association.accept(this);
         tree.addChild(this.result);
     }
-    var structure = new TreeNode(types.STRUCTURE);
+    var structure = new Tree(types.STRUCTURE);
     structure.addChild(tree);
-    var component = new TreeNode(types.COMPONENT);
+    var component = new Tree(types.COMPONENT);
     component.addChild(structure);
     this.result = component;
 };
 
 
 ContextVisitor.prototype.visitList = function(list) {
-    var tree = new TreeNode(types.LIST);
+    var tree = new Tree(types.LIST);
     var iterator = list.iterator();
     while (iterator.hasNext()) {
         var item = iterator.getNext();
         item.accept(this);
         tree.addChild(this.result);
     }
-    var structure = new TreeNode(types.STRUCTURE);
+    var structure = new Tree(types.STRUCTURE);
     structure.addChild(tree);
-    var component = new TreeNode(types.COMPONENT);
+    var component = new Tree(types.COMPONENT);
     component.addChild(structure);
     this.result = component;
 };
 
 
 ContextVisitor.prototype.visitRange = function(range) {
-    var tree = new TreeNode(types.RANGE);
+    var tree = new Tree(types.RANGE);
     var first = range.getFirst();
     var last = range.getLast();
     first.accept(this);
     tree.addChild(this.result);
     last.accept(this);
     tree.addChild(this.result);
-    var structure = new TreeNode(types.STRUCTURE);
+    var structure = new Tree(types.STRUCTURE);
     structure.addChild(tree);
-    var component = new TreeNode(types.COMPONENT);
+    var component = new Tree(types.COMPONENT);
     component.addChild(structure);
     this.result = component;
 };
 
 
 ContextVisitor.prototype.visitSet = function(set) {
-    var tree = new TreeNode(types.LIST);
+    var tree = new Tree(types.LIST);
     var iterator = set.iterator();
     while (iterator.hasNext()) {
         var item = iterator.getNext();
         item.accept(this);
         tree.addChild(this.result);
     }
-    var structure = new TreeNode(types.STRUCTURE);
+    var structure = new Tree(types.STRUCTURE);
     structure.addChild(tree);
-    var component = new TreeNode(types.COMPONENT);
+    var component = new Tree(types.COMPONENT);
     component.addChild(structure);
     var parameters = documents.parseParameters('($type: <bali:/?name=bali/types/collections/Set>)');
     component.addChild(parameters);
@@ -187,16 +189,16 @@ ContextVisitor.prototype.visitSet = function(set) {
 
 
 ContextVisitor.prototype.visitStack = function(stack) {
-    var tree = new TreeNode(types.LIST);
+    var tree = new Tree(types.LIST);
     var iterator = stack.iterator();
     while (iterator.hasNext()) {
         var item = iterator.getNext();
         item.accept(this);
         tree.addChild(this.result);
     }
-    var structure = new TreeNode(types.STRUCTURE);
+    var structure = new Tree(types.STRUCTURE);
     structure.addChild(tree);
-    var component = new TreeNode(types.COMPONENT);
+    var component = new Tree(types.COMPONENT);
     component.addChild(structure);
     var parameters = documents.parseParameters('($type: <bali:/?name=bali/types/collections/Stack>)');
     component.addChild(parameters);
@@ -205,122 +207,121 @@ ContextVisitor.prototype.visitStack = function(stack) {
 
 
 ContextVisitor.prototype.visitTaskContext = function(context) {
-    var catalog = new TreeNode(types.CATALOG);
+    var catalog = new Tree(types.CATALOG);
 
     // generate the status attribute
-    var association = new TreeNode(types.ASSOCIATION);
-    var symbol = new TerminalNode(types.SYMBOL, '$status');
+    var association = new Tree(types.ASSOCIATION);
+    var symbol = new Terminal(types.SYMBOL, '$status');
     association.addChild(symbol);
     context.status.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the clock attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$clock');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$clock');
     association.addChild(symbol);
-    var value = new TerminalNode(types.NUMBER, context.clock);
+    var value = new Terminal(types.NUMBER, context.clock);
     association.addChild(value);
     catalog.addChild(association);
 
     // generate the stepping attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$stepping');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$stepping');
     association.addChild(symbol);
-    value = new TerminalNode(types.PROBABILITY, context.stepping);
+    value = new Terminal(types.PROBABILITY, context.stepping);
     association.addChild(value);
     catalog.addChild(association);
 
     // generate the component stack
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$components');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$components');
     association.addChild(symbol);
     context.components.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the procedure stack
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$procedures');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$procedures');
     association.addChild(symbol);
     context.procedures.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the handler stack
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$handlers');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$handlers');
     association.addChild(symbol);
     context.handlers.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the parameters
-    var structure = new TreeNode(types.STRUCTURE);
+    var structure = new Tree(types.STRUCTURE);
     structure.addChild(catalog);
-    var component = new TreeNode(types.COMPONENT);
+    var component = new Tree(types.COMPONENT);
     component.addChild(structure);
     var parameters = documents.parseParameters('($type: <bali:/?name=bali/types/vm/TaskContext>)');
     component.addChild(parameters);
-    var document = new RootNode(types.DOCUMENT, component);
-    this.result = document;
+    this.result = component;
 };
 
 
 ContextVisitor.prototype.visitProcedureContext = function(context) {
-    var tree = new TreeNode(types.CATALOG);
+    var tree = new Tree(types.CATALOG);
 
     // generate the target attribute
-    var association = new TreeNode(types.ASSOCIATION);
-    var symbol = new TerminalNode(types.SYMBOL, '$target');
+    var association = new Tree(types.ASSOCIATION);
+    var symbol = new Terminal(types.SYMBOL, '$target');
     association.addChild(symbol);
     context.target.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
     // generate the type attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$type');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$type');
     association.addChild(symbol);
     context.type.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
     // generate the procedure attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$procedure');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$procedure');
     association.addChild(symbol);
     context.procedure.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
     // generate the literals attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$literals');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$literals');
     association.addChild(symbol);
     context.literals.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
     // generate the parameters attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$parameters');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$parameters');
     association.addChild(symbol);
     context.parameters.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
     // generate the variables attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$variables');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$variables');
     association.addChild(symbol);
     context.variables.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
     // generate the bytecode attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$bytecode');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$bytecode');
     association.addChild(symbol);
     var bytes = utilities.bytecodeToBytes(context.bytecode);
     var base16 = codex.base16Encode(bytes, '                ');
@@ -329,17 +330,17 @@ ContextVisitor.prototype.visitProcedureContext = function(context) {
     tree.addChild(association);
 
     // generate the address attribute
-    association = new TreeNode(types.ASSOCIATION);
-    symbol = new TerminalNode(types.SYMBOL, '$address');
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$address');
     association.addChild(symbol);
-    var value = new TerminalNode(types.NUMBER, context.address);
+    var value = new Terminal(types.NUMBER, context.address);
     association.addChild(value);
     tree.addChild(association);
 
     // generate the parameters
-    var structure = new TreeNode(types.STRUCTURE);
+    var structure = new Tree(types.STRUCTURE);
     structure.addChild(tree);
-    var component = new TreeNode(types.COMPONENT);
+    var component = new Tree(types.COMPONENT);
     component.addChild(structure);
     var parameters = documents.parseParameters('($type: <bali:/?name=bali/types/vm/ProcedureContext>)');
     component.addChild(parameters);

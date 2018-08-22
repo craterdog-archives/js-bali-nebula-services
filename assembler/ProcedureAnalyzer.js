@@ -14,7 +14,7 @@
  * Bali Virtual Machine™ extracting useful information about symbols and
  * addresses.
  */
-var types = require('bali-instruction-set/syntax/InstructionTypes');
+var types = require('bali-instruction-set/nodes/Types');
 
 
 // PUBLIC FUNCTIONS

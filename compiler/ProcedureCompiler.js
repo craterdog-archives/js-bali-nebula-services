@@ -14,7 +14,7 @@
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
 var language = require('bali-document-notation/BaliDocuments');
-var types = require('bali-document-notation/syntax/NodeTypes');
+var types = require('bali-document-notation/nodes/Types');
 
 
 // PUBLIC FUNCTIONS

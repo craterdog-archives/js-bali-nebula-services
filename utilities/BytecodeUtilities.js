@@ -23,7 +23,7 @@
  * based index or address. The value zero is reserved for specifying an
  * invalid index or address.
  */
-var types = require('bali-instruction-set/syntax/InstructionTypes');
+var types = require('bali-instruction-set/nodes/Types');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 
 
