@@ -13,7 +13,7 @@
  * This library provides functions that compile a Bali Procedure into the
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
-var documents = require('bali-document-notation/BaliDocuments');
+var language = require('bali-document-notation/BaliDocuments');
 var types = require('bali-document-notation/syntax/NodeTypes');
 
 
@@ -261,7 +261,7 @@ CompilingVisitor.prototype.visitCode = function(tree) {
     var procedure = tree.children[0];
 
     // the VM places the source code for the procedure on top of the component stack
-    var source = documents.formatParseTree(procedure);
+    var source = language.formatParseTree(procedure);
     this.builder.insertPushInstruction('CODE', source);
 };
 
@@ -476,22 +476,6 @@ CompilingVisitor.prototype.visitDiscardClause = function(tree) {
     // the VM stores no document into the remote location
     this.builder.insertPushInstruction('ELEMENT', 'none');
     this.builder.insertStoreInstruction('DRAFT', location);
-};
-
-
-/*
- * This method unwraps the document and delegates compilation to the
- * component.
- */
-// document: NEWLINE* (reference NEWLINE)? body (NEWLINE seal)* NEWLINE* EOF
-CompilingVisitor.prototype.visitDocument = function(tree) {
-    if (tree.previousReference) {
-        tree.previousReference.accept(this);
-    }
-    tree.body.accept(this);
-    for (var i = 0; i < tree.seals.length; i++) {
-        tree.seals[i].accept(this);
-    }
 };
 
 
@@ -1100,18 +1084,6 @@ CompilingVisitor.prototype.visitSaveClause = function(tree) {
 
     // the VM stores the document on top of the component stack into the remote location
     this.builder.insertStoreInstruction('DRAFT', location);
-};
-
-
-/*
- * This method inserts the instructions that cause the VM to place the citation reference
- * and binary signature for a seal on the component stack so that they can be added to
- * the document.
- */
-// seal: reference binary
-CompilingVisitor.prototype.visitSeal = function(tree) {
-    tree.children[0].accept(this);
-    tree.children[1].accept(this);
 };
 
 
