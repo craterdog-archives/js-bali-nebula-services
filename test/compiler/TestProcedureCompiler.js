@@ -9,8 +9,8 @@
  ************************************************************************/
 
 var documents = require('bali-document-notation/BaliDocuments');
-var analyzer = require('../../compiler/LanguageAnalyzer');
-var compiler = require('../../compiler/LanguageCompiler');
+var analyzer = require('../../compiler/TypeAnalyzer');
+var compiler = require('../../compiler/ProcedureCompiler');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;

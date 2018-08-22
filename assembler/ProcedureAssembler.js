@@ -28,7 +28,7 @@ var intrinsics = require('../intrinsics/IntrinsicFunctions');
  * @param {object} symbols The symbol table for the procedure.
  * @returns {array} The corresponding bytecode array.
  */
-exports.assembleBytecode = function(procedure, symbols) {
+exports.assembleProcedure = function(procedure, symbols) {
     var visitor = new AssemblingVisitor(symbols);
     procedure.accept(visitor);
     return visitor.bytecode;

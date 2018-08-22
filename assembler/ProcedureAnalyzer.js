@@ -28,7 +28,7 @@ var types = require('bali-instruction-set/syntax/InstructionTypes');
  * @returns {object} The symbol table for the procedure.
  */
 exports.extractSymbols = function(procedure) {
-    var visitor = new ScanningVisitor();
+    var visitor = new AnalyzingVisitor();
     procedure.accept(visitor);
     return visitor.symbols;
 };
@@ -36,7 +36,7 @@ exports.extractSymbols = function(procedure) {
 
 // PRIVATE CLASSES
 
-function ScanningVisitor() {
+function AnalyzingVisitor() {
     this.symbols = {
         addresses: {},
         literals: [],
@@ -47,11 +47,11 @@ function ScanningVisitor() {
     this.address = 1;  // bali VM unit based addressing
     return this;
 }
-ScanningVisitor.prototype.constructor = ScanningVisitor;
+AnalyzingVisitor.prototype.constructor = AnalyzingVisitor;
 
 
 // procedure: NEWLINE* step* NEWLINE* EOF;
-ScanningVisitor.prototype.visitProcedure = function(procedure) {
+AnalyzingVisitor.prototype.visitProcedure = function(procedure) {
     var steps = procedure.steps;
     for (var i = 0; i < steps.length; i++) {
         var step = steps[i];
@@ -61,7 +61,7 @@ ScanningVisitor.prototype.visitProcedure = function(procedure) {
 
 
 // step: label? instruction NEWLINE;
-ScanningVisitor.prototype.visitStep = function(step) {
+AnalyzingVisitor.prototype.visitStep = function(step) {
     var label = step.label;
     if (label) {
         this.symbols.addresses[label] = this.address;
@@ -75,7 +75,7 @@ ScanningVisitor.prototype.visitStep = function(step) {
 //     'JUMP' 'TO' LABEL 'ON' 'NONE' |
 //     'JUMP' 'TO' LABEL 'ON' 'TRUE' |
 //     'JUMP' 'TO' LABEL 'ON' 'FALSE'
-ScanningVisitor.prototype.visitJumpInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitJumpInstruction = function(instruction) {
     this.address++;
 };
 
@@ -84,7 +84,7 @@ ScanningVisitor.prototype.visitJumpInstruction = function(instruction) {
 //     'PUSH' 'HANDLER' LABEL |
 //     'PUSH' 'ELEMENT' LITERAL |
 //     'PUSH' 'CODE' LITERAL
-ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var value = instruction.operand;
     switch (modifier) {
@@ -100,7 +100,7 @@ ScanningVisitor.prototype.visitPushInstruction = function(instruction) {
 // popInstruction:
 //     'POP' 'HANDLER' |
 //     'POP' 'COMPONENT'
-ScanningVisitor.prototype.visitPopInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitPopInstruction = function(instruction) {
     this.address++;
 };
 
@@ -110,7 +110,7 @@ ScanningVisitor.prototype.visitPopInstruction = function(instruction) {
 //     'LOAD' 'DOCUMENT' SYMBOL |
 //     'LOAD' 'DRAFT' SYMBOL |
 //     'LOAD' 'MESSAGE' SYMBOL
-ScanningVisitor.prototype.visitLoadInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitLoadInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
     var type;
@@ -136,7 +136,7 @@ ScanningVisitor.prototype.visitLoadInstruction = function(instruction) {
 //     'STORE' 'DOCUMENT' SYMBOL |
 //     'STORE' 'DRAFT' SYMBOL |
 //     'STORE' 'MESSAGE' SYMBOL
-ScanningVisitor.prototype.visitStoreInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
     var type;
@@ -161,7 +161,7 @@ ScanningVisitor.prototype.visitStoreInstruction = function(instruction) {
 //     'INVOKE' SYMBOL |
 //     'INVOKE' SYMBOL 'WITH' 'PARAMETER' |
 //     'INVOKE' SYMBOL 'WITH' NUMBER 'PARAMETERS'
-ScanningVisitor.prototype.visitInvokeInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitInvokeInstruction = function(instruction) {
     this.address++;
 };
 
@@ -171,7 +171,7 @@ ScanningVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' SYMBOL 'WITH' 'PARAMETERS' |
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' |
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
-ScanningVisitor.prototype.visitExecuteInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var symbol = instruction.operand;
     if (!this.symbols.procedures.includes(symbol)) {
         this.symbols.procedures.push(symbol);
@@ -183,6 +183,6 @@ ScanningVisitor.prototype.visitExecuteInstruction = function(instruction) {
 // handleInstruction:
 //     'HANDLE' 'EXCEPTION' |
 //     'HANDLE' 'RESULT'
-ScanningVisitor.prototype.visitHandleInstruction = function(instruction) {
+AnalyzingVisitor.prototype.visitHandleInstruction = function(instruction) {
     this.address++;
 };

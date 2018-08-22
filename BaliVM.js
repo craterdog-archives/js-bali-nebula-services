@@ -17,10 +17,10 @@
 var documents = require('bali-document-notation/BaliDocuments');
 var instructionSet = require('bali-instruction-set/BaliInstructionSet');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
-var analyzer = require('./compiler/LanguageAnalyzer');
-var compiler = require('./compiler/LanguageCompiler');
-var scanner = require('./assembler/InstructionScanner');
-var assembler = require('./assembler/InstructionAssembler');
+var analyzer = require('./compiler/TypeAnalyzer');
+var compiler = require('./compiler/ProcedureCompiler');
+var scanner = require('./assembler/ProcedureAnalyzer');
+var assembler = require('./assembler/ProcedureAssembler');
 var utilities = require('./utilities/BytecodeUtilities');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
@@ -34,7 +34,7 @@ var cloud = {
 // PUBLIC FUNCTIONS
 
 /**
- * This function compiles a Bali Document Language™ type.
+ * This function compiles a Bali Document Notation™ type.
  * 
  * @param {String} source The Bali source code for the type to be compiled.
  * @param {Boolean} verbose Whether or not the assembly instructions should be included.
@@ -53,7 +53,7 @@ exports.compileType = function(source, verbose) {
         source = compiler.compileProcedure(procedure, type);
         var instructions = instructionSet.parseProcedure(source);
         var symbols = scanner.extractSymbols(instructions);
-        var bytecode = assembler.assembleBytecode(instructions, symbols);
+        var bytecode = assembler.assembleProcedure(instructions, symbols);
 
         var catalog = component.children[1];
         var value;
@@ -76,7 +76,7 @@ exports.compileType = function(source, verbose) {
 
 
 /**
- * This function formats a parse tree generated from a Bali Document Language™ type.
+ * This function formats a parse tree generated from a Bali Document Notation™ type.
  * 
  * @param {TreeNode} type The parse tree for the Bali type.
  * @returns {string} The The formatted Bali document for the type.

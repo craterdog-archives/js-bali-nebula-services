@@ -9,8 +9,8 @@
  ************************************************************************/
 
 var parser = require('bali-instruction-set/BaliInstructionSet');
-var scanner = require('../../assembler/InstructionScanner');
-var assembler = require('../../assembler/InstructionAssembler');
+var analyzer = require('../../assembler/ProcedureAnalyzer');
+var assembler = require('../../assembler/ProcedureAssembler');
 var utilities = require('../../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');
@@ -35,8 +35,8 @@ describe('Bali Virtual Machine™', function() {
                 expect(source).to.exist;  // jshint ignore:line
                 var procedure = parser.parseProcedure(source);
                 expect(procedure).to.exist;  // jshint ignore:line
-                var symbols = scanner.extractSymbols(procedure);
-                var bytecode = assembler.assembleBytecode(procedure, symbols);
+                var symbols = analyzer.extractSymbols(procedure);
+                var bytecode = assembler.assembleProcedure(procedure, symbols);
                 expect(bytecode).to.exist;  // jshint ignore:line
                 var formatted = utilities.bytecodeAsString(bytecode);
                 expect(formatted).to.exist;  // jshint ignore:line
