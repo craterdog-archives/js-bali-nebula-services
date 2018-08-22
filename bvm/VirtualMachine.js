@@ -12,8 +12,8 @@
 /*
  * This class defines the Bali Virtual Machine™.
  */
-var language = require('bali-language/BaliLanguage');
-var codex = require('bali-utilities/EncodingUtilities');
+var documents = require('bali-document-notation/BaliDocuments');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var cloud = require('bali-cloud-api');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
 var elements = require('../elements');
@@ -53,7 +53,11 @@ VirtualMachine.prototype.processInstructions = function() {
         // fetch the next instruction
         var instruction = this.fetchNextInstruction();
         // execute the next instruction
-        this.executeNextInstruction(instruction);
+        if (bytecode.instructionIsValid(instruction)) {
+            this.executeNextInstruction(instruction);
+        } else {
+            this.handleInvalidInstruction(instruction);
+        }
         // check for single step mode
         if (this.taskContext.stepping) break;  // after a each instruction
     }
@@ -118,7 +122,7 @@ VirtualMachine.prototype.saveTaskState = function() {
     // generate a parse tree from the task context
     var tree = generator.generateParseTree(this.taskContext);
     // format the parse tree into a document
-    var context = language.formatParseTree(tree);
+    var context = documents.formatParseTree(tree);
     // save the document in the cloud
     cloud.saveDraft(this.taskReference, context);
 };
@@ -170,9 +174,10 @@ VirtualMachine.prototype.instructionHandlers = [
 
     // PUSH HANDLER label
     function(operand) {
-        var address = new elements.Complex(operand);  // must convert to Bali element
+        // TODO: Fix Complex -> Number naming issues
+        var handlerAddress = new elements.Complex(operand);  // must convert to Bali element
         // push the address of the current exception handlers onto the handlers stack
-        this.procedureContext.handlers.pushItem(address);
+        this.procedureContext.handlers.pushItem(handlerAddress);
     },
 
     // PUSH ELEMENT literal
@@ -457,7 +462,9 @@ VirtualMachine.prototype.instructionHandlers = [
             this.taskContext.procedures.popItem();
             this.procedureContext = this.taskContext.procedures.getTop();
         }
-        // TODO: need to check for no more contexts
+        // TODO: need to check for no more contexts also for no more handler addresses
+        //       and throw JS exception that can be caught by the main processing loop.
+
         // push the current exception onto the top of the component stack
         this.procedureContext.components.pushItem(exception);
         // retrieve the address of the current exception handlers

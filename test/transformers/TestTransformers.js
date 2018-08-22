@@ -8,7 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var language = require('bali-language/BaliLanguage');
+var documents = require('bali-document-notation/BaliDocuments');
 var transformers = require('../../transformers/');
 var fs = require('fs');
 var mocha = require('mocha');
@@ -23,12 +23,12 @@ describe('Bali Virtual Machine™', function() {
             var testFile = 'test/source/taskContext.bali';
             var expected = fs.readFileSync(testFile, 'utf8');
             expect(expected).to.exist;  // jshint ignore:line
-            var tree = language.parseComponent(expected);
+            var tree = documents.parseDocument(expected);
             var context = transformers.TaskContextGenerator.generateTaskContext(tree);
             expect(context).to.exist;  // jshint ignore:line
             tree = transformers.ParseTreeGenerator.generateParseTree(context);
             expect(tree).to.exist;  // jshint ignore:line
-            var actual = language.formatParseTree(tree) + '\n';
+            var actual = documents.formatParseTree(tree) + '\n';
             expect(actual).to.exist;  // jshint ignore:line
             expect(actual).to.equal(expected);
         });

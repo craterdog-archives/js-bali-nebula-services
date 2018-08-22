@@ -13,8 +13,8 @@
  * This library provides functions that compile a Bali Procedure into the
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
-var language = require('bali-language/BaliLanguage');
-var types = require('bali-language/syntax/NodeTypes');
+var documents = require('bali-document-notation/BaliDocuments');
+var types = require('bali-document-notation/syntax/NodeTypes');
 
 
 // PUBLIC FUNCTIONS
@@ -261,7 +261,7 @@ CompilingVisitor.prototype.visitCode = function(tree) {
     var procedure = tree.children[0];
 
     // the VM places the source code for the procedure on top of the component stack
-    var source = language.formatParseTree(procedure);
+    var source = documents.formatParseTree(procedure);
     this.builder.insertPushInstruction('CODE', source);
 };
 
@@ -483,12 +483,15 @@ CompilingVisitor.prototype.visitDiscardClause = function(tree) {
  * This method unwraps the document and delegates compilation to the
  * component.
  */
-// document: NEWLINE* component NEWLINE* EOF
+// document: NEWLINE* (reference NEWLINE)? body (NEWLINE seal)* NEWLINE* EOF
 CompilingVisitor.prototype.visitDocument = function(tree) {
-    var component = tree.children[0];
-
-    // the VM places the value of the component on top of the component stack
-    component.accept(this);
+    if (tree.previousReference) {
+        tree.previousReference.accept(this);
+    }
+    tree.body.accept(this);
+    for (var i = 0; i < tree.seals.length; i++) {
+        tree.seals[i].accept(this);
+    }
 };
 
 
@@ -497,6 +500,7 @@ CompilingVisitor.prototype.visitDocument = function(tree) {
  * as a literal value.
  */
 // element:
+//     angle |
 //     binary |
 //     duration |
 //     moment |
@@ -1100,6 +1104,18 @@ CompilingVisitor.prototype.visitSaveClause = function(tree) {
 
 
 /*
+ * This method inserts the instructions that cause the VM to place the citation reference
+ * and binary signature for a seal on the component stack so that they can be added to
+ * the document.
+ */
+// seal: reference binary
+CompilingVisitor.prototype.visitSeal = function(tree) {
+    tree.children[0].accept(this);
+    tree.children[1].accept(this);
+};
+
+
+/*
  * This method inserts instructions that cause the VM to evaluate one or
  * condition expressions and execute a procedure block for the condition
  * that matches the value of a selector expression. If none of the
@@ -1568,7 +1584,7 @@ InstructionBuilder.prototype.pushStatementContext = function(tree) {
 
     // initialize the procedure configuration for this statement
     var statement = procedure.statement;
-    var type = types.TREE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
+    var type = types.NODE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
     var prefix = procedure.prefix + procedure.statementNumber + '.';
     statement.startLabel = prefix + type + 'Statement';
     if (statement.clauseCount > 0) {
@@ -1660,7 +1676,7 @@ InstructionBuilder.prototype.getStatementPrefix = function() {
  */
 InstructionBuilder.prototype.getStatementType = function() {
     var statement = this.procedures.peek().statement;
-    var type = types.TREE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
+    var type = types.NODE_TYPES[statement.mainClause.type].toTitleCase().slice(0, -6);
     return type;
 };
 

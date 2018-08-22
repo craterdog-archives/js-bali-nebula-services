@@ -49,8 +49,8 @@ describe('Bali Virtual Machine™', function() {
 
 var tests = [
     '<https://google.com/>',
-    '<bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYM>',
-    '<bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYMv3.1>',
+    '<bali:RKVVW90GXFP44PBTLFLF8ZG8NR425JYM>',
+    '<bali:RKVVW90GXFP44PBTLFLF8ZG8NR425JYMv3.1>',
     '<bali:/bali/elements/Text>',
     '<bali:/bali/elements/Text?version=6.12.1>',
     '<bali:/abcCorp/reports/2010/Q3>'

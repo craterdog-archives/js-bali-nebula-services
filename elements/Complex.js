@@ -15,7 +15,7 @@
  */
 var abstractions = require('../abstractions/');
 var antlr = require('antlr4');
-var grammar = require('bali-language/grammar');
+var grammar = require('bali-document-notation/grammar');
 var Angle = require('./Angle').Angle;
 /* global NaN, Infinity */
 
@@ -42,9 +42,9 @@ function Complex(value) {
     var imaginary;
     // Complex(value): constructor generates a complex number from a string
     var chars = new antlr.InputStream(value);
-    var lexer = new grammar.BaliLanguageLexer(chars);
+    var lexer = new grammar.BaliDocumentLexer(chars);
     var tokens = new antlr.CommonTokenStream(lexer);
-    var parser = new grammar.BaliLanguageParser(tokens);
+    var parser = new grammar.BaliDocumentParser(tokens);
     parser.buildParseTrees = true;
     number = parser.number();
     var nodeType = number.constructor.name;

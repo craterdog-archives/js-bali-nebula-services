@@ -23,7 +23,7 @@
                 true
                 .75
                 false
-                <bali:/#RKVVW90GXFP44PBTLFLF8ZG8NR425JYMv3.1>
+                <bali:RKVVW90GXFP44PBTLFLF8ZG8NR425JYMv3.1>
                 $symbol
                 #NT5PG2BXZGBGV5JTNPCP2HTM4JP6CS4X
                 none
@@ -75,3 +75,4 @@
         126
     ]($type: <bali:/?name=bali/types/collections/Stack>)
 ]($type: <bali:/?name=bali/types/vm/TaskContext>)
+

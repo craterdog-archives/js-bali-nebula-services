@@ -143,13 +143,20 @@ AnalyzingVisitor.prototype.visitDiscardClause = function(tree) {
 };
 
 
-// document: NEWLINE* component NEWLINE* EOF
+// document: NEWLINE* (reference NEWLINE)? body (NEWLINE seal)* NEWLINE* EOF
 AnalyzingVisitor.prototype.visitDocument = function(tree) {
-    tree.children[0].accept(this);
+    if (tree.previousReference) {
+        tree.previousReference.accept(this);
+    }
+    tree.body.accept(this);
+    for (var i = 0; i < tree.seals.length; i++) {
+        tree.seals[i].accept(this);
+    }
 };
 
 
 // element:
+//     angle |
 //     binary |
 //     duration |
 //     moment |
@@ -338,6 +345,13 @@ AnalyzingVisitor.prototype.visitSaveClause = function(tree) {
 };
 
 
+// seal: reference binary
+AnalyzingVisitor.prototype.visitSeal = function(tree) {
+    tree.children[0].accept(this);
+    tree.children[1].accept(this);
+};
+
+
 // selectClause: 'select' expression 'from' (expression 'do' block)+ ('else' block)?
 AnalyzingVisitor.prototype.visitSelectClause = function(tree) {
     var expressions = tree.children;
@@ -385,12 +399,6 @@ AnalyzingVisitor.prototype.visitSubcomponent = function(tree) {
 AnalyzingVisitor.prototype.visitSubcomponentExpression = function(tree) {
     tree.children[0].accept(this);
     tree.children[1].accept(this);
-};
-
-
-// task: SHELL NEWLINE* procedure NEWLINE* EOF
-AnalyzingVisitor.prototype.visitTask = function(tree) {
-    tree.children[0].accept(this);
 };
 
 

@@ -24,7 +24,7 @@
  * invalid index or address.
  */
 var types = require('bali-instruction-set/syntax/InstructionTypes');
-var codex = require('bali-utilities/EncodingUtilities');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 
 
 // PUBLIC FUNCTIONS
@@ -187,7 +187,7 @@ exports.instructionIsValid = function(instruction) {
 /**
  * This function converts a byte string into a bytecode array.
  * 
- * @param {String} bytes The byte string to be converted.
+ * @param {Buffer} bytes The byte buffer to be converted.
  * @returns {Array} The corresponding bytecode array.
  */
 exports.bytesToBytecode = function(bytes) {
@@ -204,12 +204,13 @@ exports.bytesToBytecode = function(bytes) {
  * This function converts a bytecode array into a byte string.
  * 
  * @param {Array} bytecode The bytecode array to be converted.
- * @returns {String} bytes The corresponding byte string.
+ * @returns {Buffer} bytes The corresponding byte buffer.
  */
 exports.bytecodeToBytes = function(bytecode) {
-    var bytes = '';
-    for (var i = 0; i < bytecode.length; i++) {
-        bytes += codex.shortToBytes(bytecode[i]);
+    var length = bytecode.length;
+    var bytes = Buffer.alloc(length * 2);
+    for (var i = 0; i < length; i++) {
+        bytes.fill(codex.shortToBytes(bytecode[i]), i * 2);
     }
     return bytes;
 };

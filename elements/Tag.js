@@ -13,8 +13,7 @@
  * This element class captures the state and methods associated with a
  * tag element.
  */
-var codex = require('bali-utilities/EncodingUtilities');
-var random = require('bali-utilities/RandomUtilities');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var abstractions = require('../abstractions/');
 
 
@@ -40,12 +39,12 @@ function Tag(optionalSizeOrValue) {
     switch (type) {
         case 'undefined':
             this.size = 20;  // default size
-            bytes = random.generateRandomBytes(this.size);
+            bytes = codex.randomBytes(this.size);
             this.value = '#' + codex.base32Encode(bytes);
             break;
         case 'number':
             this.size = optionalSizeOrValue;
-            bytes = random.generateRandomBytes(this.size);
+            bytes = codex.randomBytes(this.size);
             this.value = '#' + codex.base32Encode(bytes);
             break;
         case 'string':

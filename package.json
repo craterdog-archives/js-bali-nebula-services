@@ -34,7 +34,7 @@
     "antlr4": "^4.7.1",
     "bali-digital-notary": "file:../js-bali-digital-notary",
     "bali-instruction-set": "file:../js-bali-instruction-set",
-    "bali-language": "file:../js-bali-language",
+    "bali-document-notation": "file:../js-bali-document-notation",
     "moment": "^2.22.1",
     "node-forge": "^0.7.5"
   }

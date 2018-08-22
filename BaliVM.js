@@ -14,9 +14,9 @@
  * Bali Cloud Operating System™. For more information about the Bali Cloud
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
-var language = require('bali-language/BaliLanguage');
+var documents = require('bali-document-notation/BaliDocuments');
 var instructionSet = require('bali-instruction-set/BaliInstructionSet');
-var codex = require('bali-utilities/EncodingUtilities');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var analyzer = require('./compiler/LanguageAnalyzer');
 var compiler = require('./compiler/LanguageCompiler');
 var scanner = require('./assembler/InstructionScanner');
@@ -41,13 +41,13 @@ var cloud = {
  * @returns {TreeNode} The full parse tree for the Bali type.
  */
 exports.compileType = function(source, verbose) {
-    var type = language.parseDocument(source);
+    var type = documents.parseDocument(source);
     analyzer.analyzeType(type);
-    var procedures = language.getValueForKey(type, '$procedures');
-    var iterator = language.iterator(procedures);
+    var procedures = documents.getValueForKey(type, '$procedures');
+    var iterator = documents.iterator(procedures);
     while (iterator.hasNext()) {
         var component = iterator.getNext();
-        source = language.getValueForKey(component, '$source');
+        source = documents.getValueForKey(component, '$source');
         var block = source.children[0];
         var procedure = block.children[0];
         source = compiler.compileProcedure(procedure, type);
@@ -57,19 +57,19 @@ exports.compileType = function(source, verbose) {
 
         var catalog = component.children[1];
         var value;
-        language.deleteKey(catalog, '$instructions');
-        language.deleteKey(catalog, '$bytecode');
+        documents.deleteKey(catalog, '$instructions');
+        documents.deleteKey(catalog, '$bytecode');
         if (verbose) {
             // add instructions to procedure catalog
-            value = language.parseExpression('"\n' + source.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
-            language.setValueForKey(catalog, '$instructions', value);
+            value = documents.parseExpression('"\n' + source.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
+            documents.setValueForKey(catalog, '$instructions', value);
         }
     
         // add bytecode to procedure catalog
         var bytes = utilities.bytecodeToBytes(bytecode);
         var base16 = codex.base16Encode(bytes, '                ');
-        var binary = language.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
-        language.setValueForKey(catalog, '$bytecode', binary);
+        var binary = documents.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
+        documents.setValueForKey(catalog, '$bytecode', binary);
     }
     return type;
 };
@@ -82,7 +82,7 @@ exports.compileType = function(source, verbose) {
  * @returns {string} The The formatted Bali document for the type.
  */
 exports.formatType = function(type) {
-    var document = language.formatParseTree(type);
+    var document = documents.formatParseTree(type);
     return document;
 };
 

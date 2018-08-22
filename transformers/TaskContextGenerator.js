@@ -13,8 +13,8 @@
  * This library provides functions that generate a Bali Virtual Machine™
  * task context from its associated Bali parse tree.
  */
-var language = require('bali-language/BaliLanguage');
-var types = require('bali-language/syntax/NodeTypes');
+var documents = require('bali-document-notation/BaliDocuments');
+var types = require('bali-document-notation/syntax/NodeTypes');
 var elements = require('../elements/');
 var collections = require('../collections/');
 var TaskContext = require('../bvm/TaskContext').TaskContext;
@@ -73,7 +73,7 @@ TreeVisitor.prototype.visitCatalog = function(tree) {
 
 // code: '{' procedure '}'
 TreeVisitor.prototype.visitCode = function(tree) {
-    var source = language.formatParseTree(tree.children[0]);
+    var source = documents.formatParseTree(tree.children[0]);
     var code = new elements.Code(source);
     this.result = code;
 };
@@ -131,13 +131,20 @@ TreeVisitor.prototype.replaceCollectionType = function(collection) {
 };
 
 
-// document: NEWLINE* component NEWLINE* EOF
+// document: NEWLINE* (reference NEWLINE)? body (NEWLINE seal)* NEWLINE* EOF
 TreeVisitor.prototype.visitDocument = function(tree) {
-    tree.children[0].accept(this);  // component
+    if (tree.previousReference) {
+        tree.previousReference.accept(this);
+    }
+    tree.body.accept(this);
+    for (var i = 0; i < tree.seals.length; i++) {
+        tree.seals[i].accept(this);
+    }
 };
 
 
 // element:
+//     angle |
 //     binary |
 //     duration |
 //     moment |
@@ -152,6 +159,9 @@ TreeVisitor.prototype.visitDocument = function(tree) {
 //     version
 TreeVisitor.prototype.visitElement = function(terminal) {
     switch (terminal.type) {
+        case types.ANGLE:
+            this.result = new elements.Angle(terminal.value);
+            break;
         case types.BINARY:
             this.result = new elements.Binary(terminal.value);
             break;
@@ -224,6 +234,13 @@ TreeVisitor.prototype.visitRange = function(tree) {
     var last = this.result;
     var range = new collections.Range(first, last);
     this.result = range;
+};
+
+
+// seal: reference binary
+TreeVisitor.prototype.visitSeal = function(tree) {
+    tree.children[0].accept(this);
+    tree.children[1].accept(this);
 };
 
 

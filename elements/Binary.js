@@ -13,7 +13,7 @@
  * This element class captures the state and methods associated with a
  * binary string element.
  */
-var codex = require('bali-utilities/EncodingUtilities');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var abstractions = require('../abstractions/');
 
 
@@ -100,7 +100,7 @@ Binary.prototype.accept = function(visitor) {
  * @returns {Number} 1 if greater, 0 if equal, and -1 if less.
  */
 Binary.prototype.comparedWith = function(that) {
-    return this.value.localeCompare(that.value);
+    return this.value.toString().localeCompare(that.value.toString());
 };
 
 
@@ -181,10 +181,10 @@ Binary.prototype.toBase64 = function(indentation) {
 
 
 /**
- * This method returns the raw byte string for the binary string.
+ * This method returns the byte buffer for the binary string.
  * 
- * @returns {String} The raw byte string.
+ * @returns {Buffer} The byte buffer.
  */
-Binary.prototype.getRawBytes = function() {
+Binary.prototype.getBuffer = function() {
     return this.value;
 };

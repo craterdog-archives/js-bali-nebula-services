@@ -8,7 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var language = require('bali-language/BaliLanguage');
+var documents = require('bali-document-notation/BaliDocuments');
 var analyzer = require('../../compiler/LanguageAnalyzer');
 var compiler = require('../../compiler/LanguageCompiler');
 var fs = require('fs');
@@ -32,7 +32,7 @@ describe('Bali Virtual Machine™', function() {
                 var basmFile = testFolder + prefix + '.basm';
                 var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
-                var tree = language.parseProcedure(source);
+                var tree = documents.parseProcedure(source);
                 expect(tree).to.exist;  // jshint ignore:line
                 var type = {};
                 var instructions = compiler.compileProcedure(tree, type);

@@ -13,7 +13,7 @@
  * This element class captures the state and methods associated with a
  * probability element.
  */
-var random = require('bali-utilities/RandomUtilities');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var abstractions = require('../abstractions/');
 
 
@@ -106,7 +106,7 @@ Probability.prototype.toString = function () {
  * @returns {number} The boolean representation of the probability element.
  */
 Probability.prototype.toBoolean = function () {
-    return random.coinToss(this.value);
+    return codex.coinToss(this.value);
 };
 
 
