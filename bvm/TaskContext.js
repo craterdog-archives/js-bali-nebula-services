@@ -31,6 +31,7 @@ exports.DONE = new elements.Symbol('$done');
  */
 function TaskContext(catalog) {
     if (catalog) {
+        this.tag = catalog.getValue('$tag');
         this.status = catalog.getValue('$status');
         this.clock = catalog.getValue('$clock').toNumber();
         this.stepping = catalog.getValue('$stepping').toBoolean();
@@ -38,6 +39,7 @@ function TaskContext(catalog) {
         this.procedures = catalog.getValue('$procedures');
         this.handlers = catalog.getValue('$handlers');
     } else {
+        this.tag = new elements.Tag();
         this.status = exports.ACTIVE;
         this.clock = 0;
         this.stepping = false;

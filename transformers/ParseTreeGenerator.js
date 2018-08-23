@@ -209,9 +209,17 @@ ContextVisitor.prototype.visitStack = function(stack) {
 ContextVisitor.prototype.visitTaskContext = function(context) {
     var catalog = new Tree(types.CATALOG);
 
-    // generate the status attribute
+    // generate the tag attribute
     var association = new Tree(types.ASSOCIATION);
-    var symbol = new Terminal(types.SYMBOL, '$status');
+    var symbol = new Terminal(types.TAG, '$tag');
+    association.addChild(symbol);
+    context.tag.accept(this);
+    association.addChild(this.result);
+    catalog.addChild(association);
+
+    // generate the status attribute
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$status');
     association.addChild(symbol);
     context.status.accept(this);
     association.addChild(this.result);
