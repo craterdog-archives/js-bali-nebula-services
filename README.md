@@ -1,2 +1,2 @@
-# js-bali-virtual-machine
-This project contains a JavaScript based implementation of the Bali Virtual Machine™.
+# js-bali-cloud-environment
+This project contains a JavaScript based implementation of the Bali Cloud Environment™.

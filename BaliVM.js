@@ -24,11 +24,7 @@ var assembler = require('./assembler/ProcedureAssembler');
 var utilities = require('./utilities/BytecodeUtilities');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
 var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
-
-// TODO: replace with require('bali-virtual-machine/cloud')
-var cloud = {
-    readDocument: function(reference) {}
-};
+var api = require('bali-cloud-api/BaliAPI');
 
 
 // PUBLIC FUNCTIONS
@@ -96,8 +92,8 @@ exports.formatType = function(type) {
  * @param {Collection} parameters The list or catalog of parameters that were passed with the message.
  */
 exports.processMessage = function(typeReference, targetReference, message, parameters) {
-    var type = cloud.readDocument(typeReference);
-    var target = cloud.readDocument(targetReference);
+    var type = api.retrieveDocument(typeReference);
+    var target = api.retrieveDocument(targetReference);
     var virtualMachine = new VirtualMachine();
     var procedureContext = new ProcedureContext(type, target, message, parameters);
     virtualMachine.pushContext(procedureContext);
