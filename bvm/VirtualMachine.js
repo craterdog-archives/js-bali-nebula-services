@@ -29,7 +29,7 @@ var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./ProcedureContext');
 
 
-function bvm(document, testDirectory) {
+exports.bvm = function(document, testDirectory) {
     var notary = BaliNotary.notary(testDirectory);
     var repository = testDirectory ? TestRepository.repository(testDirectory) : CloudRepository.repository();
     var environment = BaliAPI.environment(notary, repository);
@@ -57,7 +57,7 @@ function bvm(document, testDirectory) {
             finalizeProcessing(this);
         }
     };
-}
+};
 
 
 /*
