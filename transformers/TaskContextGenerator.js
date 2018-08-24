@@ -17,7 +17,7 @@ var documents = require('bali-document-notation/BaliDocuments');
 var types = require('bali-document-notation/nodes/Types');
 var elements = require('../elements/');
 var collections = require('../collections/');
-var TaskContext = require('../bvm/TaskContext').TaskContext;
+var TaskContext = require('../bvm/TaskContext');
 var ProcedureContext = require('../bvm/ProcedureContext').ProcedureContext;
 
 
@@ -119,7 +119,7 @@ TreeVisitor.prototype.replaceCollectionType = function(collection) {
             collection = new collections.Stack(collection);
             break;
         case '<bali:/?name=bali/types/vm/TaskContext>':
-            collection = new TaskContext(collection);
+            collection = TaskContext.fromCatalog(collection);
             break;
         case '<bali:/?name=bali/types/vm/ProcedureContext>':
             collection = new ProcedureContext(collection);

@@ -209,12 +209,28 @@ ContextVisitor.prototype.visitStack = function(stack) {
 ContextVisitor.prototype.visitTaskContext = function(context) {
     var catalog = new Tree(types.CATALOG);
 
-    // generate the tag attribute
+    // generate the task tag attribute
     var association = new Tree(types.ASSOCIATION);
-    var symbol = new Terminal(types.TAG, '$tag');
+    var symbol = new Terminal(types.TAG, '$taskTag');
     association.addChild(symbol);
-    context.tag.accept(this);
+    context.taskTag.accept(this);
     association.addChild(this.result);
+    catalog.addChild(association);
+
+    // generate the account tag attribute
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.TAG, '$accountTag');
+    association.addChild(symbol);
+    context.accountTag.accept(this);
+    association.addChild(this.result);
+    catalog.addChild(association);
+
+    // generate the account balance attribute
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$accountBalance');
+    association.addChild(symbol);
+    var value = new Terminal(types.NUMBER, context.accountBalance);
+    association.addChild(value);
     catalog.addChild(association);
 
     // generate the status attribute
@@ -227,17 +243,17 @@ ContextVisitor.prototype.visitTaskContext = function(context) {
 
     // generate the clock attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$clock');
+    symbol = new Terminal(types.SYMBOL, '$clockCycles');
     association.addChild(symbol);
-    var value = new Terminal(types.NUMBER, context.clock);
+    value = new Terminal(types.NUMBER, context.clockCycles);
     association.addChild(value);
     catalog.addChild(association);
 
     // generate the stepping attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$stepping');
+    symbol = new Terminal(types.SYMBOL, '$inStepMode');
     association.addChild(symbol);
-    value = new Terminal(types.PROBABILITY, context.stepping);
+    value = new Terminal(types.PROBABILITY, context.inStepMode);
     association.addChild(value);
     catalog.addChild(association);
 

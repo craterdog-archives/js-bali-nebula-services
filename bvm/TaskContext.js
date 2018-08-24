@@ -23,34 +23,52 @@ exports.DONE = new elements.Symbol('$done');
 
 
 /**
- * This constructor creates a task context.
+ * This function creates a new task context.
  * 
- * @constructor
- * @param {Catalog} catalog The catalog containing the task context attributes. 
+ * @param {Tag} accountTag The unique tag for the account that initiated the task.
+ * @param {Number} accountBalance The number of tokens that are in the account.
  * @returns {TaskContext} The new task context.
  */
-function TaskContext(catalog) {
-    if (catalog) {
-        this.tag = catalog.getValue('$tag');
-        this.status = catalog.getValue('$status');
-        this.clock = catalog.getValue('$clock').toNumber();
-        this.stepping = catalog.getValue('$stepping').toBoolean();
-        this.components = catalog.getValue('$components');
-        this.procedures = catalog.getValue('$procedures');
-        this.handlers = catalog.getValue('$handlers');
-    } else {
-        this.tag = new elements.Tag();
-        this.status = exports.ACTIVE;
-        this.clock = 0;
-        this.stepping = false;
-        this.components = new collections.Stack();
-        this.procedures = new collections.Stack();
-        this.handlers = new collections.Stack();
-    }
+exports.create = function(accountTag, accountBalance) {
+    var context = new TaskContext();
+    context.taskTag = new elements.Tag();
+    context.accountTag = accountTag;
+    context.accountBalance = accountBalance;
+    context.status = exports.ACTIVE;
+    context.clockCycles = 0;
+    context.inStepMode = false;
+    context.components = new collections.Stack();
+    context.procedures = new collections.Stack();
+    context.handlers = new collections.Stack();
+    return context;
+};
+
+
+/**
+ * This function creates a task context from an existing catalog of task attributes.
+ * 
+ * @param {Catalog} catalog The catalog containing the task context attributes. 
+ * @returns {TaskContext} The corresponding task context.
+ */
+exports.fromCatalog = function(catalog) {
+    var context = new TaskContext();
+    context.taskTag = catalog.getValue('$taskTag');
+    context.accountTag = catalog.getValue('$accountTag');
+    context.accountBalance = catalog.getValue('$accountBalance');
+    context.status = catalog.getValue('$status');
+    context.clockCycles = catalog.getValue('$clockCycles').toNumber();
+    context.inStepMode = catalog.getValue('$inStepMode').toBoolean();
+    context.components = catalog.getValue('$components');
+    context.procedures = catalog.getValue('$procedures');
+    context.handlers = catalog.getValue('$handlers');
+    return context;
+};
+
+
+function TaskContext() {
     return this;
 }
 TaskContext.prototype.constructor = TaskContext;
-exports.TaskContext = TaskContext;
 
 
 TaskContext.prototype.accept = function(visitor) {
