@@ -12,7 +12,7 @@ var Text = require('../../elements/Text').Text;
 var mocha = require('mocha');
 var expect = require('chai').expect;
 
-describe('Bali Virtual Machine™', function() {
+describe('Bali Cloud Environment™', function() {
 
     describe('Test text constructors', function() {
 

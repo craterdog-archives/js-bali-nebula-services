@@ -12,7 +12,7 @@ var Reference = require('../../elements/Reference').Reference;
 var mocha = require('mocha');
 var expect = require('chai').expect;
 
-describe('Bali Virtual Machine™', function() {
+describe('Bali Cloud Environment™', function() {
 
     describe('Test reference constructors', function() {
 

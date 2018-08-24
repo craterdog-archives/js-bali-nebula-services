@@ -8,13 +8,13 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var vm = require('../BaliVM');
+var vm = require('../BaliEnvironment');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
 
 
-describe('Bali Virtual Machine™', function() {
+describe('Bali Cloud Environment™', function() {
 
     describe('Test the analysis and compilation of an example type.', function() {
 

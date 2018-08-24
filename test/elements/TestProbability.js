@@ -12,7 +12,7 @@ var Probability = require('../../elements/Probability').Probability;
 var mocha = require('mocha');
 var expect = require('chai').expect;
 
-describe('Bali Virtual Machine™', function() {
+describe('Bali Cloud Environment™', function() {
 
     describe('Test probability constructors', function() {
 

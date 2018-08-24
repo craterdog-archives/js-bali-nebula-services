@@ -13,7 +13,7 @@ var mocha = require('mocha');
 var expect = require('chai').expect;
 /* global NaN, Infinity */
 
-describe('Bali Virtual Machine™', function() {
+describe('Bali Cloud Environment™', function() {
 
     describe('Test angle constructors', function() {
 

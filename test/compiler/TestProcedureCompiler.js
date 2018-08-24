@@ -16,7 +16,7 @@ var mocha = require('mocha');
 var expect = require('chai').expect;
 
 
-describe('Bali Virtual Machine™', function() {
+describe('Bali Cloud Environment™', function() {
 
     describe('Test the compiler.', function() {
 

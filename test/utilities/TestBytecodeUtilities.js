@@ -13,7 +13,7 @@ var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
 
-describe('Bali Virtual Machine™', function() {
+describe('Bali Cloud Environment™', function() {
 
     describe('Test bytecode utilities on instructions', function() {
 
