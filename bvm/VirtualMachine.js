@@ -49,7 +49,10 @@ function bvm(document, testDirectory) {
         processInstructions: function() {
             while (fetchInstruction(this)) {
                 executeInstruction(this);
-                if (inStepMode(this)) break;  // after a each instruction
+                if (inStepMode(this)) {
+                    // after a single instruction
+                    break;
+                }
             }
             finalizeProcessing(this);
         }
@@ -101,8 +104,8 @@ function executeInstruction(bvm) {
     var operand = bytecode.decodeOperand(instruction);
 
     // pass execution off to the correct operation handler
-    var index = (operation << 2) | modifier;
-    instructionHandlers[index](bvm, operand);
+    var index = (operation << 2) | modifier;  // index: [0..31]
+    instructionHandlers[index](bvm, operand); // operand: [0..2047]
 
     // update the state of the task context
     bvm.taskContext.clockCycles++;
@@ -123,7 +126,7 @@ function finalizeProcessing(bvm) {
             publishStepEvent(bvm);
             break;
         case TaskContext.WAITING:
-            // the task is waiting on a message so requeue the task state
+            // the task is waiting on a message so requeue the task context
             queueTaskContext(bvm);
             break;
         case TaskContext.DONE:
@@ -142,7 +145,8 @@ function publishCompletionEvent(bvm) {
     var event = '[\n' +
         '    $type: $completion\n' +
         '    $taskTag: ' + bvm.taskContext.taskTag + '\n' +
-        '    $taskBalance: ' + bvm.taskContext.taskBalance + '\n' +
+        '    $accountTag: ' + bvm.taskContext.accountTag + '\n' +
+        '    $accountBalance: ' + bvm.taskContext.accountBalance + '\n' +
         '    $clockCycles: ' + bvm.taskContext.clockCycles + '\n' +
         '    $result: ' + bvm.taskContext.result + '\n' +
         ']';
@@ -536,23 +540,28 @@ var instructionHandlers = [
     // HANDLE EXCEPTION
     function(bvm, operand) {
         if (operand) throw new Error('BVM: The current instruction has a non-zero operand.');
-        // pop the current exception off of the component stack
-        var exception = bvm.procedureContext.components.popItem();
-        while (bvm.taskContext.procedures.getSize() > 0 &&
-                bvm.procedureContext.handlers.getSize() === 0) {
-            // pop the current context off of the context stack since it has no handlers
+        // search up the stack for a handler
+        while (!bvm.taskContext.procedures.isEmpty()) {
+            while (!bvm.procedureContext.handlers.isEmpty()) {
+                // retrieve the address of the current exception handlers
+                var address = bvm.procedureContext.handlers.popItem().toNumber();
+                // use that address as the next instruction to be executed
+                bvm.procedureContext.address = address;
+            }
+            // pop the current exception off of the component stack
+            var exception = bvm.procedureContext.components.popItem();
+            // pop the current procedure context off of the context stack since it has no handlers
             bvm.taskContext.procedures.popItem();
-            bvm.procedureContext = bvm.taskContext.procedures.getTop();
+            if (bvm.taskContext.procedures.isEmpty()) {
+                // we're done
+                bvm.taskContext.exception = exception;
+                bvm.taskContext.status = TaskContext.DONE;
+            } else {
+                bvm.procedureContext = bvm.taskContext.procedures.getTop();
+                // push the result of the procedure call onto the top of the component stack
+                bvm.procedureContext.components.pushItem(exception);
+            }
         }
-        // TODO: need to check for no more contexts also for no more handler addresses
-        //       and throw JS exception that can be caught by the main processing loop.
-
-        // push the current exception onto the top of the component stack
-        bvm.procedureContext.components.pushItem(exception);
-        // retrieve the address of the current exception handlers
-        var address = bvm.procedureContext.handlers.popItem().toNumber();
-        // use that address as the next instruction to be executed
-        bvm.procedureContext.address = address;
     },
 
     // HANDLE RESULT
@@ -562,9 +571,15 @@ var instructionHandlers = [
         var result = bvm.procedureContext.components.popItem();
         // pop the current context off of the context stack since it is now out of scope
         bvm.taskContext.procedures.popItem();
-        bvm.procedureContext = bvm.taskContext.procedures.getTop();
-        // push the result of the procedure call onto the top of the component stack
-        bvm.procedureContext.components.pushItem(result);
+        if (bvm.taskContext.procedures.isEmpty()) {
+            // we're done
+            bvm.taskContext.result = result;
+            bvm.taskContext.status = TaskContext.DONE;
+        } else {
+            bvm.procedureContext = bvm.taskContext.procedures.getTop();
+            // push the result of the procedure call onto the top of the component stack
+            bvm.procedureContext.components.pushItem(result);
+        }
     },
 
     // UNIMPLEMENTED HANDLE OPERATION
