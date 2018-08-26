@@ -4,7 +4,6 @@
     $accountBalance: 1000
     $processorStatus: $active
     $clockCycles: 137
-    $breakPoints: undefined
     $componentStack: [
         $sort
         1

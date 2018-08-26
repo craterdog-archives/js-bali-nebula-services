@@ -249,14 +249,6 @@ ContextVisitor.prototype.visitTaskContext = function(context) {
     association.addChild(value);
     catalog.addChild(association);
 
-    // generate the break points attribute
-    association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$breakPoints');
-    association.addChild(symbol);
-    context.breakPoints.accept(this);
-    association.addChild(this.result);
-    catalog.addChild(association);
-
     // generate the component stack
     association = new Tree(types.ASSOCIATION);
     symbol = new Terminal(types.SYMBOL, '$componentStack');
