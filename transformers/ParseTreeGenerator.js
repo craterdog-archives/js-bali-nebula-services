@@ -233,15 +233,15 @@ ContextVisitor.prototype.visitTaskContext = function(context) {
     association.addChild(value);
     catalog.addChild(association);
 
-    // generate the status attribute
+    // generate the processor status attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$status');
+    symbol = new Terminal(types.SYMBOL, '$processorStatus');
     association.addChild(symbol);
-    context.status.accept(this);
+    context.processorStatus.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
-    // generate the clock attribute
+    // generate the clock cycles attribute
     association = new Tree(types.ASSOCIATION);
     symbol = new Terminal(types.SYMBOL, '$clockCycles');
     association.addChild(symbol);
@@ -249,35 +249,35 @@ ContextVisitor.prototype.visitTaskContext = function(context) {
     association.addChild(value);
     catalog.addChild(association);
 
-    // generate the stepping attribute
+    // generate the break points attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$inStepMode');
+    symbol = new Terminal(types.SYMBOL, '$breakPoints');
     association.addChild(symbol);
-    value = new Terminal(types.PROBABILITY, context.inStepMode);
-    association.addChild(value);
+    context.breakPoints.accept(this);
+    association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the component stack
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$components');
+    symbol = new Terminal(types.SYMBOL, '$componentStack');
     association.addChild(symbol);
-    context.components.accept(this);
+    context.componentStack.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the procedure stack
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$procedures');
+    symbol = new Terminal(types.SYMBOL, '$procedureStack');
     association.addChild(symbol);
-    context.procedures.accept(this);
+    context.procedureStack.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the handler stack
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$handlers');
+    symbol = new Terminal(types.SYMBOL, '$handlerStack');
     association.addChild(symbol);
-    context.handlers.accept(this);
+    context.handlerStack.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 

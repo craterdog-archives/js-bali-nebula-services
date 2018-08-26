@@ -16,28 +16,41 @@
 var codex = require('../utilities/BytecodeUtilities');
 
 
-/**
- * This constructor creates a procedure context for a function or document message.
- * 
- * @constructor
- * @param {Catalog} catalog The catalog containing the procedure context attributes. 
- * @returns {ProcedureContext} The new procedure context.
+/*
+ * The message is a Bali document catalog.
  */
+exports.fromMessage = function(message) {
+    var context = new ProcedureContext();
+    context.target = message.getValueForKey('$target');
+    context.type = message.getValueForKey('$type');
+    context.procedure = message.getValueForKey('$procedure');
+    context.parameters = message.getValueForKey('parameters');
+    context.address = 1;
+    return context;
+};
+
+
+/*
+ * The catalog is a javascript catalog not a Bali document catalog.
+ */
+exports.fromCatalog = function(catalog) {
+    var context = new ProcedureContext();
+    context.target = catalog.getValue('$target');
+    context.type = catalog.getValue('$type');
+    context.procedure = catalog.getValue('$procedure');
+    context.literals = catalog.getValue('$literals');
+    context.parameters = catalog.getValue('$parameters');
+    context.variables = catalog.getValue('$variables');
+    context.bytecode = codex.bytesToBytecode(catalog.getValue('$bytecode').value);
+    context.address = catalog.getValue('$address').toNumber();
+    return context;
+};
+
+
 function ProcedureContext(catalog) {
-    if (catalog) {
-        this.target = catalog.getValue('$target');
-        this.type = catalog.getValue('$type');
-        this.procedure = catalog.getValue('$procedure');
-        this.literals = catalog.getValue('$literals');
-        this.parameters = catalog.getValue('$parameters');
-        this.variables = catalog.getValue('$variables');
-        this.bytecode = codex.bytesToBytecode(catalog.getValue('$bytecode').value);
-        this.address = catalog.getValue('$address').toNumber();
-    }
     return this;
 }
 ProcedureContext.prototype.constructor = ProcedureContext;
-exports.ProcedureContext = ProcedureContext;
 
 
 ProcedureContext.prototype.accept = function(visitor) {

@@ -18,7 +18,7 @@ var types = require('bali-document-notation/nodes/Types');
 var elements = require('../elements/');
 var collections = require('../collections/');
 var TaskContext = require('../bvm/TaskContext');
-var ProcedureContext = require('../bvm/ProcedureContext').ProcedureContext;
+var ProcedureContext = require('../bvm/ProcedureContext');
 
 
 /**
@@ -122,7 +122,7 @@ TreeVisitor.prototype.replaceCollectionType = function(collection) {
             collection = TaskContext.fromCatalog(collection);
             break;
         case '<bali:/?name=bali/types/vm/ProcedureContext>':
-            collection = new ProcedureContext(collection);
+            collection = ProcedureContext.fromCatalog(collection);
             break;
         default:
             throw new Error('Found an illegal collection type in the parameter list: ' + type);

@@ -2,10 +2,10 @@
     $taskTag: #Y29YH82BHG4SPTGWGFRYBL4RQ33GTX59
     $accountTag: #641ZH7VZKQW47HBJGXRCAHKT859YX25G
     $accountBalance: 1000
-    $status: $active
+    $processorStatus: $active
     $clockCycles: 137
-    $inStepMode: false
-    $components: [
+    $breakPoints: undefined
+    $componentStack: [
         $sort
         1
         [
@@ -14,7 +14,7 @@
             3
         ]
     ]($type: <bali:/?name=bali/types/collections/Stack>)
-    $procedures: [
+    $procedureStack: [
         [
             $target: [
                 'JzAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eic='
@@ -72,7 +72,7 @@
             $address: 2
         ]($type: <bali:/?name=bali/types/vm/ProcedureContext>)
     ]($type: <bali:/?name=bali/types/collections/Stack>)
-    $handlers: [
+    $handlerStack: [
         52
         12
         126

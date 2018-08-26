@@ -11,16 +11,16 @@ INVOKE $setValue WITH 3 PARAMETERS
 PUSH ELEMENT `$accountBalance`
 PUSH ELEMENT `1000`
 INVOKE $setValue WITH 3 PARAMETERS
-PUSH ELEMENT `$status`
+PUSH ELEMENT `$processorStatus`
 PUSH ELEMENT `$active`
 INVOKE $setValue WITH 3 PARAMETERS
 PUSH ELEMENT `$clockCycles`
 PUSH ELEMENT `137`
 INVOKE $setValue WITH 3 PARAMETERS
-PUSH ELEMENT `$inStepMode`
-PUSH ELEMENT `false`
+PUSH ELEMENT `$breakPoints`
+PUSH ELEMENT `undefined`
 INVOKE $setValue WITH 3 PARAMETERS
-PUSH ELEMENT `$components`
+PUSH ELEMENT `$componentStack`
 PUSH ELEMENT `3`
 INVOKE $list WITH PARAMETER
 PUSH ELEMENT `$sort`
@@ -43,7 +43,7 @@ PUSH ELEMENT `<bali:/?name=bali/types/collections/Stack>`
 INVOKE $setValue WITH 3 PARAMETERS
 INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
-PUSH ELEMENT `$procedures`
+PUSH ELEMENT `$procedureStack`
 PUSH ELEMENT `1`
 INVOKE $list WITH PARAMETER
 PUSH ELEMENT `8`
@@ -192,7 +192,7 @@ PUSH ELEMENT `<bali:/?name=bali/types/collections/Stack>`
 INVOKE $setValue WITH 3 PARAMETERS
 INVOKE $setParameters WITH 2 PARAMETERS
 INVOKE $setValue WITH 3 PARAMETERS
-PUSH ELEMENT `$handlers`
+PUSH ELEMENT `$handlerStack`
 PUSH ELEMENT `3`
 INVOKE $list WITH PARAMETER
 PUSH ELEMENT `52`

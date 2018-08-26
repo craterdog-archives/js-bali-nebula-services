@@ -27,20 +27,22 @@ exports.DONE = new elements.Symbol('$done');
  * 
  * @param {Tag} accountTag The unique tag for the account that initiated the task.
  * @param {Number} accountBalance The number of tokens that are in the account.
+ * @param {ProcedureContext} procedureContext The initial procedure context for the task.
  * @returns {TaskContext} The new task context.
  */
-exports.create = function(accountTag, accountBalance) {
-    var context = new TaskContext();
-    context.taskTag = new elements.Tag();
-    context.accountTag = accountTag;
-    context.accountBalance = accountBalance;
-    context.status = exports.ACTIVE;
-    context.clockCycles = 0;
-    context.inStepMode = false;
-    context.components = new collections.Stack();
-    context.procedures = new collections.Stack();
-    context.handlers = new collections.Stack();
-    return context;
+exports.create = function(accountTag, accountBalance, procedureContext) {
+    var taskContext = new TaskContext();
+    taskContext.taskTag = new elements.Tag();
+    taskContext.accountTag = accountTag;
+    taskContext.accountBalance = accountBalance;
+    taskContext.processorStatus = exports.ACTIVE;
+    taskContext.clockCycles = 0;
+    taskContext.breakPoints = undefined;
+    taskContext.componentStack = new collections.Stack();
+    taskContext.procedureStack = new collections.Stack();
+    taskContext.handlerStack = new collections.Stack();
+    taskContext.procedureStack.pushItem(procedureContext);
+    return taskContext;
 };
 
 
@@ -51,17 +53,17 @@ exports.create = function(accountTag, accountBalance) {
  * @returns {TaskContext} The corresponding task context.
  */
 exports.fromCatalog = function(catalog) {
-    var context = new TaskContext();
-    context.taskTag = catalog.getValue('$taskTag');
-    context.accountTag = catalog.getValue('$accountTag');
-    context.accountBalance = catalog.getValue('$accountBalance');
-    context.status = catalog.getValue('$status');
-    context.clockCycles = catalog.getValue('$clockCycles').toNumber();
-    context.inStepMode = catalog.getValue('$inStepMode').toBoolean();
-    context.components = catalog.getValue('$components');
-    context.procedures = catalog.getValue('$procedures');
-    context.handlers = catalog.getValue('$handlers');
-    return context;
+    var taskContext = new TaskContext();
+    taskContext.taskTag = catalog.getValue('$taskTag');
+    taskContext.accountTag = catalog.getValue('$accountTag');
+    taskContext.accountBalance = catalog.getValue('$accountBalance');
+    taskContext.processorStatus = catalog.getValue('$processorStatus');
+    taskContext.clockCycles = catalog.getValue('$clockCycles').toNumber();
+    taskContext.breakPoints = catalog.getValue('$breakPoints');
+    taskContext.componentStack = catalog.getValue('$componentStack');
+    taskContext.procedureStack = catalog.getValue('$procedureStack');
+    taskContext.handlerStack = catalog.getValue('$handlerStack');
+    return taskContext;
 };
 
 
