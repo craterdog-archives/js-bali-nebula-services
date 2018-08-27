@@ -21,11 +21,11 @@ var codex = require('../utilities/BytecodeUtilities');
  */
 exports.fromMessage = function(message) {
     var context = new ProcedureContext();
-    context.target = message.getValueForKey('$target');
-    context.type = message.getValueForKey('$type');
-    context.procedure = message.getValueForKey('$procedure');
-    context.parameters = message.getValueForKey('parameters');
-    context.address = 1;
+    context.targetComponent = message.getValueForKey('$targetComponent');
+    context.typeReference = message.getValueForKey('$typeReference');
+    context.procedureName = message.getValueForKey('$procedureName');
+    context.parameterValues = message.getValueForKey('parameterValues');
+    context.nextAddress = 1;
     return context;
 };
 
@@ -35,14 +35,15 @@ exports.fromMessage = function(message) {
  */
 exports.fromCatalog = function(catalog) {
     var context = new ProcedureContext();
-    context.target = catalog.getValue('$target');
-    context.type = catalog.getValue('$type');
-    context.procedure = catalog.getValue('$procedure');
-    context.literals = catalog.getValue('$literals');
-    context.parameters = catalog.getValue('$parameters');
-    context.variables = catalog.getValue('$variables');
-    context.bytecode = codex.bytesToBytecode(catalog.getValue('$bytecode').value);
-    context.address = catalog.getValue('$address').toNumber();
+    context.targetComponent = catalog.getValue('$targetComponent');
+    context.typeReference = catalog.getValue('$typeReference');
+    context.procedureName = catalog.getValue('$procedureName');
+    context.literalValues = catalog.getValue('$literalValues');
+    context.parameterValues = catalog.getValue('$parameterValues');
+    context.variableValues = catalog.getValue('$variableValues');
+    context.bytecodeInstructions = codex.bytesToBytecode(catalog.getValue('$bytecodeInstructions').value);
+    context.currentInstruction = catalog.getValue('$currentInstruction').toNumber();
+    context.nextAddress = catalog.getValue('$nextAddress').toNumber();
     return context;
 };
 

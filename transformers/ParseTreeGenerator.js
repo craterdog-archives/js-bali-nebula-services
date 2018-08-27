@@ -287,69 +287,77 @@ ContextVisitor.prototype.visitTaskContext = function(context) {
 ContextVisitor.prototype.visitProcedureContext = function(context) {
     var tree = new Tree(types.CATALOG);
 
-    // generate the target attribute
+    // generate the target component attribute
     var association = new Tree(types.ASSOCIATION);
-    var symbol = new Terminal(types.SYMBOL, '$target');
+    var symbol = new Terminal(types.SYMBOL, '$targetComponent');
     association.addChild(symbol);
-    context.target.accept(this);
+    context.targetComponent.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the type attribute
+    // generate the type reference attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$type');
+    symbol = new Terminal(types.SYMBOL, '$typeReference');
     association.addChild(symbol);
-    context.type.accept(this);
+    context.typeReference.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the procedure attribute
+    // generate the procedure name attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$procedure');
+    symbol = new Terminal(types.SYMBOL, '$procedureName');
     association.addChild(symbol);
-    context.procedure.accept(this);
+    context.procedureName.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the literals attribute
+    // generate the literal values attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$literals');
+    symbol = new Terminal(types.SYMBOL, '$literalValues');
     association.addChild(symbol);
-    context.literals.accept(this);
+    context.literalValues.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the parameters attribute
+    // generate the parameter values attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$parameters');
+    symbol = new Terminal(types.SYMBOL, '$parameterValues');
     association.addChild(symbol);
-    context.parameters.accept(this);
+    context.parameterValues.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the variables attribute
+    // generate the variable values attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$variables');
+    symbol = new Terminal(types.SYMBOL, '$variableValues');
     association.addChild(symbol);
-    context.variables.accept(this);
+    context.variableValues.accept(this);
     association.addChild(this.result);
     tree.addChild(association);
 
-    // generate the bytecode attribute
+    // generate the bytecode instructions attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$bytecode');
+    symbol = new Terminal(types.SYMBOL, '$bytecodeInstructions');
     association.addChild(symbol);
-    var bytes = utilities.bytecodeToBytes(context.bytecode);
+    var bytes = utilities.bytecodeToBytes(context.bytecodeInstructions);
     var base16 = codex.base16Encode(bytes, '                ');
-    var bytecode = documents.parseExpression("'" + base16 + "'" + '($mediatype: "application/bcod")');
-    association.addChild(bytecode);
+    var bytecodeInstructions = documents.parseExpression("'" + base16 + "'" + '($mediatype: "application/bcod")');
+    association.addChild(bytecodeInstructions);
     tree.addChild(association);
 
-    // generate the address attribute
+    // generate the current instruction attribute
     association = new Tree(types.ASSOCIATION);
-    symbol = new Terminal(types.SYMBOL, '$address');
+    symbol = new Terminal(types.SYMBOL, '$currentInstruction');
     association.addChild(symbol);
-    var value = new Terminal(types.NUMBER, context.address);
+    var value = new Terminal(types.NUMBER, context.currentInstruction);
+    association.addChild(value);
+    tree.addChild(association);
+
+    // generate the next address attribute
+    association = new Tree(types.ASSOCIATION);
+    symbol = new Terminal(types.SYMBOL, '$nextAddress');
+    association.addChild(symbol);
+    value = new Terminal(types.NUMBER, context.nextAddress);
     association.addChild(value);
     tree.addChild(association);
 
