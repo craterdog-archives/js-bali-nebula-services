@@ -23,7 +23,7 @@
  * based index or address. The value zero is reserved for specifying an
  * invalid index or address.
  */
-var types = require('bali-instruction-set/nodes/Types');
+var types = require('bali-instruction-set/Types');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 
 
@@ -187,13 +187,14 @@ exports.instructionIsValid = function(instruction) {
 /**
  * This function converts a byte string into a bytecode array.
  * 
- * @param {Buffer} bytes The byte buffer to be converted.
+ * @param {String} base16 The base 16 encoded bytes to be converted.
  * @returns {Array} The corresponding bytecode array.
  */
-exports.bytesToBytecode = function(bytes) {
+exports.base16ToBytecode = function(base16) {
+    var buffer = codex.base16Decode(base16);
     var bytecode = [];
-    for (var i = 0; i < bytes.length; i += 2) {
-        var word = codex.bytesToShort(bytes.slice(i));
+    for (var i = 0; i < buffer.length; i += 2) {
+        var word = codex.bytesToShort(buffer.slice(i));
         bytecode.push(word);
     }
     return bytecode;
@@ -201,18 +202,21 @@ exports.bytesToBytecode = function(bytes) {
 
 
 /**
- * This function converts a bytecode array into a byte string.
+ * This function converts a bytecode array into a base 16 encoded string.
  * 
  * @param {Array} bytecode The bytecode array to be converted.
- * @returns {Buffer} bytes The corresponding byte buffer.
+ * @param {String} indentation The string to be prepended to each line of the result.
+ * @returns {String} The corresponding base 16 encoded string.
  */
-exports.bytecodeToBytes = function(bytecode) {
+exports.bytecodeToBase16 = function(bytecode, indentation) {
     var length = bytecode.length;
-    var bytes = Buffer.alloc(length * 2);
+    var buffer = Buffer.alloc(length * 2);
     for (var i = 0; i < length; i++) {
-        bytes.fill(codex.shortToBytes(bytecode[i]), i * 2);
+        var word = bytecode[i];
+        buffer.fill(codex.shortToBytes(word), i * 2);
     }
-    return bytes;
+    var base16 = codex.base16Encode(buffer, indentation);
+    return base16;
 };
 
 

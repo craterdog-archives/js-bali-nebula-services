@@ -8,7 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var utilities = require('../../utilities/BytecodeUtilities');
+var utilities = require('../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;

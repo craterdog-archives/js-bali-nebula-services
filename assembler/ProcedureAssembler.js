@@ -8,7 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 'use strict';
-var types = require('bali-instruction-set/nodes/Types');
+var types = require('bali-instruction-set/Types');
 var utilities = require('../utilities/BytecodeUtilities');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
 

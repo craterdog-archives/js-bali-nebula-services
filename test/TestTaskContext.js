@@ -8,8 +8,8 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var documents = require('bali-document-notation/BaliDocuments');
-var transformers = require('../../transformers/');
+var BaliDocument = require('bali-document-notation/BaliDocument');
+var TaskContext = require('../bvm/TaskContext');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
@@ -17,18 +17,16 @@ var expect = require('chai').expect;
 
 describe('Bali Cloud Environment™', function() {
 
-    describe('Test the transformers.', function() {
+    describe('Test the task context transformations.', function() {
 
         it('should transform a parse tree into a task context and back.', function() {
             var testFile = 'test/source/taskContext.bali';
             var expected = fs.readFileSync(testFile, 'utf8');
             expect(expected).to.exist;  // jshint ignore:line
-            var tree = documents.parseDocument(expected);
-            var context = transformers.TaskContextGenerator.generateTaskContext(tree);
+            var document = BaliDocument.fromSource(expected);
+            var context = TaskContext.fromDocument(document);
             expect(context).to.exist;  // jshint ignore:line
-            tree = transformers.ParseTreeGenerator.generateParseTree(context);
-            expect(tree).to.exist;  // jshint ignore:line
-            var actual = documents.formatParseTree(tree) + '\n';
+            var actual = context.toString() + '\n';
             expect(actual).to.exist;  // jshint ignore:line
             expect(actual).to.equal(expected);
         });

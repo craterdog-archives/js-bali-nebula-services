@@ -8,9 +8,9 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var documents = require('bali-document-notation/BaliDocuments');
-var analyzer = require('../../compiler/TypeAnalyzer');
-var compiler = require('../../compiler/ProcedureCompiler');
+var BaliDocument = require('bali-document-notation/BaliDocument');
+var analyzer = require('../compiler/TypeAnalyzer');
+var compiler = require('../compiler/ProcedureCompiler');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
@@ -32,10 +32,10 @@ describe('Bali Cloud Environment™', function() {
                 var basmFile = testFolder + prefix + '.basm';
                 var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
-                var tree = documents.parseProcedure(source);
-                expect(tree).to.exist;  // jshint ignore:line
+                var document = BaliDocument.fromSource(source);
+                expect(document).to.exist;  // jshint ignore:line
                 var type = {};
-                var instructions = compiler.compileProcedure(tree, type);
+                var instructions = compiler.compileProcedure(document, type);
                 expect(instructions).to.exist;  // jshint ignore:line
                 fs.writeFileSync(basmFile, instructions, 'utf8');
                 var expected = fs.readFileSync(basmFile, 'utf8');

@@ -14,16 +14,16 @@
  * Bali Cloud Operating System™. For more information about the Bali Cloud
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
-var documents = require('bali-document-notation/BaliDocuments');
-var instructionSet = require('bali-instruction-set/BaliInstructionSet');
+var BaliDocument = require('bali-document-notation/BaliDocument');
+var BaliProcedure = require('bali-instruction-set/BaliProcedure');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
+var parser = require('bali-document-notation/transformers/DocumentParser');
 var analyzer = require('./compiler/TypeAnalyzer');
 var compiler = require('./compiler/ProcedureCompiler');
 var scanner = require('./assembler/ProcedureAnalyzer');
 var assembler = require('./assembler/ProcedureAssembler');
 var utilities = require('./utilities/BytecodeUtilities');
 var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
-var ProcedureContext = require('./bvm/ProcedureContext').ProcedureContext;
 var api = require('bali-cloud-api/BaliAPI');
 
 
@@ -32,72 +32,56 @@ var api = require('bali-cloud-api/BaliAPI');
 /**
  * This function compiles a Bali Document Notation™ type.
  * 
- * @param {String} source The Bali source code for the type to be compiled.
+ * @param {BaliDocument} type The Bali document containing the type definition to be compiled.
  * @param {Boolean} verbose Whether or not the assembly instructions should be included.
  * @returns {TreeNode} The full parse tree for the Bali type.
  */
-exports.compileType = function(source, verbose) {
-    var type = documents.parseDocument(source);
+exports.compileType = function(type, verbose) {
     analyzer.analyzeType(type);
-    var procedures = documents.getValueForKey(type, '$procedures');
-    var iterator = documents.iterator(procedures);
+    var procedures = type.getValue('$procedures');
+    var iterator = procedures.iterator();
     while (iterator.hasNext()) {
         var component = iterator.getNext();
-        source = documents.getValueForKey(component, '$source');
+        var source = component.getValue('$source');
         var block = source.children[0];
         var procedure = block.children[0];
         source = compiler.compileProcedure(procedure, type);
-        var instructions = instructionSet.parseProcedure(source);
+        var instructions = BaliProcedure.fromSource(source);
         var symbols = scanner.extractSymbols(instructions);
         var bytecode = assembler.assembleProcedure(instructions, symbols);
 
         var catalog = component.children[1];
         var value;
-        documents.deleteKey(catalog, '$instructions');
-        documents.deleteKey(catalog, '$bytecode');
+        catalog.deleteKey('$instructions');
+        catalog.deleteKey('$bytecode');
         if (verbose) {
             // add instructions to procedure catalog
-            value = documents.parseExpression('"\n' + source.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
-            documents.setValueForKey(catalog, '$instructions', value);
+            value = parser.parseExpression('"\n' + source.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
+            catalog.setValue('$instructions', value);
         }
     
         // add bytecode to procedure catalog
-        var bytes = utilities.bytecodeToBytes(bytecode);
-        var base16 = codex.base16Encode(bytes, '                ');
-        var binary = documents.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
-        documents.setValueForKey(catalog, '$bytecode', binary);
+        var base16 = utilities.bytecodeToBase16(bytecode, '                ');
+        var binary = parser.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
+        catalog.setValue('$bytecode', binary);
     }
     return type;
 };
 
 
 /**
- * This function formats a parse tree generated from a Bali Document Notation™ type.
- * 
- * @param {TreeNode} type The parse tree for the Bali type.
- * @returns {string} The The formatted Bali document for the type.
- */
-exports.formatType = function(type) {
-    var document = documents.formatParseTree(type);
-    return document;
-};
-
-
-/**
  * This function processes a message using the Bali Virtual Machine™.
  * 
- * @param {Reference} typeReference A reference to the type containing the message definition.
  * @param {Reference} targetReference A reference to the target that supports the message.
+ * @param {Reference} typeReference A reference to the type containing the message definition.
  * @param {Symbol} message The symbol for the message to be processed.
  * @param {Collection} parameters The list or catalog of parameters that were passed with the message.
  */
-exports.processMessage = function(typeReference, targetReference, message, parameters) {
-    var type = api.retrieveDocument(typeReference);
-    var target = api.retrieveDocument(targetReference);
-    var virtualMachine = new VirtualMachine();
-    var procedureContext = new ProcedureContext(type, target, message, parameters);
-    virtualMachine.pushContext(procedureContext);
-    virtualMachine.processProcedure();
+exports.processMessage = function(targetReference, typeReference, message, parameters) {
+    var document;
+    // TODO: fill in document...
+    var virtualMachine = VirtualMachine.fromDocument(document);
+    virtualMachine.processInstructions();
 };
 
 

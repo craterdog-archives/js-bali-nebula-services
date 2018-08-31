@@ -8,10 +8,10 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var parser = require('bali-instruction-set/BaliInstructionSet');
-var analyzer = require('../../assembler/ProcedureAnalyzer');
-var assembler = require('../../assembler/ProcedureAssembler');
-var utilities = require('../../utilities/BytecodeUtilities');
+var BaliProcedure = require('bali-instruction-set/BaliProcedure');
+var analyzer = require('../assembler/ProcedureAnalyzer');
+var assembler = require('../assembler/ProcedureAssembler');
+var utilities = require('../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
@@ -33,7 +33,7 @@ describe('Bali Cloud Environment™', function() {
                 var codeFile = testFolder + prefix + '.code';
                 var source = fs.readFileSync(basmFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
-                var procedure = parser.parseProcedure(source);
+                var procedure = BaliProcedure.fromSource(source);
                 expect(procedure).to.exist;  // jshint ignore:line
                 var symbols = analyzer.extractSymbols(procedure);
                 var bytecode = assembler.assembleProcedure(procedure, symbols);

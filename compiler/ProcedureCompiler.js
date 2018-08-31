@@ -13,7 +13,7 @@
  * This library provides functions that compile a Bali Procedure into the
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
-var language = require('bali-document-notation/BaliDocuments');
+var BaliDocument = require('bali-document-notation/BaliDocument');
 var types = require('bali-document-notation/nodes/Types');
 
 
@@ -261,7 +261,7 @@ CompilingVisitor.prototype.visitCode = function(tree) {
     var procedure = tree.children[0];
 
     // the VM places the source code for the procedure on top of the component stack
-    var source = language.formatParseTree(procedure);
+    var source = procedure.toString();
     this.builder.insertPushInstruction('CODE', source);
 };
 
@@ -476,6 +476,12 @@ CompilingVisitor.prototype.visitDiscardClause = function(tree) {
     // the VM stores no document into the remote location
     this.builder.insertPushInstruction('ELEMENT', 'none');
     this.builder.insertStoreInstruction('DRAFT', location);
+};
+
+
+// document: NEWLINE* (reference NEWLINE)? content (NEWLINE seal)* NEWLINE* EOF
+CompilingVisitor.prototype.visitDocument = function(tree) {
+    tree.documentContent.accept(this);
 };
 
 

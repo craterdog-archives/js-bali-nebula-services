@@ -143,14 +143,15 @@ AnalyzingVisitor.prototype.visitDiscardClause = function(tree) {
 };
 
 
-// document: NEWLINE* (reference NEWLINE)? body (NEWLINE seal)* NEWLINE* EOF
+// document: NEWLINE* (reference NEWLINE)? content (NEWLINE seal)* NEWLINE* EOF
 AnalyzingVisitor.prototype.visitDocument = function(tree) {
     if (tree.previousReference) {
         tree.previousReference.accept(this);
     }
-    tree.body.accept(this);
-    for (var i = 0; i < tree.seals.length; i++) {
-        tree.seals[i].accept(this);
+    tree.documentContent.accept(this);
+    for (var i = 0; i < tree.notarySeals.length; i++) {
+        tree.notarySeals[i].certificateReference.accept(this);
+        tree.notarySeals[i].digitalSignature.accept(this);
     }
 };
 
@@ -340,13 +341,6 @@ AnalyzingVisitor.prototype.visitReturnClause = function(tree) {
 
 // saveClause: 'save' expression 'to' expression
 AnalyzingVisitor.prototype.visitSaveClause = function(tree) {
-    tree.children[0].accept(this);
-    tree.children[1].accept(this);
-};
-
-
-// seal: reference binary
-AnalyzingVisitor.prototype.visitSeal = function(tree) {
     tree.children[0].accept(this);
     tree.children[1].accept(this);
 };

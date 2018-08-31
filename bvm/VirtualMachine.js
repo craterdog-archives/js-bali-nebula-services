@@ -19,20 +19,18 @@ var CloudRepository = require('bali-cloud-api/CloudRepository');
 var TestRepository = require('bali-cloud-api/LocalRepository');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
-var elements = require('../elements');
-var collections = require('../collections');
+var elements = require('bali-element-types');
+var collections = require('bali-collection-types');
 var bytecode = require('../utilities/BytecodeUtilities');
-var treeGenerator = require('../transformers/ParseTreeGenerator');
-var taskGenerator = require('../transformers/TaskContextGenerator');
 var TaskContext = require('./TaskContext');
-var ProcedureContext = require('./ProcedureContext');
+var ProcedureContext = require('./TaskContext').ProcedureContext;
 
 
-exports.bvm = function(document, testDirectory) {
+exports.fromDocument = function(document, testDirectory) {
     var notary = BaliNotary.notary(testDirectory);
     var repository = testDirectory ? TestRepository.repository(testDirectory) : CloudRepository.repository();
     var environment = BaliAPI.environment(notary, repository);
-    var taskContext = taskGenerator.generateTaskContext(document);
+    var taskContext = TaskContext.fromDocument(document);
     var procedureContext = taskContext.procedureStack.getTop();
 
     return {
@@ -45,6 +43,7 @@ exports.bvm = function(document, testDirectory) {
         processInstructions: function() {
             while (fetchInstruction(this)) {
                 executeInstruction(this);
+                console.log('taskContext: ' + taskContext);
             }
             finalizeProcessing(this);
         }
@@ -154,7 +153,7 @@ function publishSuspensionEvent(bvm) {
  */
 function queueTaskContext(bvm) {
     // generate a parse tree from the task context
-    var document = treeGenerator.generateParseTree(bvm.taskContext);
+    var document = bvm.taskContext.toDocument();
     // queue up the task for a new virtual machine
     var WAIT_QUEUE = '#3F8TVTX4SVG5Z12F3RMYZCTWHV2VPX4K';
     bvm.environment.queueMessage(WAIT_QUEUE, document);
@@ -445,7 +444,7 @@ var instructionHandlers = [
         procedureContext.parameterValues = new collections.List();
         procedureContext.variableValues = bvm.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = codex.bytesToBytecode(bytes);
+        procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
         bvm.taskContext.procedureStack.pushItem(procedureContext);
@@ -468,7 +467,7 @@ var instructionHandlers = [
         procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = codex.bytesToBytecode(bytes);
+        procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
         bvm.taskContext.procedureStack.pushItem(procedureContext);
@@ -490,7 +489,7 @@ var instructionHandlers = [
         procedureContext.parameterValues = new collections.List();
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = codex.bytesToBytecode(bytes);
+        procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
         bvm.taskContext.procedureStack.pushItem(procedureContext);
@@ -513,7 +512,7 @@ var instructionHandlers = [
         procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = codex.bytesToBytecode(bytes);
+        procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
         bvm.taskContext.procedureStack.pushItem(procedureContext);

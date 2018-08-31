@@ -8,7 +8,8 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var vm = require('../BaliEnvironment');
+var BaliDocument = require('bali-document-notation/BaliDocument');
+var environment = require('../BaliEnvironment');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
@@ -27,14 +28,15 @@ describe('Bali Cloud Environment™', function() {
                 console.log('      ' + file);
                 var prefix = file.split('.').slice(0, 1);
                 var baliFile = testFolder + prefix + '.bali';
-                var type = fs.readFileSync(baliFile, 'utf8');
-                expect(type).to.exist;  // jshint ignore:line
-                var tree = vm.compileType(type);
-                //var tree = vm.compileType(type, true);  // includes assembly instructions
-                expect(type).to.exist;  // jshint ignore:line
-                var formatted = vm.formatType(tree);
+                var source = fs.readFileSync(baliFile, 'utf8');
+                expect(source).to.exist;  // jshint ignore:line
+                var type = BaliDocument.fromSource(source);
+                var tree = environment.compileType(type);
+                //var tree = environment.compileType(type, true);  // includes assembly instructions
+                expect(tree).to.exist;  // jshint ignore:line
+                var formatted = tree.toString();
                 //fs.writeFileSync(baliFile, formatted, 'utf8');
-                expect(formatted).to.equal(type);
+                expect(formatted).to.equal(source);
             }
         });
 
