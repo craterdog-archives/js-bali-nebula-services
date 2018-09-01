@@ -19,8 +19,8 @@ var CloudRepository = require('bali-cloud-api/CloudRepository');
 var TestRepository = require('bali-cloud-api/LocalRepository');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
-var elements = require('bali-element-types');
-var collections = require('bali-collection-types');
+var elements = require('bali-element-types/elements');
+var collections = require('bali-collection-types/collections');
 var bytecode = require('../utilities/BytecodeUtilities');
 var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./TaskContext').ProcedureContext;
@@ -31,19 +31,33 @@ exports.fromDocument = function(document, testDirectory) {
     var repository = testDirectory ? TestRepository.repository(testDirectory) : CloudRepository.repository();
     var environment = BaliAPI.environment(notary, repository);
     var taskContext = TaskContext.fromDocument(document);
-    var procedureContext = taskContext.procedureStack.getTop();
+    var procedureContext = taskContext.procedureStack.peek();
 
     return {
 
+        environment: environment,
+        taskContext: taskContext,
+        procedureContext: procedureContext,
+
         /*
-         * This method processes the instructions in the current task until the end of the
+         * This method executes the next instruction in the current task.
+         */
+        step: function() {
+            var wasFetched = fetchInstruction(this);
+            if (wasFetched) {
+                executeInstruction(this);
+            }
+            return wasFetched;
+        },
+
+        /*
+         * This method executes all of the instructions in the current task until the end of the
          * instructions is reached, the account balance reaches zero, or the task is waiting
          * to receive a message from a queue.
          */
-        processInstructions: function() {
+        run: function() {
             while (fetchInstruction(this)) {
                 executeInstruction(this);
-                console.log('taskContext: ' + taskContext);
             }
             finalizeProcessing(this);
         }
@@ -55,9 +69,11 @@ exports.fromDocument = function(document, testDirectory) {
  * This method fetches the next 16 bit bytecode instruction from the current procedure context.
  */
 function isRunnable(bvm) {
+    // NOTE: the nextAddress is a Bali address but the bytecodeInstructions is a JS array
+    var hasInstructions = bvm.procedureContext && bvm.procedureContext.nextAddress <= bvm.procedureContext.bytecodeInstructions.length;
     var isActive = bvm.taskContext.processorStatus === TaskContext.ACTIVE;
     var hasTokens = bvm.taskContext.accountBalance > 0;
-    return isActive && hasTokens;
+    return hasInstructions && isActive && hasTokens;
 }
 
 
@@ -65,9 +81,9 @@ function isRunnable(bvm) {
  * This method fetches the next 16 bit bytecode instruction from the current procedure context.
  */
 function fetchInstruction(bvm) {
-    if (isRunnable()) {
-        var nextAddress = bvm.procedureContext.nextAddress;
-        var currentInstruction = bvm.procedureContext.bytecode.getItem(nextAddress).toNumber();
+    if (isRunnable(bvm)) {
+        var nextAddress = bvm.procedureContext.nextAddress - 1;  // JS zero based indexing
+        var currentInstruction = bvm.procedureContext.bytecodeInstructions[nextAddress];
         bvm.procedureContext.currentInstruction = currentInstruction;
         return true;
     } else {
@@ -166,10 +182,10 @@ function queueTaskContext(bvm) {
 var instructionHandlers = [
     // JUMP TO label
     function(bvm, operand) {
-        var nextAddress = operand;
-        // if the address is not zero then use it as the next instruction to be executed,
+        // if the operand is not zero then use it as the next instruction to be executed,
         // otherwise it is a SKIP INSTRUCTION (aka NOOP)
-        if (nextAddress) {
+        if (operand) {
+            var nextAddress = operand - 1;  // JS zero based indexing
             bvm.procedureContext.nextAddress = nextAddress;
         }
     },
@@ -177,9 +193,9 @@ var instructionHandlers = [
     // JUMP TO label ON NONE
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero address operand.');
-        var nextAddress = operand;
+        var nextAddress = operand - 1;  // JS zero based indexing
         // pop the condition component off the component stack
-        var condition = bvm.taskContext.componentStack.popItem();
+        var condition = bvm.taskContext.componentStack.pop();
         // if the condition is 'none' then use the address as the next instruction to be executed
         if (condition.equalTo(elements.Template.NONE)) {
             bvm.procedureContext.nextAddress = nextAddress;
@@ -189,9 +205,9 @@ var instructionHandlers = [
     // JUMP TO label ON TRUE
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero address operand.');
-        var nextAddress = operand;
+        var nextAddress = operand - 1;  // JS zero based indexing
         // pop the condition component off the component stack
-        var condition = bvm.taskContext.componentStack.popItem();
+        var condition = bvm.taskContext.componentStack.pop();
         // if the condition is 'true' then use the address as the next instruction to be executed
         if (condition.equalTo(elements.Probability.TRUE)) {
             bvm.procedureContext.nextAddress = nextAddress;
@@ -201,9 +217,9 @@ var instructionHandlers = [
     // JUMP TO label ON FALSE
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero address operand.');
-        var nextAddress = operand;
+        var nextAddress = operand - 1;  // JS zero based indexing
         // pop the condition component off the component stack
-        var condition = bvm.taskContext.componentStack.popItem();
+        var condition = bvm.taskContext.componentStack.pop();
         // if the condition is 'false' then use the address as the next instruction to be executed
         if (condition.equalTo(elements.Probability.FALSE)) {
             bvm.procedureContext.nextAddress = nextAddress;
@@ -213,27 +229,27 @@ var instructionHandlers = [
     // PUSH HANDLER label
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero address operand.');
-        var handlerAddress = new elements.Complex(operand);  // must convert to Bali element
+        var handlerAddress = operand - 1;  // JS zero based indexing
         // push the address of the current exception handlers onto the handlers stack
-        bvm.taskContext.handlerStack.pushItem(handlerAddress);
+        bvm.taskContext.handlerStack.push(handlerAddress);
     },
 
     // PUSH ELEMENT literal
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // lookup the literal associated with the index
-        var literal = bvm.procedureContext.literalValues.getItem(index);
-        bvm.taskContext.componentStack.pushItem(literal);
+        var literal = bvm.procedureContext.literalValues[index];
+        bvm.taskContext.componentStack.push(literal);
     },
 
     // PUSH CODE literal
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // lookup the literal associated with the index
-        var code = bvm.procedureContext.literalValues.getItem(index);
-        bvm.taskContext.componentStack.pushItem(code);
+        var code = bvm.procedureContext.literalValues[index];
+        bvm.taskContext.componentStack.push(code);
     },
 
     // UNIMPLEMENTED PUSH OPERATION
@@ -246,14 +262,14 @@ var instructionHandlers = [
         if (operand) throw new Error('BVM: The current instruction has a non-zero operand.');
         // remove the current exception handler address from the top of the handlers stack
         // since it is no longer in scope
-        bvm.taskContext.handlerStack.popItem();
+        bvm.taskContext.handlerStack.pop();
     },
 
     // POP COMPONENT
     function(bvm, operand) {
         if (operand) throw new Error('BVM: The current instruction has a non-zero operand.');
         // remove the component that is on top of the component stack since it was not used
-        bvm.taskContext.componentStack.popItem();
+        bvm.taskContext.componentStack.pop();
     },
 
     // UNIMPLEMENTED POP OPERATION
@@ -269,27 +285,27 @@ var instructionHandlers = [
     // LOAD VARIABLE symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // lookup the variable associated with the index
-        var variable = bvm.procedureContext.variableValues.getItem(index).value;
-        bvm.taskContext.componentStack.pushItem(variable);
+        var variable = bvm.procedureContext.variableValues[index];
+        bvm.taskContext.componentStack.push(variable);
     },
 
     // LOAD PARAMETER symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // lookup the parameter associated with the index
-        var parameter = bvm.procedureContext.parameterValues.getItem(index).value;
-        bvm.taskContext.componentStack.pushItem(parameter);
+        var parameter = bvm.procedureContext.parameterValues[index];
+        bvm.taskContext.componentStack.push(parameter);
     },
 
     // LOAD DOCUMENT symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // lookup the reference associated with the index
-        var reference = bvm.procedureContext.variableValues.getItem(index).value;
+        var reference = bvm.procedureContext.variableValues[index];
         // retrieve the referenced document from the cloud repository
         var citation = BaliCitation.fromReference(reference);
         var document;
@@ -299,19 +315,19 @@ var instructionHandlers = [
             document = bvm.environment.retrieveDocument(citation);
         }
         // push the document on top of the component stack
-        bvm.taskContext.componentStack.pushItem(document);
+        bvm.taskContext.componentStack.push(document);
     },
 
     // LOAD MESSAGE symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // lookup the referenced queue associated with the index
-        var queue = bvm.procedureContext.variableValues.getItem(index).value;
+        var queue = bvm.procedureContext.variableValues[index];
         // attempt to receive a message from the referenced queue in the cloud
         var message = bvm.environment.receiveMessage(queue);
         if (message) {
-            bvm.taskContext.componentStack.pushItem(message);
+            bvm.taskContext.componentStack.push(message);
         } else {
             // set the task status to 'waiting'
             bvm.taskContext.processorStatus = TaskContext.WAITING;
@@ -325,7 +341,7 @@ var instructionHandlers = [
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
         var index = operand;
         // pop the component that is on top of the component stack off the stack
-        var component = bvm.taskContext.componentStack.popItem();
+        var component = bvm.taskContext.componentStack.pop();
         // and store the component in the variable associated with the index
         bvm.procedureContext.variableValues.replaceItem(index, component);
     },
@@ -333,11 +349,11 @@ var instructionHandlers = [
     // STORE DRAFT symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // pop the draft that is on top of the component stack off the stack
-        var draft = bvm.taskContext.componentStack.popItem();
+        var draft = bvm.taskContext.componentStack.pop();
         // lookup the reference associated with the index operand
-        var reference = bvm.procedureContext.variableValues.getItem(index).value;
+        var reference = bvm.procedureContext.variableValues[index];
         var citation = BaliCitation.fromReference(reference);
         // write the referenced draft to the cloud repository
         bvm.environment.saveDraft(citation.tag, citation.version, draft);
@@ -346,11 +362,11 @@ var instructionHandlers = [
     // STORE DOCUMENT symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // pop the document that is on top of the component stack off the stack
-        var document = bvm.taskContext.componentStack.popItem();
+        var document = bvm.taskContext.componentStack.pop();
         // lookup the reference associated with the index operand
-        var reference = bvm.procedureContext.variableValues.getItem(index).value;
+        var reference = bvm.procedureContext.variableValues[index];
         var citation = BaliCitation.fromReference(reference);
         // write the referenced document to the cloud repository
         bvm.environment.commitDocument(citation, document);
@@ -359,11 +375,11 @@ var instructionHandlers = [
     // STORE MESSAGE symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // pop the message that is on top of the component stack off the stack
-        var message = bvm.taskContext.componentStack.popItem();
+        var message = bvm.taskContext.componentStack.pop();
         // lookup the referenced queue associated with the index operand
-        var queue = bvm.procedureContext.variableValues.getItem(index).value;
+        var queue = bvm.procedureContext.variableValues[index];
         // send the message to the referenced queue in the cloud
         bvm.environment.sendMessage(queue, message);
     },
@@ -371,73 +387,73 @@ var instructionHandlers = [
     // INVOKE symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand - 1;  // convert to a javascript zero based index
+        var index = operand - 1;  // JS zero based indexing
         // create an empty parameters list for the intrinsic function call
         var parameters = new collections.List();
         // call the intrinsic function associated with the index operand
         var result = intrinsics.intrinsicFunctions[index].apply(bvm, parameters);
         // push the result of the function call onto the top of the component stack
-        bvm.taskContext.componentStack.pushItem(result);
+        bvm.taskContext.componentStack.push(result);
     },
 
     // INVOKE symbol WITH PARAMETER
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand - 1;  // convert to a javascript zero based index
+        var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
         var parameters = new collections.List();
-        var parameter = bvm.taskContext.componentStack.popItem();
-        parameters.pushItem(parameter);
+        var parameter = bvm.taskContext.componentStack.pop();
+        parameters.push(parameter);
         // call the intrinsic function associated with the index operand
         var result = intrinsics.intrinsicFunctions[index].apply(bvm, parameters);
         // push the result of the function call onto the top of the component stack
-        bvm.taskContext.componentStack.pushItem(result);
+        bvm.taskContext.componentStack.push(result);
     },
 
     // INVOKE symbol WITH 2 PARAMETERS
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand - 1;  // convert to a javascript zero based index
+        var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
         var parameters = new collections.List();
-        var parameter = bvm.taskContext.componentStack.popItem();
-        parameters.pushItem(parameter);
-        parameter = bvm.taskContext.componentStack.popItem();
-        parameters.pushItem(parameter);
+        var parameter = bvm.taskContext.componentStack.pop();
+        parameters.push(parameter);
+        parameter = bvm.taskContext.componentStack.pop();
+        parameters.push(parameter);
         // call the intrinsic function associated with the index operand
         var result = intrinsics.intrinsicFunctions[index].apply(bvm, parameters);
         // push the result of the function call onto the top of the component stack
-        bvm.taskContext.componentStack.pushItem(result);
+        bvm.taskContext.componentStack.push(result);
     },
 
     // INVOKE symbol WITH 3 PARAMETERS
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand - 1;  // convert to a javascript zero based index
+        var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
         var parameters = new collections.List();
-        var parameter = bvm.taskContext.componentStack.popItem();
-        parameters.pushItem(parameter);
-        parameter = bvm.taskContext.componentStack.popItem();
-        parameters.pushItem(parameter);
-        parameter = bvm.taskContext.componentStack.popItem();
-        parameters.pushItem(parameter);
+        var parameter = bvm.taskContext.componentStack.pop();
+        parameters.push(parameter);
+        parameter = bvm.taskContext.componentStack.pop();
+        parameters.push(parameter);
+        parameter = bvm.taskContext.componentStack.pop();
+        parameters.push(parameter);
         // call the intrinsic function associated with the index operand
         var result = intrinsics.intrinsicFunctions[index].apply(bvm, parameters);
         // push the result of the function call onto the top of the component stack
-        bvm.taskContext.componentStack.pushItem(result);
+        bvm.taskContext.componentStack.push(result);
     },
 
     // EXECUTE symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         var procedureContext = new ProcedureContext();
         procedureContext.targetComponent = elements.Template.NONE;
-        procedureContext.typeReference = bvm.taskContext.componentStack.popItem();
+        procedureContext.typeReference = bvm.taskContext.componentStack.pop();
         var type = bvm.environment.retrieveDocument(procedureContext.typeReference);
         var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
+        var association = procedureDefinitions[index];
         procedureContext.procedureName = association.key;
         var procedure = association.value;
         procedureContext.literalValues = type.literalValues;
@@ -447,42 +463,42 @@ var instructionHandlers = [
         procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
-        bvm.taskContext.procedureStack.pushItem(procedureContext);
+        bvm.taskContext.procedureStack.push(procedureContext);
     },
 
     // EXECUTE symbol WITH PARAMETERS
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         var procedureContext = new ProcedureContext();
         procedureContext.targetComponent = elements.Template.NONE;
-        procedureContext.typeReference = bvm.taskContext.componentStack.popItem();
+        procedureContext.typeReference = bvm.taskContext.componentStack.pop();
         var type = bvm.environment.retrieveDocument(procedureContext.typeReference);
         var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
+        var association = procedureDefinitions[index];
         procedureContext.procedureName = association.key;
         var procedure = association.value;
         procedureContext.literalValues = type.literalValues;
-        var parameterValues = bvm.taskContext.componentStack.popItem();
+        var parameterValues = bvm.taskContext.componentStack.pop();
         procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
         procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
-        bvm.taskContext.procedureStack.pushItem(procedureContext);
+        bvm.taskContext.procedureStack.push(procedureContext);
     },
 
     // EXECUTE symbol ON TARGET
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         var procedureContext = new ProcedureContext();
-        procedureContext.targetComponent = bvm.taskContext.componentStack.popItem();
+        procedureContext.targetComponent = bvm.taskContext.componentStack.pop();
         procedureContext.typeReference = this.extractType(procedureContext.targetComponent);
         var type = bvm.environment.retrieveDocument(procedureContext.typeReference);
         var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
+        var association = procedureDefinitions[index];
         procedureContext.procedureName = association.key;
         var procedure = association.value;
         procedureContext.literalValues = type.literalValues;
@@ -492,30 +508,30 @@ var instructionHandlers = [
         procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
-        bvm.taskContext.procedureStack.pushItem(procedureContext);
+        bvm.taskContext.procedureStack.push(procedureContext);
     },
 
     // EXECUTE symbol ON TARGET WITH PARAMETERS
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         var procedureContext = new ProcedureContext();
-        procedureContext.targetComponent = bvm.taskContext.componentStack.popItem();
+        procedureContext.targetComponent = bvm.taskContext.componentStack.pop();
         procedureContext.typeReference = this.extractType(procedureContext.targetComponent);
         var type = bvm.environment.retrieveDocument(procedureContext.typeReference);
         var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
+        var association = procedureDefinitions[index];
         procedureContext.procedureName = association.key;
         var procedure = association.value;
         procedureContext.literalValues = type.literalValues;
-        var parameterValues = bvm.taskContext.componentStack.popItem();
+        var parameterValues = bvm.taskContext.componentStack.pop();
         procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
         procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
         procedureContext.nextAddress = 1;
         bvm.procedureContext = procedureContext;
-        bvm.taskContext.procedureStack.pushItem(procedureContext);
+        bvm.taskContext.procedureStack.push(procedureContext);
     },
 
     // HANDLE EXCEPTION
@@ -525,22 +541,22 @@ var instructionHandlers = [
         while (!bvm.taskContext.procedureStack.isEmpty()) {
             while (!bvm.taskContext.handlerStack.isEmpty()) {
                 // retrieve the address of the current exception handlers
-                var handlerAddress = bvm.taskContext.handlerStack.popItem().toNumber();
+                var handlerAddress = bvm.taskContext.handlerStack.pop();
                 // use that address as the next instruction to be executed
                 bvm.procedureContext.nextAddress = handlerAddress;
             }
             // pop the current exception off of the component stack
-            var exception = bvm.taskContext.componentStack.popItem();
+            var exception = bvm.taskContext.componentStack.pop();
             // pop the current procedure context off of the context stack since it has no handlers
-            bvm.taskContext.procedureStack.popItem();
+            bvm.taskContext.procedureStack.pop();
             if (bvm.taskContext.procedureStack.isEmpty()) {
                 // we're done
                 bvm.taskContext.exception = exception;
                 bvm.taskContext.processorStatus = TaskContext.DONE;
             } else {
-                bvm.procedureContext = bvm.taskContext.procedureStack.getTop();
+                bvm.procedureContext = bvm.taskContext.procedureStack.peek();
                 // push the result of the procedure call onto the top of the component stack
-                bvm.taskContext.componentStack.pushItem(exception);
+                bvm.taskContext.componentStack.push(exception);
             }
         }
     },
@@ -549,17 +565,17 @@ var instructionHandlers = [
     function(bvm, operand) {
         if (operand) throw new Error('BVM: The current instruction has a non-zero operand.');
         // pop the result of the procedure call off of the component stack
-        var result = bvm.taskContext.componentStack.popItem();
+        var result = bvm.taskContext.componentStack.pop();
         // pop the current context off of the context stack since it is now out of scope
-        bvm.taskContext.procedureStack.popItem();
+        bvm.taskContext.procedureStack.pop();
         if (bvm.taskContext.procedureStack.isEmpty()) {
             // we're done
             bvm.taskContext.result = result;
             bvm.taskContext.processorStatus = TaskContext.DONE;
         } else {
-            bvm.procedureContext = bvm.taskContext.procedureStack.getTop();
+            bvm.procedureContext = bvm.taskContext.procedureStack.peek();
             // push the result of the procedure call onto the top of the component stack
-            bvm.taskContext.componentStack.pushItem(result);
+            bvm.taskContext.componentStack.push(result);
         }
     },
 

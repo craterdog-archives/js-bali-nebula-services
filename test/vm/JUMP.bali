@@ -1,0 +1,25 @@
+[
+    $taskTag: #Y29YH82BHG4SPTGWGFRYBL4RQ33GTX59
+    $accountTag: #641ZH7VZKQW47HBJGXRCAHKT859YX25G
+    $accountBalance: 1000
+    $processorStatus: $active
+    $clockCycles: 0
+    $componentStack: []($type: Stack)
+    $handlerStack: []($type: Stack)
+    $procedureStack: [
+        [
+            $targetComponent: none
+            $typeReference: none
+            $procedureName: $dummy
+            $parameterValues: []
+            $literalValues: [true, false, none]
+            $variableValues: []
+            $bytecodeInstructions: '
+                00002801181400002802180800142801100B00142802101400002803081100142801081400140000
+            '($mediatype: "application/bcod")
+            $currentInstruction: 0
+            $nextAddress: 1
+        ]($type: ProcedureContext)
+    ]($type: Stack)
+]($type: TaskContext)
+

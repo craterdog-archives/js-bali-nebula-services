@@ -16,120 +16,134 @@ var BaliProcedure = require('bali-instruction-set/BaliProcedure');
 var analyzer = require('../assembler/ProcedureAnalyzer');
 var assembler = require('../assembler/ProcedureAssembler');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
+var utilities = require('../utilities/BytecodeUtilities');
 var TaskContext = require('../bvm/TaskContext');
 var VirtualMachine = require('../bvm/VirtualMachine');
 var elements = require('bali-element-types');
 var collections = require('bali-collection-types');
+var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
 
 
 describe('Bali Virtual Machine™', function() {
     var testDirectory = 'test/config/';
-    var notary = BaliNotary.notary(testDirectory);
-    var repository = TestRepository.repository(testDirectory);
-    var environment = BaliAPI.environment(notary, repository);
 
     describe('Test the JUMP instruction.', function() {
-        var taskContext;
-/*
+
         it('should create the initial task context', function() {
-            var source =
-                    '\n' +
-                    '1.IfStatement:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.1.ConditionClause:\n' +
-                    'PUSH ELEMENT `true`\n' +
-                    'JUMP TO 1.2.ConditionClause ON FALSE\n' +
-                    '\n' +
-                    '1.1.1.EvaluateStatement:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.1.ConditionClauseDone:\n' +
-                    'JUMP TO 1.IfStatementDone\n' +
-                    '\n' +
-                    '1.2.ConditionClause:\n' +
-                    'PUSH ELEMENT `false`\n' +
-                    'JUMP TO 1.3.ConditionClause ON FALSE\n' +
-                    '\n' +
-                    '1.2.1.EvaluateStatement:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.2.ConditionClauseDone:\n' +
-                    'JUMP TO 1.IfStatementDone\n' +
-                    '\n' +
-                    '1.3.ConditionClause:\n' +
-                    'PUSH ELEMENT `true`\n' +
-                    'JUMP TO 1.4.ConditionClause ON TRUE\n' +
-                    '\n' +
-                    '1.3.1.EvaluateStatement:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.3.ConditionClauseDone:\n' +
-                    'JUMP TO 1.IfStatementDone\n' +
-                    '\n' +
-                    '1.4.ConditionClause:\n' +
-                    'PUSH ELEMENT `false`\n' +
-                    'JUMP TO 1.5.ConditionClause ON TRUE\n' +
-                    '\n' +
-                    '1.4.1.EvaluateStatement:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.4.ConditionClauseDone:\n' +
-                    'JUMP TO 1.IfStatementDone\n' +
-                    '\n' +
-                    '1.5.ConditionClause:\n' +
-                    'PUSH ELEMENT `none`\n' +
-                    'JUMP TO 1.6.ConditionClause ON NONE\n' +
-                    '\n' +
-                    '1.5.1.EvaluateStatement:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.5.ConditionClauseDone:\n' +
-                    'JUMP TO 1.IfStatementDone\n' +
-                    '\n' +
-                    '1.6.ConditionClause:\n' +
-                    'PUSH ELEMENT `true`\n' +
-                    'JUMP TO 1.IfStatementDone ON NONE\n' +
-                    '\n' +
-                    '1.6.1.EvaluateStatement:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.6.ConditionClauseDone:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n' +
-                    '1.IfStatementDone:\n' +
-                    'SKIP INSTRUCTION\n' +
-                    '\n';
+            var testFile = 'test/vm/JUMP.basm';
+            var source = fs.readFileSync(testFile, 'utf8');
+            expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
             var symbols = analyzer.extractSymbols(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
-    
-            source =
-                    '\n[\n' +
-                    '    $targetComponent: none\n' +
-                    '    $typeReference: none\n' +
-                    '    $procedureName: $dummy\n' +
-                    '    $parameterValues: []\n' +
-                    '    $literalValues: [true, false, none]\n' +
-                    '    $variableValues: []\n' +
-                    '    $bytecodeInstructions: [' + bytecodeInstructions + ']\n' +
-                    '    $currentInstruction: none\n' +
-                    '    $nextAddress: 1\n' +
-                    ']\n';
-            console.log('source: ' + source);
-            var document = BaliDocument.fromSource(source);
-            console.log('document: ' + document);
-            var accountTag = new elements.Tag();
-            var accountBalance = 100;
-            // TODO: fill in document...
-            taskContext = TaskContext.fromDocument(document);
-
-            var bvm = VirtualMachine(taskContext, testDirectory);
-            bvm.processInstructions();
+            var bytecode = utilities.bytecodeToBase16(bytecodeInstructions);
+            //console.log('bytecode: ' + bytecode);
         });
-*/
+
+        it('should create the initial task context', function() {
+            var testFile = 'test/vm/JUMP.bali';
+            var source = fs.readFileSync(testFile, 'utf8');
+            expect(source).to.exist;  // jshint ignore:line
+            var document = BaliDocument.fromSource(source);
+            var bvm = VirtualMachine.fromDocument(document, testDirectory);
+            expect(bvm.procedureContext.nextAddress).to.equal(1);
+
+            // 1.IfStatement:
+            // SKIP INSTRUCTION
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(2);
+
+            // 1.1.ConditionClause:
+            // PUSH ELEMENT `true`
+            // JUMP TO 1.IfStatementDone ON FALSE
+            bvm.step();
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(4);
+
+            // 1.1.1.EvaluateStatement:
+            // SKIP INSTRUCTION
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(5);
+
+            // 1.2.ConditionClause:
+            // PUSH ELEMENT `false`
+            // JUMP TO 1.3.ConditionClause ON FALSE
+            bvm.step();
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(8);
+
+            // 1.2.1.EvaluateStatement:
+            // JUMP TO 1.IfStatementDone
+
+            // 1.3.ConditionClause:
+            // PUSH ELEMENT `true`
+            // JUMP TO 1.4.ConditionClause ON TRUE
+            bvm.step();
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(11);
+
+            // 1.3.1.EvaluateStatement:
+            // JUMP TO 1.IfStatementDone
+
+            // 1.4.ConditionClause:
+            // PUSH ELEMENT `false`
+            // JUMP TO 1.IfStatementDone ON TRUE
+            bvm.step();
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(13);
+
+            // 1.4.1.EvaluateStatement:
+            // SKIP INSTRUCTION
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(14);
+
+            // 1.5.ConditionClause:
+            // PUSH ELEMENT `none`
+            // JUMP TO 1.6.ConditionClause ON NONE
+            bvm.step();
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(17);
+
+            // 1.5.1.EvaluateStatement:
+            // JUMP TO 1.IfStatementDone
+
+            // 1.6.ConditionClause:
+            // PUSH ELEMENT `true`
+            // JUMP TO 1.IfStatementDone ON NONE
+            bvm.step();
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(19);
+
+            // 1.6.1.EvaluateStatement:
+            // JUMP TO 1.IfStatementDone
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(20);
+
+            // 1.IfStatementDone:
+            // SKIP INSTRUCTION
+            bvm.step();
+            expect(bvm.procedureContext.nextAddress).to.equal(21);
+
+            // EOF
+            expect(bvm.step()).to.equal(false);
+        });
+
     });
 
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
