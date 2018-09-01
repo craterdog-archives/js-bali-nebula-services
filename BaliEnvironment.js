@@ -48,7 +48,7 @@ exports.compileType = function(type, verbose) {
         source = compiler.compileProcedure(procedure, type);
         var instructions = BaliProcedure.fromSource(source);
         var symbols = scanner.extractSymbols(instructions);
-        var bytecode = assembler.assembleProcedure(instructions, symbols);
+        var base16 = assembler.assembleProcedure(instructions, symbols);
 
         var catalog = component.children[1];
         var value;
@@ -61,9 +61,8 @@ exports.compileType = function(type, verbose) {
         }
     
         // add bytecode to procedure catalog
-        var base16 = utilities.bytecodeToBase16(bytecode, '                ');
-        var binary = parser.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
-        catalog.setValue('$bytecode', binary);
+        var bytecode = parser.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
+        catalog.setValue('$bytecode', bytecode);
     }
     return type;
 };

@@ -758,7 +758,7 @@ TaskExporter.prototype.visitProcedureContext = function(procedureContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$bytecodeInstructions');
     association.addChild(key);
-    var base16 = bytecode.bytecodeToBase16(procedureContext.bytecodeInstructions, '                ');
+    var base16 = bytecode.bytecodeToBase16(procedureContext.bytecodeInstructions);
     var bytecodeInstructions = parser.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
     association.addChild(bytecodeInstructions);
     catalog.addChild(association);

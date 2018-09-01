@@ -24,14 +24,15 @@ var intrinsics = require('../intrinsics/IntrinsicFunctions');
  * This function traverses a parse tree structure containing assembly
  * instructions and generates the corresponding bytecode.
  * 
- * @param {object} procedure The parse tree structure to be traversed.
- * @param {object} symbols The symbol table for the procedure.
- * @returns {array} The corresponding bytecode array.
+ * @param {Object} procedure The parse tree structure to be traversed.
+ * @param {Object} symbols The symbol table for the procedure.
+ * @returns {String} The corresponding base 16 encoded bytecode.
  */
 exports.assembleProcedure = function(procedure, symbols) {
     var visitor = new AssemblingVisitor(symbols);
     procedure.accept(visitor);
-    return visitor.bytecode;
+    var bytecode = utilities.bytecodeToBase16(visitor.instructions);
+    return bytecode;
 };
 
 
@@ -39,14 +40,15 @@ exports.assembleProcedure = function(procedure, symbols) {
  * This function analyzes bytecode and regenerates the assembly instructions
  * in the procedure that was used to generate the bytecode.
  * 
- * @param {array} bytecode The bytecode array.
- * @param {object} symbols The symbol table for the instructions.
- * @returns {string} The regenerated procedure.
+ * @param {String} bytecode The base 16 encoded bytecode.
+ * @param {Object} symbols The symbol table for the instructions.
+ * @returns {String} The regenerated procedure.
  */
 exports.disassembleBytecode = function(bytecode, symbols) {
+    var instructions = utilities.base16ToBytecode(bytecode);
     var procedure = '';
     var address = 1;  // bali VM unit based addressing
-    while (address <= bytecode.length) {
+    while (address <= instructions.length) {
         // check for a label at this address
         var label = lookupLabel(symbols, address);
         if (label) {
@@ -54,7 +56,7 @@ exports.disassembleBytecode = function(bytecode, symbols) {
         }
 
         // decode the instruction
-        var instruction = bytecode[address - 1];  // javascript zero based indexing
+        var instruction = instructions[address - 1];  // javascript zero based indexing
         var operation = utilities.decodeOperation(instruction);
         var modifier = utilities.decodeModifier(instruction);
         var operand = utilities.decodeOperand(instruction);
@@ -147,7 +149,7 @@ function lookupSymbol(symbols, operation, modifier, index) {
 
 function AssemblingVisitor(symbols) {
     this.symbols = symbols;
-    this.bytecode = [];  // array of bytecode instructions
+    this.instructions = [];  // array of bytecode instructions
     return this;
 }
 AssemblingVisitor.prototype.constructor = AssemblingVisitor;
@@ -183,8 +185,8 @@ AssemblingVisitor.prototype.visitJumpInstruction = function(instruction) {
     if (label && label !== 0) {
         address = this.symbols.addresses[label];
     }
-    var bytes = utilities.encodeInstruction(types.JUMP, modifier, address);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.JUMP, modifier, address);
+    this.instructions.push(word);
 };
 
 
@@ -204,8 +206,8 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
             value = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
             break;
     }
-    var bytes = utilities.encodeInstruction(types.PUSH, modifier, value);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.PUSH, modifier, value);
+    this.instructions.push(word);
 };
 
 
@@ -214,8 +216,8 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
 //     'POP' 'COMPONENT'
 AssemblingVisitor.prototype.visitPopInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var bytes = utilities.encodeInstruction(types.POP, modifier);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.POP, modifier);
+    this.instructions.push(word);
 };
 
 
@@ -241,8 +243,8 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
             break;
     }
     var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
-    var bytes = utilities.encodeInstruction(types.LOAD, modifier, index);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.LOAD, modifier, index);
+    this.instructions.push(word);
 };
 
 
@@ -266,8 +268,8 @@ AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
             break;
     }
     var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
-    var bytes = utilities.encodeInstruction(types.STORE, modifier, index);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.STORE, modifier, index);
+    this.instructions.push(word);
 };
 
 
@@ -279,8 +281,8 @@ AssemblingVisitor.prototype.visitInvokeInstruction = function(instruction) {
     var count = instruction.modifier;
     var symbol = instruction.operand;
     var index = intrinsics.intrinsicNames.indexOf(symbol) + 1;  // bali VM unit based indexing
-    var bytes = utilities.encodeInstruction(types.INVOKE, count, index);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.INVOKE, count, index);
+    this.instructions.push(word);
 };
 
 
@@ -293,8 +295,8 @@ AssemblingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
     var index = this.symbols.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
-    var bytes = utilities.encodeInstruction(types.EXECUTE, modifier, index);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.EXECUTE, modifier, index);
+    this.instructions.push(word);
 };
 
 
@@ -303,6 +305,6 @@ AssemblingVisitor.prototype.visitExecuteInstruction = function(instruction) {
 //     'HANDLE' 'RESULT'
 AssemblingVisitor.prototype.visitHandleInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var bytes = utilities.encodeInstruction(types.HANDLE, modifier);
-    this.bytecode.push(bytes);
+    var word = utilities.encodeInstruction(types.HANDLE, modifier);
+    this.instructions.push(word);
 };

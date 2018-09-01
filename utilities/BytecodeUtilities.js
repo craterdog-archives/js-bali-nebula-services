@@ -205,17 +205,16 @@ exports.base16ToBytecode = function(base16) {
  * This function converts a bytecode array into a base 16 encoded string.
  * 
  * @param {Array} bytecode The bytecode array to be converted.
- * @param {String} indentation The string to be prepended to each line of the result.
  * @returns {String} The corresponding base 16 encoded string.
  */
-exports.bytecodeToBase16 = function(bytecode, indentation) {
+exports.bytecodeToBase16 = function(bytecode) {
     var length = bytecode.length;
     var buffer = Buffer.alloc(length * 2);
     for (var i = 0; i < length; i++) {
         var word = bytecode[i];
         buffer.fill(codex.shortToBytes(word), i * 2);
     }
-    var base16 = codex.base16Encode(buffer, indentation);
+    var base16 = codex.base16Encode(buffer, '                ');
     return base16;
 };
 

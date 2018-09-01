@@ -26,11 +26,10 @@ var TaskContext = require('./TaskContext');
 var ProcedureContext = require('./TaskContext').ProcedureContext;
 
 
-exports.fromDocument = function(document, testDirectory) {
+exports.fromDocument = function(taskContext, testDirectory) {
     var notary = BaliNotary.notary(testDirectory);
     var repository = testDirectory ? TestRepository.repository(testDirectory) : CloudRepository.repository();
     var environment = BaliAPI.environment(notary, repository);
-    var taskContext = TaskContext.fromDocument(document);
     var procedureContext = taskContext.procedureStack.peek();
 
     return {
