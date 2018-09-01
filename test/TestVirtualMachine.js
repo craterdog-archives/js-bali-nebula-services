@@ -164,18 +164,60 @@ describe('Bali Virtual Machine™', function() {
 
     });
 
+    describe('Test the PUSH and POP instructions.', function() {
+
+        it('should create the initial task context', function() {
+            var testFile = 'test/bvm/PUSH-POP.basm';
+            var source = fs.readFileSync(testFile, 'utf8');
+            expect(source).to.exist;  // jshint ignore:line
+            var procedure = BaliProcedure.fromSource(source);
+            var symbols = analyzer.extractSymbols(procedure);
+            var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
+            source = TASK_TEMPLATE;
+            // NOTE: must remove the back tick delimiters from the literal values
+            source = source.replace(/%literalValues/, symbols.literals.toString().replace(/\`/g, ''));
+            source = source.replace(/%variableValues/, symbols.variables.toString());
+            source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
+            var document = BaliDocument.fromSource(source);
+            taskContext = TaskContext.fromDocument(document);
+        });
+
+        it('should execute the test instructions', function() {
+            var bvm = VirtualMachine.fromDocument(taskContext, testDirectory);
+            expect(bvm.procedureContext.nextAddress).to.equal(1);
+
+            // 1.PushHandler
+            // PUSH HANDLER 3.PushCode
+            bvm.step();
+            expect(bvm.taskContext.handlerStack.length).to.equal(1);
+
+            // 2.PushElement
+            // PUSH ELEMENT "five"
+            bvm.step();
+            expect(bvm.taskContext.componentStack.length).to.equal(1);
+
+            // 3.PushCode
+            // PUSH CODE `{return prefix + name + suffix}`
+            bvm.step();
+            expect(bvm.taskContext.componentStack.length).to.equal(2);
+
+            // 4.PopHandler
+            // POP HANDLER
+            bvm.step();
+            expect(bvm.taskContext.handlerStack.length).to.equal(0);
+
+            // 5.PopComponent
+            // POP COMPONENT
+            bvm.step();
+            expect(bvm.taskContext.componentStack.length).to.equal(1);
+
+            // EOF
+            expect(bvm.step()).to.equal(false);
+            expect(bvm.taskContext.clockCycles).to.equal(5);
+            expect(bvm.taskContext.accountBalance).to.equal(995);
+            expect(bvm.taskContext.processorStatus).to.equal('$active');
+        });
+
+    });
+
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-

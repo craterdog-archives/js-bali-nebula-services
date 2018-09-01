@@ -107,6 +107,26 @@ ProcedureContext.prototype.accept = function(visitor) {
 };
 
 
+// CODE
+
+function Code(source) {
+    this.source = source;
+    return this;
+}
+Code.prototype.constructor = Code;
+exports.Code = Code;
+
+
+Code.prototype.toString = function() {
+    return this.source;
+};
+
+
+Code.prototype.accept = function(visitor) {
+    visitor.visitCode(this);
+};
+
+
 /*
  * The task importer is a visitor that walks a Bali document parse tree defining a
  * task context and generates the corresponding javascript task context structure.
@@ -146,8 +166,8 @@ TaskImporter.prototype.visitCatalog = function(tree) {
 
 // code: '{' procedure '}'
 TaskImporter.prototype.visitCode = function(tree) {
-    var source = tree.children[0].toString();
-    var code = new elements.Code(source);
+    var source = tree.toString();
+    var code = new Code(source);
     this.result = code;
 };
 
