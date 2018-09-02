@@ -22,7 +22,13 @@ module.exports = function(grunt) {
 
     // grunt-contrib-clean plugin configuration (clean up files)
     clean: {
-      build: ['dist/*']
+      build: [
+        'dist/*',
+        'test/config/repository/documents/*'
+      ],
+      options: {
+        force: false
+      }
     },
 
     // grunt-mocha-test plugin configuration (unit testing)
