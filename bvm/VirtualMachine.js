@@ -372,7 +372,8 @@ var instructionHandlers = [
         // TODO: jump to exception handler if reference isn't a reference
         // write the referenced document to the cloud repository
         var citation = BaliCitation.fromReference(reference);
-        bvm.environment.commitDocument(citation.tag, citation.version, document);
+        citation = bvm.environment.commitDocument(citation.tag, citation.version, document);
+        bvm.procedureContext.variableValues[index] = citation.toReference();
     },
 
     // STORE MESSAGE symbol

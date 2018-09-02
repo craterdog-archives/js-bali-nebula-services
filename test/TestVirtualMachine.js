@@ -238,13 +238,11 @@ describe('Bali Virtual Machine™', function() {
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
             var symbols = analyzer.extractSymbols(procedure);
-            console.log('symbols: ' + JSON.stringify(symbols, null, 2));
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
             source = source.replace(/%literalValues/, symbols.literals.toString().replace(/\`/g, ''));
             source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
-            console.log('task: ' + source);
             var document = BaliDocument.fromSource(source);
             taskContext = TaskContext.fromDocument(document);
         });
@@ -287,6 +285,9 @@ describe('Bali Virtual Machine™', function() {
 
             // 6.LoadDocument:
             // LOAD DOCUMENT $document
+            bvm.step();
+            expect(bvm.taskContext.componentStack.length).to.equal(1);
+            expect(bvm.taskContext.componentStack.peek().documentContent.toString()).to.equal('"This is a text string."');
 
             // 7.StoreMessage:
             // STORE MESSAGE $queue
