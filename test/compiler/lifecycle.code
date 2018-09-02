@@ -10,18 +10,18 @@
 [008]:    D001    62     1    EXECUTE 1 ON TARGET
 [009]:    8003    40     3    STORE VARIABLE 3
 [00A]:    6002    30     2    LOAD VARIABLE 2
-[00B]:    8802    41     2    STORE DRAFT 2
+[00B]:    8803    41     3    STORE DRAFT 3
 [00C]:    2802    11     2    PUSH ELEMENT 2
 [00D]:    D001    62     1    EXECUTE 1 ON TARGET
 [00E]:    8004    40     4    STORE VARIABLE 4
 [00F]:    6002    30     2    LOAD VARIABLE 2
-[010]:    9003    42     3    STORE DOCUMENT 3
+[010]:    9004    42     4    STORE DOCUMENT 4
 [011]:    6005    30     5    LOAD VARIABLE 5
 [012]:    2803    11     3    PUSH ELEMENT 3
 [013]:    2802    11     2    PUSH ELEMENT 2
 [014]:    D001    62     1    EXECUTE 1 ON TARGET
 [015]:    8006    40     6    STORE VARIABLE 6
-[016]:    7004    32     4    LOAD DOCUMENT 4
+[016]:    7006    32     6    LOAD DOCUMENT 6
 [017]:    B81B    53    27    INVOKE 27 WITH 3 PARAMETERS
 [018]:    2802    11     2    PUSH ELEMENT 2
 [019]:    D001    62     1    EXECUTE 1 ON TARGET
@@ -30,7 +30,7 @@
 [01C]:    D002    62     2    EXECUTE 2 ON TARGET
 [01D]:    2803    11     3    PUSH ELEMENT 3
 [01E]:    B00B    52    11    INVOKE 11 WITH 2 PARAMETERS
-[01F]:    8805    41     5    STORE DRAFT 5
+[01F]:    8807    41     7    STORE DRAFT 7
 [020]:    2802    11     2    PUSH ELEMENT 2
 [021]:    D001    62     1    EXECUTE 1 ON TARGET
 [022]:    8008    40     8    STORE VARIABLE 8
@@ -38,11 +38,11 @@
 [024]:    D002    62     2    EXECUTE 2 ON TARGET
 [025]:    2803    11     3    PUSH ELEMENT 3
 [026]:    B00B    52    11    INVOKE 11 WITH 2 PARAMETERS
-[027]:    9006    42     6    STORE DOCUMENT 6
+[027]:    9008    42     8    STORE DOCUMENT 8
 [028]:    2802    11     2    PUSH ELEMENT 2
 [029]:    D001    62     1    EXECUTE 1 ON TARGET
 [02A]:    8009    40     9    STORE VARIABLE 9
 [02B]:    2804    11     4    PUSH ELEMENT 4
-[02C]:    8807    41     7    STORE DRAFT 7
+[02C]:    8809    41     9    STORE DRAFT 9
 [02D]:    600A    30    10    LOAD VARIABLE 10
 [02E]:    E800    71     0    HANDLE RESULT

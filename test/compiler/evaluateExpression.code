@@ -31,7 +31,7 @@
 [01D]:    6007    30     7    LOAD VARIABLE 7
 [01E]:    D003    62     3    EXECUTE 3 ON TARGET
 [01F]:    8008    40     8    STORE VARIABLE 8
-[020]:    7001    32     1    LOAD DOCUMENT 1
+[020]:    7008    32     8    LOAD DOCUMENT 8
 [021]:    8002    40     2    STORE VARIABLE 2
 [022]:    6009    30     9    LOAD VARIABLE 9
 [023]:    D004    62     4    EXECUTE 4 ON TARGET

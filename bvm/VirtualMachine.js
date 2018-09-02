@@ -305,10 +305,11 @@ var instructionHandlers = [
         var index = operand - 1;  // JS zero based indexing
         // lookup the reference associated with the index
         var reference = bvm.procedureContext.variableValues[index];
+        // TODO: jump to exception handler if reference isn't a reference
         // retrieve the referenced document from the cloud repository
         var citation = BaliCitation.fromReference(reference);
         var document;
-        if (citation.digest === elements.Template.NONE) {
+        if (citation.digest === 'none') {
             document = bvm.environment.retrieveDraft(citation.tag, citation.version);
         } else {
             document = bvm.environment.retrieveDocument(citation);
@@ -323,6 +324,7 @@ var instructionHandlers = [
         var index = operand - 1;  // JS zero based indexing
         // lookup the referenced queue associated with the index
         var queue = bvm.procedureContext.variableValues[index];
+        // TODO: jump to exception handler if queue isn't a reference
         // attempt to receive a message from the referenced queue in the cloud
         var message = bvm.environment.receiveMessage(queue);
         if (message) {
@@ -338,11 +340,11 @@ var instructionHandlers = [
     // STORE VARIABLE symbol
     function(bvm, operand) {
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // pop the component that is on top of the component stack off the stack
         var component = bvm.taskContext.componentStack.pop();
         // and store the component in the variable associated with the index
-        bvm.procedureContext.variableValues.replaceItem(index, component);
+        bvm.procedureContext.variableValues[index] = component;
     },
 
     // STORE DRAFT symbol
@@ -353,8 +355,9 @@ var instructionHandlers = [
         var draft = bvm.taskContext.componentStack.pop();
         // lookup the reference associated with the index operand
         var reference = bvm.procedureContext.variableValues[index];
-        var citation = BaliCitation.fromReference(reference);
+        // TODO: jump to exception handler if reference isn't a reference
         // write the referenced draft to the cloud repository
+        var citation = BaliCitation.fromReference(reference);
         bvm.environment.saveDraft(citation.tag, citation.version, draft);
     },
 
@@ -366,9 +369,10 @@ var instructionHandlers = [
         var document = bvm.taskContext.componentStack.pop();
         // lookup the reference associated with the index operand
         var reference = bvm.procedureContext.variableValues[index];
-        var citation = BaliCitation.fromReference(reference);
+        // TODO: jump to exception handler if reference isn't a reference
         // write the referenced document to the cloud repository
-        bvm.environment.commitDocument(citation, document);
+        var citation = BaliCitation.fromReference(reference);
+        bvm.environment.commitDocument(citation.tag, citation.version, document);
     },
 
     // STORE MESSAGE symbol
@@ -379,6 +383,7 @@ var instructionHandlers = [
         var message = bvm.taskContext.componentStack.pop();
         // lookup the referenced queue associated with the index operand
         var queue = bvm.procedureContext.variableValues[index];
+        // TODO: jump to exception handler if queue isn't a reference
         // send the message to the referenced queue in the cloud
         bvm.environment.sendMessage(queue, message);
     },

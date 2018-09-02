@@ -39,9 +39,9 @@ exports.extractSymbols = function(procedure) {
 function AnalyzingVisitor() {
     this.symbols = {
         addresses: {},
+        parameters: [],
         literals: [],
         variables: [],
-        references: [],
         procedures: []
     };
     this.address = 1;  // bali VM unit based addressing
@@ -90,7 +90,9 @@ AnalyzingVisitor.prototype.visitPushInstruction = function(instruction) {
     switch (modifier) {
         case types.ELEMENT:
         case types.CODE:
-            if (!this.symbols.literals.includes(value)) this.symbols.literals.push(value);
+            if (!this.symbols.literals.includes(value)) {
+                this.symbols.literals.push(value);
+            }
             break;
     }
     this.address++;
@@ -107,21 +109,21 @@ AnalyzingVisitor.prototype.visitPopInstruction = function(instruction) {
 
 // loadInstruction:
 //     'LOAD' 'VARIABLE' SYMBOL |
+//     'LOAD' 'PARAMETER' SYMBOL |
 //     'LOAD' 'DOCUMENT' SYMBOL |
-//     'LOAD' 'DRAFT' SYMBOL |
 //     'LOAD' 'MESSAGE' SYMBOL
 AnalyzingVisitor.prototype.visitLoadInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
     var type;
     switch(modifier) {
-        case types.VARIABLE:
-            type = 'variables';
+        case types.PARAMETER:
+            type = 'parameters';
             break;
+        case types.VARIABLE:
         case types.DOCUMENT:
-        case types.DRAFT:
         case types.MESSAGE:
-            type = 'references';
+            type = 'variables';
             break;
     }
     if (!this.symbols[type].includes(symbol)) {
@@ -133,25 +135,13 @@ AnalyzingVisitor.prototype.visitLoadInstruction = function(instruction) {
 
 // storeInstruction:
 //     'STORE' 'VARIABLE' SYMBOL |
-//     'STORE' 'DOCUMENT' SYMBOL |
 //     'STORE' 'DRAFT' SYMBOL |
+//     'STORE' 'DOCUMENT' SYMBOL |
 //     'STORE' 'MESSAGE' SYMBOL
 AnalyzingVisitor.prototype.visitStoreInstruction = function(instruction) {
-    var modifier = instruction.modifier;
     var symbol = instruction.operand;
-    var type;
-    switch(modifier) {
-        case types.VARIABLE:
-            type = 'variables';
-            break;
-        case types.DOCUMENT:
-        case types.DRAFT:
-        case types.MESSAGE:
-            type = 'references';
-            break;
-    }
-    if (!this.symbols[type].includes(symbol)) {
-        this.symbols[type].push(symbol);
+    if (!this.symbols.variables.includes(symbol)) {
+        this.symbols.variables.push(symbol);
     }
     this.address++;
 };

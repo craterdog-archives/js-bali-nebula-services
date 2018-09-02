@@ -12,7 +12,6 @@ config.gypi
 hs_err_pid*
 target/
 dist/
-test/config/
 
 # Development Repositories
 CVS

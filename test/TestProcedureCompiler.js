@@ -21,7 +21,7 @@ describe('Bali Cloud Environment™', function() {
     describe('Test the compiler.', function() {
 
         it('should compile source documents into assembly instructions.', function() {
-            var testFolder = 'test/source/';
+            var testFolder = 'test/compiler/';
             var files = fs.readdirSync(testFolder);
             for (var i = 0; i < files.length; i++) {
                 var file = files[i];

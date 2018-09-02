@@ -111,29 +111,18 @@ function lookupSymbol(symbols, operation, modifier, index) {
             break;
         case types.LOAD:
             switch (modifier) {
-                case types.VARIABLE:
-                    type = 'variables';
-                    break;
                 case types.PARAMETER:
                     type = 'parameters';
                     break;
+                case types.VARIABLE:
                 case types.DOCUMENT:
                 case types.MESSAGE:
-                    type = 'references';
+                    type = 'variables';
                     break;
             }
             break;
         case types.STORE:
-            switch (modifier) {
-                case types.VARIABLE:
-                    type = 'variables';
-                    break;
-                case types.DRAFT:
-                case types.DOCUMENT:
-                case types.MESSAGE:
-                    type = 'references';
-                    break;
-            }
+            type = 'variables';
             break;
         case types.INVOKE:
             return intrinsics.intrinsicNames[index - 1];  // javascript zero based indexing
@@ -231,15 +220,13 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
     var symbol = instruction.operand;
     var type;
     switch(modifier) {
-        case types.VARIABLE:
-            type = 'variables';
-            break;
         case types.PARAMETER:
             type = 'parameters';
             break;
+        case types.VARIABLE:
         case types.DOCUMENT:
         case types.MESSAGE:
-            type = 'references';
+            type = 'variables';
             break;
     }
     var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
@@ -256,18 +243,7 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
 AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
-    var type;
-    switch(modifier) {
-        case types.VARIABLE:
-            type = 'variables';
-            break;
-        case types.DRAFT:
-        case types.DOCUMENT:
-        case types.MESSAGE:
-            type = 'references';
-            break;
-    }
-    var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
+    var index = this.symbols.variables.indexOf(symbol) + 1;  // unit based indexing
     var word = utilities.encodeInstruction(types.STORE, modifier, index);
     this.instructions.push(word);
 };

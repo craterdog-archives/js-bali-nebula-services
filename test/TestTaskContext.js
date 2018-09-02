@@ -20,7 +20,7 @@ describe('Bali Cloud Environment™', function() {
     describe('Test the task context transformations.', function() {
 
         it('should transform a parse tree into a task context and back.', function() {
-            var testFile = 'test/source/taskContext.bali';
+            var testFile = 'test/compiler/taskContext.bali';
             var expected = fs.readFileSync(testFile, 'utf8');
             expect(expected).to.exist;  // jshint ignore:line
             var document = BaliDocument.fromSource(expected);

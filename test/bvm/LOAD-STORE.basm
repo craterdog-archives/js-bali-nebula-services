@@ -1,0 +1,26 @@
+
+1.LoadParameter:
+LOAD PARAMETER $x
+
+2.StoreVariable:
+STORE VARIABLE $foo
+
+3.LoadVariable:
+LOAD VARIABLE $foo
+
+4.StoreDraft:
+STORE DRAFT $document
+LOAD DOCUMENT $document
+
+5.StoreDocument:
+STORE DOCUMENT $document
+
+6.LoadDocument:
+LOAD DOCUMENT $document
+
+7.StoreMessage:
+STORE MESSAGE $queue
+
+8.LoadMessage:
+LOAD MESSAGE $queue
+
