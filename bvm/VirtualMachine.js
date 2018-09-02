@@ -386,7 +386,7 @@ var instructionHandlers = [
         var queue = bvm.procedureContext.variableValues[index];
         // TODO: jump to exception handler if queue isn't a reference
         // send the message to the referenced queue in the cloud
-        bvm.environment.sendMessage(queue, message);
+        bvm.environment.queueMessage(queue, message);
     },
 
     // INVOKE symbol

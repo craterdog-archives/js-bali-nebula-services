@@ -53,7 +53,7 @@ var TASK_TEMPLATE =
         '           $variableValues: [\n' +
         '               none\n' +
         '               <bali:[$protocol:v1,$tag:#LGLHW28KH99AXZZDTFXV14BX8CF2F68N,$version:v2.3,$digest:none]>\n' +
-        '               <bali:[$protocol:v1,$tag:#ZQMQ8BGN43Y146KCXX24ZASF0GDJ5YDZ,$version:v1,$digest:none]>\n' +
+        '               #ZQMQ8BGN43Y146KCXX24ZASF0GDJ5YDZ\n' +
         '           ]\n' +
         '           $bytecodeInstructions: \'\n' +
         '               %bytecodeInstructions\n' +
@@ -291,9 +291,14 @@ describe('Bali Virtual Machine™', function() {
 
             // 7.StoreMessage:
             // STORE MESSAGE $queue
+            bvm.step();
+            expect(bvm.taskContext.componentStack.length).to.equal(0);
 
             // 8.LoadMessage:
             // LOAD MESSAGE $queue
+            bvm.step();
+            expect(bvm.taskContext.componentStack.length).to.equal(1);
+            expect(bvm.taskContext.componentStack.peek().documentContent.toString()).to.equal('"This is a text string."');
 
             /*
 ----------------------------
