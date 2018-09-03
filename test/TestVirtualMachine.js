@@ -357,7 +357,7 @@ describe('Bali Virtual Machine™', function() {
             // INVOKE $default WITH 3 PARAMETERS
             bvm.step();
             expect(bvm.taskContext.componentStack.length).to.equal(1);
-            console.log('default: ' + bvm.taskContext.componentStack.peek().toString());
+            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('11');
 
             // EOF
             expect(bvm.step()).to.equal(false);
