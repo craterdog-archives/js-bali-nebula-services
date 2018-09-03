@@ -394,7 +394,7 @@ var instructionHandlers = [
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
         var index = operand - 1;  // JS zero based indexing
         // create an empty parameters list for the intrinsic function call
-        var parameters = new collections.List();
+        var parameters = [];
         // call the intrinsic function associated with the index operand
         var result = intrinsics.intrinsicFunctions[index].apply(bvm, parameters);
         // push the result of the function call onto the top of the component stack
@@ -406,7 +406,7 @@ var instructionHandlers = [
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
         var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
-        var parameters = new collections.List();
+        var parameters = [];
         var parameter = bvm.taskContext.componentStack.pop();
         parameters.push(parameter);
         // call the intrinsic function associated with the index operand
@@ -420,7 +420,7 @@ var instructionHandlers = [
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
         var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
-        var parameters = new collections.List();
+        var parameters = [];
         var parameter = bvm.taskContext.componentStack.pop();
         parameters.push(parameter);
         parameter = bvm.taskContext.componentStack.pop();
@@ -436,7 +436,7 @@ var instructionHandlers = [
         if (!operand) throw new Error('BVM: The current instruction has a zero index operand.');
         var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
-        var parameters = new collections.List();
+        var parameters = [];
         var parameter = bvm.taskContext.componentStack.pop();
         parameters.push(parameter);
         parameter = bvm.taskContext.componentStack.pop();

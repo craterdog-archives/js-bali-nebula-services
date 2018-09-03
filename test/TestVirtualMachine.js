@@ -196,27 +196,27 @@ describe('Bali Virtual Machine™', function() {
             var bvm = VirtualMachine.fromDocument(taskContext, testDirectory);
             expect(bvm.procedureContext.nextAddress).to.equal(1);
 
-            // 1.PushHandler
+            // 1.PushHandler:
             // PUSH HANDLER 3.PushCode
             bvm.step();
             expect(bvm.taskContext.handlerStack.length).to.equal(1);
 
-            // 2.PushElement
+            // 2.PushElement:
             // PUSH ELEMENT "five"
             bvm.step();
             expect(bvm.taskContext.componentStack.length).to.equal(1);
 
-            // 3.PushCode
+            // 3.PushCode:
             // PUSH CODE `{return prefix + name + suffix}`
             bvm.step();
             expect(bvm.taskContext.componentStack.length).to.equal(2);
 
-            // 4.PopHandler
+            // 4.PopHandler:
             // POP HANDLER
             bvm.step();
             expect(bvm.taskContext.handlerStack.length).to.equal(0);
 
-            // 5.PopComponent
+            // 5.PopComponent:
             // POP COMPONENT
             bvm.step();
             expect(bvm.taskContext.componentStack.length).to.equal(1);
@@ -300,35 +300,70 @@ describe('Bali Virtual Machine™', function() {
             expect(bvm.taskContext.componentStack.length).to.equal(1);
             expect(bvm.taskContext.componentStack.peek().documentContent.toString()).to.equal('"This is a text string."');
 
-            /*
-----------------------------
+            // EOF
+            expect(bvm.step()).to.equal(false);
+            expect(bvm.taskContext.clockCycles).to.equal(9);
+            expect(bvm.taskContext.accountBalance).to.equal(991);
+            expect(bvm.taskContext.processorStatus).to.equal('$active');
+        });
 
-            // 2.PushElement
-            // PUSH ELEMENT "five"
+    });
+
+    describe('Test the INVOKE instructions.', function() {
+
+        it('should create the initial task context', function() {
+            var testFile = 'test/bvm/INVOKE.basm';
+            var source = fs.readFileSync(testFile, 'utf8');
+            expect(source).to.exist;  // jshint ignore:line
+            var procedure = BaliProcedure.fromSource(source);
+            var symbols = analyzer.extractSymbols(procedure);
+            var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
+            source = TASK_TEMPLATE;
+            // NOTE: must remove the back tick delimiters from the literal values
+            source = source.replace(/%literalValues/, symbols.literals.toString().replace(/\`/g, ''));
+            source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
+            var document = BaliDocument.fromSource(source);
+            taskContext = TaskContext.fromDocument(document);
+        });
+
+        it('should execute the test instructions', function() {
+            var bvm = VirtualMachine.fromDocument(taskContext, testDirectory);
+            expect(bvm.procedureContext.nextAddress).to.equal(1);
+
+            // 1.Invoke:
+            // INVOKE $random
             bvm.step();
             expect(bvm.taskContext.componentStack.length).to.equal(1);
 
-            // 3.PushCode
-            // PUSH CODE `{return prefix + name + suffix}`
+            // 2.InvokeWithParameter:
+            // PUSH ELEMENT `3`
+            bvm.step();
+            // INVOKE $factorial WITH PARAMETER
             bvm.step();
             expect(bvm.taskContext.componentStack.length).to.equal(2);
+            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('6');
 
-            // 4.PopHandler
-            // POP HANDLER
+            // 3.InvokeWith2Parameters:
+            // PUSH ELEMENT `5`
             bvm.step();
-            expect(bvm.taskContext.handlerStack.length).to.equal(0);
+            // INVOKE $sum WITH 2 PARAMETERS
+            bvm.step();
+            expect(bvm.taskContext.componentStack.length).to.equal(2);
+            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('11');
 
-            // 5.PopComponent
-            // POP COMPONENT
+            // 4.InvokeWith3Parameters:
+            // PUSH ELEMENT `13`
+            bvm.step();
+            // INVOKE $default WITH 3 PARAMETERS
             bvm.step();
             expect(bvm.taskContext.componentStack.length).to.equal(1);
+            console.log('default: ' + bvm.taskContext.componentStack.peek().toString());
 
             // EOF
             expect(bvm.step()).to.equal(false);
-            expect(bvm.taskContext.clockCycles).to.equal(5);
-            expect(bvm.taskContext.accountBalance).to.equal(995);
+            expect(bvm.taskContext.clockCycles).to.equal(7);
+            expect(bvm.taskContext.accountBalance).to.equal(993);
             expect(bvm.taskContext.processorStatus).to.equal('$active');
-            */
         });
 
     });

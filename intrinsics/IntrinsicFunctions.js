@@ -13,6 +13,7 @@
  * This library encapsulates the intrinsic functions supported by the Bali
  * Virtual Machine™.
  */
+var elements = require('bali-element-types/elements');
 
 
 // PUBLIC FUNCTIONS
@@ -35,7 +36,7 @@ exports.intrinsicFunctions = [
 
     // default
     function(useProposed, proposedValue, defaultValue) {
-        return useProposed ? proposedValue : defaultValue;
+        return Boolean(String(useProposed)) ? proposedValue : defaultValue;
     },
 
     // difference
@@ -48,7 +49,13 @@ exports.intrinsicFunctions = [
     function(firstNumber, secondNumber) {},
 
     // factorial
-    function(number) {},
+    function(number) {
+        function f(n) {
+            return (n<2) ? 1 : f(n-1) * n;
+        }
+        var factorial = f(number.toNumber());
+        return new elements.Complex(String(factorial));
+    },
 
     // getValue
     function(catalog, key) {},
@@ -86,6 +93,12 @@ exports.intrinsicFunctions = [
     // quotient
     function(firstNumber, secondNumber) {},
 
+    // random
+    function() {
+        var random = Math.random();
+        return new elements.Complex(String(random));
+    },
+
     // range
     function(firstValue, lastValue) {},
 
@@ -102,7 +115,10 @@ exports.intrinsicFunctions = [
     function(catalog, key, value) {},
 
     // sum
-    function(firstNumber, secondNumber) {},
+    function(firstNumber, secondNumber) {
+        var sum = firstNumber.toNumber() + secondNumber.toNumber();
+        return new elements.Complex(String(sum));
+    },
 
     // xor
     function(firstProbability, secondProbability) {}
@@ -131,6 +147,7 @@ exports.intrinsicNames = [
     '$or',
     '$product',
     '$quotient',
+    '$random',
     '$range',
     '$remainder',
     '$sans',
