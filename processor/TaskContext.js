@@ -66,17 +66,16 @@ TaskContext.prototype.toString = function() {
 
 TaskContext.prototype.toBali = function(padding) {
     padding = padding ? padding : '';
-    var string =
-                              '[\n' +
-            padding + '    $taskTag: %taskTag\n' +
-            padding + '    $accountTag: %accountTag\n' +
-            padding + '    $accountBalance: %accountBalance\n' +
-            padding + '    $processorStatus: %processorStatus\n' +
-            padding + '    $clockCycles: %clockCycles\n' +
-            padding + '    $componentStack: %componentStack\n' +
-            padding + '    $handlerStack: %handlerStack\n' +
-            padding + '    $procedureStack: %procedureStack\n' +
-            padding + ']';
+    var string =  '[\n' +
+        padding + '    $taskTag: %taskTag\n' +
+        padding + '    $accountTag: %accountTag\n' +
+        padding + '    $accountBalance: %accountBalance\n' +
+        padding + '    $processorStatus: %processorStatus\n' +
+        padding + '    $clockCycles: %clockCycles\n' +
+        padding + '    $componentStack: %componentStack\n' +
+        padding + '    $handlerStack: %handlerStack\n' +
+        padding + '    $procedureStack: %procedureStack\n' +
+        padding + ']($type: TaskContext)';
     string = string.replace(/%taskTag/, this.taskTag.toBali());
     string = string.replace(/%accountTag/, this.accountTag.toBali());
     string = string.replace(/%accountBalance/, this.accountBalance.toBali());

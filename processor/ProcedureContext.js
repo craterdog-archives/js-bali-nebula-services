@@ -67,18 +67,17 @@ ProcedureContext.prototype.toString = function() {
 
 ProcedureContext.prototype.toBali = function(padding) {
     padding = padding ? padding : '';
-    var string =
-                              '[\n' +
-            padding + '    $targetComponent: %targetComponent\n' +
-            padding + '    $typeReference: %typeReference\n' +
-            padding + '    $procedureName: %procedureName\n' +
-            padding + '    $parameterValues: %parameterValues\n' +
-            padding + '    $literalValues: %literalValues\n' +
-            padding + '    $variableValues: %variableValues\n' +
-            padding + '    $bytecodeInstructions: %bytecodeInstructions\n' +
-            padding + '    $currentInstruction: %currentInstruction\n' +
-            padding + '    $nextAddress: %nextAddress \n' +
-            padding + ']';
+    var string =  '[\n' +
+        padding + '    $targetComponent: %targetComponent\n' +
+        padding + '    $typeReference: %typeReference\n' +
+        padding + '    $procedureName: %procedureName\n' +
+        padding + '    $parameterValues: %parameterValues\n' +
+        padding + '    $literalValues: %literalValues\n' +
+        padding + '    $variableValues: %variableValues\n' +
+        padding + '    $bytecodeInstructions: %bytecodeInstructions\n' +
+        padding + '    $currentInstruction: %currentInstruction\n' +
+        padding + '    $nextAddress: %nextAddress\n' +
+        padding + ']($type: ProcedureContext)';
     string = string.replace(/%targetComponent/, this.targetComponent.toBali(padding + '    '));
     string = string.replace(/%typeReference/, this.typeReference.toBali());
     string = string.replace(/%procedureName/, this.procedureName.toBali());
