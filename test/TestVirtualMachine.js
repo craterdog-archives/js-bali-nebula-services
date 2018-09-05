@@ -16,8 +16,8 @@ var analyzer = require('../assembler/ProcedureAnalyzer');
 var assembler = require('../assembler/ProcedureAssembler');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var utilities = require('../utilities/BytecodeUtilities');
-var TaskContext = require('../bvm/TaskContext');
-var VirtualMachine = require('../bvm/VirtualMachine');
+var TaskContext = require('../processor/TaskContext');
+var VirtualMachine = require('../processor/VirtualMachine');
 var elements = require('bali-element-types');
 var collections = require('bali-collection-types');
 var fs = require('fs');
@@ -71,7 +71,7 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the JUMP instruction.', function() {
 
         it('should create the initial task context', function() {
-            var testFile = 'test/bvm/JUMP.basm';
+            var testFile = 'test/processor/JUMP.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
@@ -79,39 +79,39 @@ describe('Bali Virtual Machine™', function() {
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
-            source = source.replace(/%literalValues/, symbols.literals.toString().replace(/\`/g, ''));
+            source = source.replace(/%literalValues/, symbols.literals.toBali().replace(/\`/g, ''));
             source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
             var document = BaliDocument.fromSource(source);
             taskContext = TaskContext.fromDocument(document);
         });
 
         it('should execute the test instructions', function() {
-            var bvm = VirtualMachine.fromDocument(taskContext, testDirectory);
-            expect(bvm.procedureContext.nextAddress).to.equal(1);
+            var processor = VirtualMachine.fromDocument(taskContext, testDirectory);
+            expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.IfStatement:
             // SKIP INSTRUCTION
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(2);
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(2);
 
             // 1.1.ConditionClause:
             // PUSH ELEMENT `true`
             // JUMP TO 1.IfStatementDone ON FALSE
-            bvm.step();
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(4);
+            processor.step();
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(4);
 
             // 1.1.1.EvaluateStatement:
             // SKIP INSTRUCTION
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(5);
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(5);
 
             // 1.2.ConditionClause:
             // PUSH ELEMENT `false`
             // JUMP TO 1.3.ConditionClause ON FALSE
-            bvm.step();
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(8);
+            processor.step();
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(8);
 
             // 1.2.1.EvaluateStatement:
             // JUMP TO 1.IfStatementDone
@@ -119,9 +119,9 @@ describe('Bali Virtual Machine™', function() {
             // 1.3.ConditionClause:
             // PUSH ELEMENT `true`
             // JUMP TO 1.4.ConditionClause ON TRUE
-            bvm.step();
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(11);
+            processor.step();
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(11);
 
             // 1.3.1.EvaluateStatement:
             // JUMP TO 1.IfStatementDone
@@ -129,21 +129,21 @@ describe('Bali Virtual Machine™', function() {
             // 1.4.ConditionClause:
             // PUSH ELEMENT `false`
             // JUMP TO 1.IfStatementDone ON TRUE
-            bvm.step();
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(13);
+            processor.step();
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(13);
 
             // 1.4.1.EvaluateStatement:
             // SKIP INSTRUCTION
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(14);
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(14);
 
             // 1.5.ConditionClause:
             // PUSH ELEMENT `none`
             // JUMP TO 1.6.ConditionClause ON NONE
-            bvm.step();
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(17);
+            processor.step();
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(17);
 
             // 1.5.1.EvaluateStatement:
             // JUMP TO 1.IfStatementDone
@@ -151,26 +151,26 @@ describe('Bali Virtual Machine™', function() {
             // 1.6.ConditionClause:
             // PUSH ELEMENT `true`
             // JUMP TO 1.IfStatementDone ON NONE
-            bvm.step();
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(19);
+            processor.step();
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(19);
 
             // 1.6.1.EvaluateStatement:
             // JUMP TO 1.IfStatementDone
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(20);
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(20);
 
             // 1.IfStatementDone:
             // SKIP INSTRUCTION
-            bvm.step();
-            expect(bvm.procedureContext.nextAddress).to.equal(21);
+            processor.step();
+            expect(processor.procedureContext.nextAddress).to.equal(21);
 
             // EOF
-            expect(bvm.step()).to.equal(false);
-            expect(bvm.taskContext.clockCycles).to.equal(17);
-            expect(bvm.taskContext.accountBalance).to.equal(983);
-            expect(bvm.taskContext.processorStatus).to.equal('$active');
-            expect(bvm.taskContext.componentStack.length).to.equal(0);
+            expect(processor.step()).to.equal(false);
+            expect(processor.taskContext.clockCycles).to.equal(17);
+            expect(processor.taskContext.accountBalance).to.equal(983);
+            expect(processor.taskContext.processorStatus).to.equal('$active');
+            expect(processor.taskContext.componentStack.length).to.equal(0);
         });
 
     });
@@ -178,7 +178,7 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the PUSH and POP instructions.', function() {
 
         it('should create the initial task context', function() {
-            var testFile = 'test/bvm/PUSH-POP.basm';
+            var testFile = 'test/processor/PUSH-POP.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
@@ -186,46 +186,46 @@ describe('Bali Virtual Machine™', function() {
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
-            source = source.replace(/%literalValues/, symbols.literals.toString().replace(/\`/g, ''));
+            source = source.replace(/%literalValues/, symbols.literals.toBali().replace(/\`/g, ''));
             source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
             var document = BaliDocument.fromSource(source);
             taskContext = TaskContext.fromDocument(document);
         });
 
         it('should execute the test instructions', function() {
-            var bvm = VirtualMachine.fromDocument(taskContext, testDirectory);
-            expect(bvm.procedureContext.nextAddress).to.equal(1);
+            var processor = VirtualMachine.fromDocument(taskContext, testDirectory);
+            expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.PushHandler:
             // PUSH HANDLER 3.PushCode
-            bvm.step();
-            expect(bvm.taskContext.handlerStack.length).to.equal(1);
+            processor.step();
+            expect(processor.taskContext.handlerStack.length).to.equal(1);
 
             // 2.PushElement:
             // PUSH ELEMENT "five"
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
 
             // 3.PushCode:
             // PUSH CODE `{return prefix + name + suffix}`
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(2);
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(2);
 
             // 4.PopHandler:
             // POP HANDLER
-            bvm.step();
-            expect(bvm.taskContext.handlerStack.length).to.equal(0);
+            processor.step();
+            expect(processor.taskContext.handlerStack.length).to.equal(0);
 
             // 5.PopComponent:
             // POP COMPONENT
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
 
             // EOF
-            expect(bvm.step()).to.equal(false);
-            expect(bvm.taskContext.clockCycles).to.equal(5);
-            expect(bvm.taskContext.accountBalance).to.equal(995);
-            expect(bvm.taskContext.processorStatus).to.equal('$active');
+            expect(processor.step()).to.equal(false);
+            expect(processor.taskContext.clockCycles).to.equal(5);
+            expect(processor.taskContext.accountBalance).to.equal(995);
+            expect(processor.taskContext.processorStatus).to.equal('$active');
         });
 
     });
@@ -233,7 +233,7 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the LOAD and STORE instructions.', function() {
 
         it('should create the initial task context', function() {
-            var testFile = 'test/bvm/LOAD-STORE.basm';
+            var testFile = 'test/processor/LOAD-STORE.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
@@ -241,70 +241,70 @@ describe('Bali Virtual Machine™', function() {
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
-            source = source.replace(/%literalValues/, symbols.literals.toString().replace(/\`/g, ''));
+            source = source.replace(/%literalValues/, symbols.literals.toBali().replace(/\`/g, ''));
             source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
             var document = BaliDocument.fromSource(source);
             taskContext = TaskContext.fromDocument(document);
         });
 
         it('should execute the test instructions', function() {
-            var bvm = VirtualMachine.fromDocument(taskContext, testDirectory);
-            expect(bvm.procedureContext.nextAddress).to.equal(1);
+            var processor = VirtualMachine.fromDocument(taskContext, testDirectory);
+            expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.LoadParameter:
             // LOAD PARAMETER $x
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
-            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('"This is a text string."');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.peek().toBali()).to.equal('"This is a text string."');
 
             // 2.StoreVariable:
             // STORE VARIABLE $foo
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(0);
-            expect(bvm.procedureContext.variableValues[0].toString()).to.equal('"This is a text string."');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(0);
+            expect(processor.procedureContext.variableValues[0].toBali()).to.equal('"This is a text string."');
 
             // 3.LoadVariable:
             // LOAD VARIABLE $foo
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
-            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('"This is a text string."');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.peek().toBali()).to.equal('"This is a text string."');
 
             // 4.StoreDraft:
             // STORE DRAFT $document
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(0);
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(0);
             // LOAD DOCUMENT $document
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
-            expect(bvm.taskContext.componentStack.peek().documentContent.toString()).to.equal('"This is a text string."');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.peek().documentContent.toBali()).to.equal('"This is a text string."');
 
             // 5.StoreDocument:
             // STORE DOCUMENT $document
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(0);
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(0);
 
             // 6.LoadDocument:
             // LOAD DOCUMENT $document
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
-            expect(bvm.taskContext.componentStack.peek().documentContent.toString()).to.equal('"This is a text string."');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.peek().documentContent.toBali()).to.equal('"This is a text string."');
 
             // 7.StoreMessage:
             // STORE MESSAGE $queue
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(0);
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(0);
 
             // 8.LoadMessage:
             // LOAD MESSAGE $queue
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
-            expect(bvm.taskContext.componentStack.peek().documentContent.toString()).to.equal('"This is a text string."');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.peek().documentContent.toBali()).to.equal('"This is a text string."');
 
             // EOF
-            expect(bvm.step()).to.equal(false);
-            expect(bvm.taskContext.clockCycles).to.equal(9);
-            expect(bvm.taskContext.accountBalance).to.equal(991);
-            expect(bvm.taskContext.processorStatus).to.equal('$active');
+            expect(processor.step()).to.equal(false);
+            expect(processor.taskContext.clockCycles).to.equal(9);
+            expect(processor.taskContext.accountBalance).to.equal(991);
+            expect(processor.taskContext.processorStatus).to.equal('$active');
         });
 
     });
@@ -312,7 +312,7 @@ describe('Bali Virtual Machine™', function() {
     describe('Test the INVOKE instructions.', function() {
 
         it('should create the initial task context', function() {
-            var testFile = 'test/bvm/INVOKE.basm';
+            var testFile = 'test/processor/INVOKE.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
@@ -320,50 +320,50 @@ describe('Bali Virtual Machine™', function() {
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
-            source = source.replace(/%literalValues/, symbols.literals.toString().replace(/\`/g, ''));
+            source = source.replace(/%literalValues/, symbols.literals.toBali().replace(/\`/g, ''));
             source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
             var document = BaliDocument.fromSource(source);
             taskContext = TaskContext.fromDocument(document);
         });
 
         it('should execute the test instructions', function() {
-            var bvm = VirtualMachine.fromDocument(taskContext, testDirectory);
-            expect(bvm.procedureContext.nextAddress).to.equal(1);
+            var processor = VirtualMachine.fromDocument(taskContext, testDirectory);
+            expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.Invoke:
             // INVOKE $random
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
 
             // 2.InvokeWithParameter:
             // PUSH ELEMENT `3`
-            bvm.step();
+            processor.step();
             // INVOKE $factorial WITH PARAMETER
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(2);
-            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('6');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(2);
+            expect(processor.taskContext.componentStack.peek().toBali()).to.equal('6');
 
             // 3.InvokeWith2Parameters:
             // PUSH ELEMENT `5`
-            bvm.step();
+            processor.step();
             // INVOKE $sum WITH 2 PARAMETERS
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(2);
-            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('11');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(2);
+            expect(processor.taskContext.componentStack.peek().toBali()).to.equal('11');
 
             // 4.InvokeWith3Parameters:
             // PUSH ELEMENT `13`
-            bvm.step();
+            processor.step();
             // INVOKE $default WITH 3 PARAMETERS
-            bvm.step();
-            expect(bvm.taskContext.componentStack.length).to.equal(1);
-            expect(bvm.taskContext.componentStack.peek().toString()).to.equal('11');
+            processor.step();
+            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.peek().toBali()).to.equal('11');
 
             // EOF
-            expect(bvm.step()).to.equal(false);
-            expect(bvm.taskContext.clockCycles).to.equal(7);
-            expect(bvm.taskContext.accountBalance).to.equal(993);
-            expect(bvm.taskContext.processorStatus).to.equal('$active');
+            expect(processor.step()).to.equal(false);
+            expect(processor.taskContext.clockCycles).to.equal(7);
+            expect(processor.taskContext.accountBalance).to.equal(993);
+            expect(processor.taskContext.processorStatus).to.equal('$active');
         });
 
     });

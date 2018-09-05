@@ -18,6 +18,8 @@ var Terminal = require('bali-document-notation/nodes/Terminal').Terminal;
 var types = require('bali-document-notation/nodes/Types');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var parser = require('bali-document-notation/transformers/DocumentParser');
+var Code = require('./Code');
+var ProcedureContext = require('./ProcedureContext');
 var bytecode = require('../utilities/BytecodeUtilities');
 var elements = require('bali-element-types/elements');
 var collections = require('bali-collection-types/collections');
@@ -27,17 +29,6 @@ var collections = require('bali-collection-types/collections');
 exports.ACTIVE = '$active';
 exports.WAITING = '$waiting';
 exports.DONE = '$done';
-
-
-/**
- * This function creates a new task context that is not initialized.
- * 
- * @returns {TaskContext} The new task context.
- */
-exports.fromScratch = function() {
-    var taskContext = new TaskContext();
-    return taskContext;
-};
 
 
 /**
@@ -57,14 +48,6 @@ exports.fromDocument = function(document) {
 // TASK CONTEXT
 
 function TaskContext() {
-    this.taskTag = codex.randomTag();
-    this.accountTag = undefined;
-    this.accountBalance = 0;
-    this.processorStatus = exports.ACTIVE;
-    this.clockCycles = 0;
-    this.componentStack = [];
-    this.procedureStack = [];
-    this.handlerStack = [];
     return this;
 }
 TaskContext.prototype.constructor = TaskContext;
@@ -76,54 +59,33 @@ TaskContext.prototype.accept = function(visitor) {
 
 
 TaskContext.prototype.toString = function() {
-    var visitor = new TaskExporter();
-    this.accept(visitor);
-    var document = visitor.result;
-    var string = document.toString();
+    var string = this.toBali();
     return string;
 };
 
 
-// PROCEDURE CONTEXT
-
-function ProcedureContext() {
-    this.targetComponent = undefined;
-    this.typeReference = undefined;
-    this.procedureName = undefined;
-    this.parameterValues = [];
-    this.literalValues = [];
-    this.variableValues = [];
-    this.bytecodeInstructions = [];
-    this.currentInstruction = 0;  // SKIP INSTRUCTION
-    this.nextAddress = 1;
-    return this;
-}
-ProcedureContext.prototype.constructor = ProcedureContext;
-exports.ProcedureContext = ProcedureContext;
-
-
-ProcedureContext.prototype.accept = function(visitor) {
-    visitor.visitProcedureContext(this);
-};
-
-
-// CODE
-
-function Code(source) {
-    this.source = source;
-    return this;
-}
-Code.prototype.constructor = Code;
-exports.Code = Code;
-
-
-Code.prototype.toString = function() {
-    return this.source;
-};
-
-
-Code.prototype.accept = function(visitor) {
-    visitor.visitCode(this);
+TaskContext.prototype.toBali = function(padding) {
+    padding = padding ? padding : '';
+    var string =
+                              '[\n' +
+            padding + '    $taskTag: %taskTag\n' +
+            padding + '    $accountTag: %accountTag\n' +
+            padding + '    $accountBalance: %accountBalance\n' +
+            padding + '    $processorStatus: %processorStatus\n' +
+            padding + '    $clockCycles: %clockCycles\n' +
+            padding + '    $componentStack: %componentStack\n' +
+            padding + '    $handlerStack: %handlerStack\n' +
+            padding + '    $procedureStack: %procedureStack\n' +
+            padding + ']';
+    string = string.replace(/%taskTag/, this.taskTag.toBali());
+    string = string.replace(/%accountTag/, this.accountTag.toBali());
+    string = string.replace(/%accountBalance/, this.accountBalance.toBali());
+    string = string.replace(/%processorStatus/, this.processorStatus.toBali());
+    string = string.replace(/%clockCycles/, this.clockCycles.toBali());
+    string = string.replace(/%componentStack/, this.componentStack.toBali(padding + '    '));
+    string = string.replace(/%handlerStack/, this.handlerStack.toBali(padding + '    '));
+    string = string.replace(/%procedureStack/, this.procedureStack.toBali(padding + '    '));
+    return string;
 };
 
 
@@ -166,8 +128,8 @@ TaskImporter.prototype.visitCatalog = function(tree) {
 
 // code: '{' procedure '}'
 TaskImporter.prototype.visitCode = function(tree) {
-    var source = tree.toString();
-    var code = new Code(source);
+    var source = tree.toBali();
+    var code = Code.fromSource(source);
     this.result = code;
 };
 
@@ -194,11 +156,13 @@ TaskImporter.prototype.replaceCollectionType = function(collection) {
     var type = parameters.constructor.name;
     switch (type) {
         case 'List':
-            type = parameters.getItem(1).toString();
+            type = parameters.getItem(1).toBali();
             break;
         case 'Catalog':
             var key = new elements.Symbol('$type');
-            type = parameters.getValue(key).toString();
+            //type = parameters.getValue(key).toBali();
+            type = parameters.getValue(key);
+            type = type.toString();
             break;
         default:
             throw new Error('Found an illegal parameters class type: ' + type);
@@ -215,7 +179,7 @@ TaskImporter.prototype.replaceCollectionType = function(collection) {
             collection = new TaskContext(collection);
             break;
         case 'ProcedureContext':
-            collection = new ProcedureContext(collection);
+            collection = ProcedureContext.fromCatalog(collection);
             break;
         default:
             throw new Error('Found an illegal collection type in the parameter list: ' + type);
@@ -232,36 +196,38 @@ TaskImporter.prototype.visitDocument = function(tree) {
 
 TaskImporter.prototype.visitTaskContext = function(tree) {
     var taskContext = new TaskContext();
-    taskContext.taskTag = tree.getValue('$taskTag').element().toString();
-    taskContext.accountTag = tree.getValue('$accountTag').element().toString();
-    taskContext.accountBalance = Number(tree.getValue('$accountBalance').element().toString());
-    taskContext.processorStatus = tree.getValue('$processorStatus').element().toString();
-    taskContext.clockCycles = Number(tree.getValue('$clockCycles').element().toString());
+    tree.getValue('$taskTag').accept(this);
+    taskContext.taskTag = this.result;
+    tree.getValue('$accountTag').accept(this);
+    taskContext.accountTag = this.result;
+    tree.getValue('$accountBalance').accept(this);
+    taskContext.accountBalance = this.result;
+    tree.getValue('$processorStatus').accept(this);
+    taskContext.processorStatus = this.result;
+    tree.getValue('$clockCycles').accept(this);
+    taskContext.clockCycles = this.result;
 
-    var componentStack = [];
+    var componentStack = new collections.Stack();
     var iterator = tree.getValue('$componentStack').iterator();
     while (iterator.hasNext()) {
-        var component = iterator.getNext();
-        component.accept(this);
-        componentStack.push(this.result);
+        iterator.getNext().accept(this);
+        componentStack.pushItem(this.result);
     }
     taskContext.componentStack = componentStack;
 
-    var handlerStack = [];
+    var handlerStack = new collections.Stack();
     iterator = tree.getValue('$handlerStack').iterator();
     while (iterator.hasNext()) {
-        var handler = iterator.getNext();
-        var address = Number(handler.element().toString());
-        handlerStack.push(address);
+        iterator.getNext().accept(this);
+        handlerStack.pushItem(this.result);
     }
     taskContext.handlerStack = handlerStack;
 
-    var procedureStack = [];
+    var procedureStack = new collections.Stack();
     iterator = tree.getValue('$procedureStack').iterator();
     while (iterator.hasNext()) {
-        var procedure = iterator.getNext();
-        this.visitProcedureContext(procedure);
-        procedureStack.push(this.result);
+        this.visitProcedureContext(iterator.getNext());
+        procedureStack.pushItem(this.result);
     }
     taskContext.procedureStack = procedureStack;
 
@@ -270,47 +236,49 @@ TaskImporter.prototype.visitTaskContext = function(tree) {
 
 
 TaskImporter.prototype.visitProcedureContext = function(tree) {
-    var procedureContext = new ProcedureContext();
+    var procedureContext = ProcedureContext.fromScratch();
 
-    var targetComponent = tree.getValue('$targetComponent');
-    targetComponent.accept(this);
+    tree.getValue('$targetComponent').accept(this);
     procedureContext.targetComponent = this.result;
 
-    procedureContext.typeReference = tree.getValue('$typeReference').element().toString();
-    procedureContext.procedureName = tree.getValue('$procedureName').element().toString();
+    tree.getValue('$typeReference').accept(this);
+    procedureContext.typeReference = this.result;
 
-    var parameterValues = [];
+    tree.getValue('$procedureName').accept(this);
+    procedureContext.procedureName = this.result;
+
+    var parameterValues = new collections.List();
     var iterator = tree.getValue('$parameterValues').iterator();
     while (iterator.hasNext()) {
-        var parameter = iterator.getNext();
-        parameter.accept(this);
-        parameterValues.push(this.result);
+        iterator.getNext().accept(this);
+        parameterValues.addItem(this.result);
     }
     procedureContext.parameterValues = parameterValues;
 
-    var literalValues = [];
+    var literalValues = new collections.List();
     iterator = tree.getValue('$literalValues').iterator();
     while (iterator.hasNext()) {
-        var literal = iterator.getNext();
-        literal.accept(this);
-        literalValues.push(this.result);
+        iterator.getNext().accept(this);
+        literalValues.addItem(this.result);
     }
     procedureContext.literalValues = literalValues;
 
-    var variableValues = [];
+    var variableValues = new collections.List();
     iterator = tree.getValue('$variableValues').iterator();
     while (iterator.hasNext()) {
-        var variable = iterator.getNext();
-        variable.accept(this);
-        variableValues.push(this.result);
+        iterator.getNext().accept(this);
+        variableValues.addItem(this.result);
     }
     procedureContext.variableValues = variableValues;
 
-    var bytecodeInstructions = tree.getValue('$bytecodeInstructions').element().toString().slice(1, -1);
-    procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytecodeInstructions);
+    // NOTE: this is a special case where the Bali binary must be converted to a JS list of instructions
+    procedureContext.bytecodeInstructions = tree.getValue('$bytecodeInstructions');
 
-    procedureContext.currentInstruction = Number(tree.getValue('$currentInstruction').element().toString());
-    procedureContext.nextAddress = Number(tree.getValue('$nextAddress').element().toString());
+    tree.getValue('$currentInstruction').accept(this);
+    procedureContext.currentInstruction = this.result;
+
+    tree.getValue('$nextAddress').accept(this);
+    procedureContext.nextAddress = this.result;
 
     this.result = procedureContext;
 };
@@ -433,7 +401,7 @@ TaskExporter.prototype.constructor = TaskExporter;
 
 
 TaskExporter.prototype.visitAngle = function(angle) {
-    var element = new Terminal(types.ANGLE, angle.toString());
+    var element = new Terminal(types.ANGLE, angle.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -441,7 +409,7 @@ TaskExporter.prototype.visitAngle = function(angle) {
 
 
 TaskExporter.prototype.visitBinary = function(binary) {
-    var element = new Terminal(types.BINARY, binary.toString());
+    var element = new Terminal(types.BINARY, binary.toBali());
     if (element.value.length > 82) element.isSimple = false;  // binaries are formatted in 80 character blocks
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
@@ -450,7 +418,7 @@ TaskExporter.prototype.visitBinary = function(binary) {
 
 
 TaskExporter.prototype.visitDuration = function(duration) {
-    var element = new Terminal(types.DURATION, duration.toString());
+    var element = new Terminal(types.DURATION, duration.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -458,7 +426,7 @@ TaskExporter.prototype.visitDuration = function(duration) {
 
 
 TaskExporter.prototype.visitMoment = function(moment) {
-    var element = new Terminal(types.MOMENT, moment.toString());
+    var element = new Terminal(types.MOMENT, moment.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -466,7 +434,7 @@ TaskExporter.prototype.visitMoment = function(moment) {
 
 
 TaskExporter.prototype.visitNumber = function(number) {
-    var element = new Terminal(types.NUMBER, number.toString());
+    var element = new Terminal(types.NUMBER, number.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -474,7 +442,7 @@ TaskExporter.prototype.visitNumber = function(number) {
 
 
 TaskExporter.prototype.visitPercent = function(percent) {
-    var element = new Terminal(types.PERCENT, percent.toString());
+    var element = new Terminal(types.PERCENT, percent.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -482,7 +450,7 @@ TaskExporter.prototype.visitPercent = function(percent) {
 
 
 TaskExporter.prototype.visitProbability = function(probability) {
-    var element = new Terminal(types.PROBABILITY, probability.toString());
+    var element = new Terminal(types.PROBABILITY, probability.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -490,7 +458,7 @@ TaskExporter.prototype.visitProbability = function(probability) {
 
 
 TaskExporter.prototype.visitReference = function(reference) {
-    var element = new Terminal(types.REFERENCE, reference.toString());
+    var element = new Terminal(types.REFERENCE, reference.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -498,7 +466,7 @@ TaskExporter.prototype.visitReference = function(reference) {
 
 
 TaskExporter.prototype.visitSymbol = function(symbol) {
-    var element = new Terminal(types.SYMBOL, symbol.toString());
+    var element = new Terminal(types.SYMBOL, symbol.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -506,7 +474,7 @@ TaskExporter.prototype.visitSymbol = function(symbol) {
 
 
 TaskExporter.prototype.visitTag = function(tag) {
-    var element = new Terminal(types.TAG, tag.toString());
+    var element = new Terminal(types.TAG, tag.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -514,7 +482,7 @@ TaskExporter.prototype.visitTag = function(tag) {
 
 
 TaskExporter.prototype.visitTemplate = function(template) {
-    var element = new Terminal(types.TEMPLATE, template.toString());
+    var element = new Terminal(types.TEMPLATE, template.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -522,7 +490,7 @@ TaskExporter.prototype.visitTemplate = function(template) {
 
 
 TaskExporter.prototype.visitText = function(text) {
-    var element = new Terminal(types.TEXT, text.toString());
+    var element = new Terminal(types.TEXT, text.toBali());
     if (element.value.startsWith('"\n')) element.isSimple = false;
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
@@ -531,7 +499,7 @@ TaskExporter.prototype.visitText = function(text) {
 
 
 TaskExporter.prototype.visitVersion = function(version) {
-    var element = new Terminal(types.VERSION, version.toString());
+    var element = new Terminal(types.VERSION, version.toBali());
     var component = new Tree(types.COMPONENT);
     component.addChild(element);
     this.result = component;
@@ -662,7 +630,7 @@ TaskExporter.prototype.visitTaskContext = function(taskContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$accountBalance');
     association.addChild(key);
-    value = new Terminal(types.NUMBER, taskContext.accountBalance.toString());
+    value = new Terminal(types.NUMBER, taskContext.accountBalance.toBali());
     association.addChild(value);
     catalog.addChild(association);
 
@@ -678,7 +646,7 @@ TaskExporter.prototype.visitTaskContext = function(taskContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$clockCycles');
     association.addChild(key);
-    value = new Terminal(types.NUMBER, taskContext.clockCycles.toString());
+    value = new Terminal(types.NUMBER, taskContext.clockCycles.toBali());
     association.addChild(value);
     catalog.addChild(association);
 
@@ -686,7 +654,7 @@ TaskExporter.prototype.visitTaskContext = function(taskContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$componentStack');
     association.addChild(key);
-    this.visitArray(taskContext.componentStack);
+    taskContext.componentStack.accept(this);
     parameters = parser.parseParameters('($type: Stack)');
     this.result.addChild(parameters);
     association.addChild(this.result);
@@ -696,7 +664,7 @@ TaskExporter.prototype.visitTaskContext = function(taskContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$handlerStack');
     association.addChild(key);
-    this.visitArray(taskContext.handlerStack);
+    taskContext.handlerStack.accept(this);
     parameters = parser.parseParameters('($type: Stack)');
     this.result.addChild(parameters);
     association.addChild(this.result);
@@ -706,7 +674,7 @@ TaskExporter.prototype.visitTaskContext = function(taskContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$procedureStack');
     association.addChild(key);
-    this.visitArray(taskContext.procedureStack);
+    taskContext.procedureStack.accept(this);
     parameters = parser.parseParameters('($type: Stack)');
     this.result.addChild(parameters);
     association.addChild(this.result);
@@ -754,7 +722,7 @@ TaskExporter.prototype.visitProcedureContext = function(procedureContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$parameterValues');
     association.addChild(key);
-    this.visitArray(procedureContext.parameterValues);
+    procedureContext.parameterValues.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
@@ -762,7 +730,7 @@ TaskExporter.prototype.visitProcedureContext = function(procedureContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$literalValues');
     association.addChild(key);
-    this.visitArray(procedureContext.literalValues);
+    procedureContext.literalValues.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
@@ -770,7 +738,7 @@ TaskExporter.prototype.visitProcedureContext = function(procedureContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$variableValues');
     association.addChild(key);
-    this.visitArray(procedureContext.variableValues);
+    procedureContext.variableValues.accept(this);
     association.addChild(this.result);
     catalog.addChild(association);
 
@@ -778,16 +746,15 @@ TaskExporter.prototype.visitProcedureContext = function(procedureContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$bytecodeInstructions');
     association.addChild(key);
-    var base16 = bytecode.bytecodeToBase16(procedureContext.bytecodeInstructions);
-    var bytecodeInstructions = parser.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
-    association.addChild(bytecodeInstructions);
+    procedureContext.bytecodeInstructions.accept(this);
+    association.addChild(this.result);
     catalog.addChild(association);
 
     // generate the current instruction attribute
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$currentInstruction');
     association.addChild(key);
-    value = new Terminal(types.NUMBER, procedureContext.currentInstruction.toString());
+    value = new Terminal(types.NUMBER, procedureContext.currentInstruction.toBali());
     association.addChild(value);
     catalog.addChild(association);
 
@@ -795,33 +762,9 @@ TaskExporter.prototype.visitProcedureContext = function(procedureContext) {
     association = new Tree(types.ASSOCIATION);
     key = new Terminal(types.SYMBOL, '$nextAddress');
     association.addChild(key);
-    value = new Terminal(types.NUMBER, procedureContext.nextAddress.toString());
+    value = new Terminal(types.NUMBER, procedureContext.nextAddress.toBali());
     association.addChild(value);
     catalog.addChild(association);
 
-    this.result = component;
-};
-
-
-TaskExporter.prototype.visitArray = function(array) {
-    var component = new Tree(types.COMPONENT);
-    var structure = new Tree(types.STRUCTURE);
-    var list = new Tree(types.LIST);
-    structure.addChild(list);
-    component.addChild(structure);
-    for (var i = 0; i < array.length; i++) {
-        var item = array[i];
-        switch (item.constructor.name) {
-            case 'String':
-                this.result = new Terminal(types.SYMBOL, item.toString());
-                break;
-            case 'Number':
-                this.result = new Terminal(types.NUMBER, item.toString());
-                break;
-            default:
-                item.accept(this);
-        }
-        list.addChild(this.result);
-    }
     this.result = component;
 };

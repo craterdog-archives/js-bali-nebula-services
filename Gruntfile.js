@@ -37,7 +37,7 @@ module.exports = function(grunt) {
         options: {
           reporter: 'spec'
         },
-        src: ['test/utilities/*.js', 'test/elements/*.js', 'test/collections/*.js', 'test/compiler/*.js', 'test/assembler/*.js', 'test/transformers/*.js', 'test/bvm/*.js', 'test/*.js']
+        src: ['test/TestBytecodeUtilities.js', 'test/TestProcedureCompiler.js', 'test/TestProcedureAssembler.js', 'test/TestTaskContext.js']
       }
     },
 

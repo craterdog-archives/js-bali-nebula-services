@@ -36,16 +36,15 @@ describe('Bali Cloud Environment™', function() {
                 var procedure = BaliProcedure.fromSource(source);
                 expect(procedure).to.exist;  // jshint ignore:line
                 var symbols = analyzer.extractSymbols(procedure);
-                var base16 = assembler.assembleProcedure(procedure, symbols);
-                var bytecode = utilities.base16ToBytecode(base16);
+                var bytecode = assembler.assembleProcedure(procedure, symbols);
                 expect(bytecode).to.exist;  // jshint ignore:line
                 var formatted = utilities.bytecodeAsString(bytecode);
                 expect(formatted).to.exist;  // jshint ignore:line
-                fs.writeFileSync(codeFile, formatted, 'utf8');
+                //fs.writeFileSync(codeFile, formatted, 'utf8');
                 var expected = fs.readFileSync(codeFile, 'utf8');
                 expect(expected).to.exist;  // jshint ignore:line
                 expect(formatted).to.equal(expected);
-                var disassembled = assembler.disassembleBytecode(base16, symbols);
+                var disassembled = assembler.disassembleBytecode(bytecode, symbols);
                 expect(disassembled).to.exist;  // jshint ignore:line
                 expect(disassembled).to.equal(source);
             }

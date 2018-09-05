@@ -23,7 +23,7 @@ var compiler = require('./compiler/ProcedureCompiler');
 var scanner = require('./assembler/ProcedureAnalyzer');
 var assembler = require('./assembler/ProcedureAssembler');
 var utilities = require('./utilities/BytecodeUtilities');
-var VirtualMachine = require('./bvm/VirtualMachine').VirtualMachine;
+var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
 var api = require('bali-cloud-api/BaliAPI');
 
 

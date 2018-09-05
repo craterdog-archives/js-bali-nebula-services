@@ -9,7 +9,7 @@
  ************************************************************************/
 
 var BaliDocument = require('bali-document-notation/BaliDocument');
-var TaskContext = require('../bvm/TaskContext');
+var TaskContext = require('../processor/TaskContext');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
@@ -24,9 +24,9 @@ describe('Bali Cloud Environment™', function() {
             var expected = fs.readFileSync(testFile, 'utf8');
             expect(expected).to.exist;  // jshint ignore:line
             var document = BaliDocument.fromSource(expected);
-            var context = TaskContext.fromDocument(document);
-            expect(context).to.exist;  // jshint ignore:line
-            var actual = context.toString() + '\n';
+            var taskContext = TaskContext.fromDocument(document);
+            expect(taskContext).to.exist;  // jshint ignore:line
+            var actual = taskContext.toBali() + '\n';
             expect(actual).to.exist;  // jshint ignore:line
             expect(actual).to.equal(expected);
         });

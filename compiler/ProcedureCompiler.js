@@ -261,7 +261,7 @@ CompilingVisitor.prototype.visitCode = function(tree) {
     var procedure = tree.children[0];
 
     // the VM places the source code for the procedure on top of the component stack
-    var source = procedure.toString();
+    var source = procedure.toBali();
     this.builder.insertPushInstruction('CODE', source);
 };
 

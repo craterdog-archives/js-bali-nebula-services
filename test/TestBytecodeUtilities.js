@@ -8,6 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
+var collections = require('bali-collection-types/collections');
 var utilities = require('../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');
@@ -18,7 +19,7 @@ describe('Bali Cloud Environment™', function() {
     describe('Test bytecode utilities on instructions', function() {
 
         it('should construct and compare instructions with and without operands', function() {
-            var bytecode = [];
+            var bytecode = new collections.List();
             var operand;
             var operation;
             var modifier;
@@ -32,7 +33,7 @@ describe('Bali Cloud Environment™', function() {
                 encoded = utilities.encodeInstruction(operation, modifier);
                 if (utilities.instructionIsValid(instruction)) {
                     expect(instruction).to.equal(encoded);
-                    bytecode.push(instruction);
+                    bytecode.addItem(instruction);
                 }
                 // test with operand
                 operand = i + 1;
@@ -42,7 +43,7 @@ describe('Bali Cloud Environment™', function() {
                 encoded = utilities.encodeInstruction(operation, modifier, operand);
                 if (utilities.instructionIsValid(instruction)) {
                     expect(instruction).to.equal(encoded);
-                    bytecode.push(instruction);
+                    bytecode.addItem(instruction);
                 }
             }
 

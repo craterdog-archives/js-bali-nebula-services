@@ -24,6 +24,8 @@
  * invalid index or address.
  */
 var types = require('bali-instruction-set/Types');
+var elements = require('bali-element-types/elements');
+var collections = require('bali-collection-types/collections');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 
 
@@ -185,34 +187,36 @@ exports.instructionIsValid = function(instruction) {
 
 
 /**
- * This function converts a byte string into a bytecode array.
+ * This function converts a byte string into a bytecode list.
  * 
  * @param {String} base16 The base 16 encoded bytes to be converted.
- * @returns {Array} The corresponding bytecode array.
+ * @returns {List} The corresponding list of 16 bit instructions.
  */
 exports.base16ToBytecode = function(base16) {
     var buffer = codex.base16Decode(base16);
-    var bytecode = [];
+    var bytecode = new collections.List();
     for (var i = 0; i < buffer.length; i += 2) {
-        var word = codex.bytesToShort(buffer.slice(i));
-        bytecode.push(word);
+        var word = new elements.Complex(codex.bytesToShort(buffer.slice(i)).toString());
+        bytecode.addItem(word);
     }
     return bytecode;
 };
 
 
 /**
- * This function converts a bytecode array into a base 16 encoded string.
+ * This function converts a bytecode list into a base 16 encoded string.
  * 
- * @param {Array} bytecode The bytecode array to be converted.
+ * @param {List} bytecode The list of 16 bit instructions to be converted.
  * @returns {String} The corresponding base 16 encoded string.
  */
 exports.bytecodeToBase16 = function(bytecode) {
-    var length = bytecode.length;
+    var length = bytecode.getSize();
     var buffer = Buffer.alloc(length * 2);
-    for (var i = 0; i < length; i++) {
-        var word = bytecode[i];
-        buffer.fill(codex.shortToBytes(word), i * 2);
+    var index = 0;  // JS zero based index
+    var iterator = bytecode.iterator();
+    while (iterator.hasNext()) {
+        var instruction = iterator.getNext();
+        buffer.fill(codex.shortToBytes(instruction.toNumber()), index++ * 2);
     }
     var base16 = codex.base16Encode(buffer, '                ');
     return base16;
@@ -222,17 +226,17 @@ exports.bytecodeToBase16 = function(bytecode) {
 /**
  * This function returns a human readable version of Bali virtual machine bytecode.
  * 
- * @param {array} bytecode The bytecode array of 16 bit instructions to be formatted.
- * @returns {string} The human readable form of the bytecode.
+ * @param {List} bytecode The list of 16 bit instructions to be formatted.
+ * @returns {String} The human readable form of the bytecode.
  */
 exports.bytecodeAsString = function(bytecode) {
     var string = ' Addr     Bytes   Bytecode                  Instruction\n';
     string += '----------------------------------------------------------------------\n';
-    var address = 1;  // bali VM unit based addressing
-    while (address <= bytecode.length) {
-        var instruction = bytecode[address - 1];  // javascript zero based indexing
-        string += wordAsString(address, instruction) + '\n';
-        address++;  // ready for next instruction
+    var address = 1;  // Bali unit based addressing
+    var iterator = bytecode.iterator();
+    while (iterator.hasNext()) {
+        var instruction = iterator.getNext();
+        string += wordAsString(address++, instruction) + '\n';
     }
     return string;
 };
@@ -242,9 +246,9 @@ exports.bytecodeAsString = function(bytecode) {
  * This function takes an instruction and formats it into a human readable
  * version of a Bali virtual machine instruction.
  *
- * @param {number} instruction The instruction to be formatted.
- * @param {string} optionalOperand An optional label, symbol, or element as operand.
- * @return {string} The human readable form of the instruction.
+ * @param {Number} instruction The instruction to be formatted.
+ * @param {String} optionalOperand An optional label, symbol, or element as operand.
+ * @return {String} The human readable form of the instruction.
  */
 exports.instructionAsString = function(instruction, optionalOperand) {
     var operation = exports.decodeOperation(instruction);
