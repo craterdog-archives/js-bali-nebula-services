@@ -9,8 +9,7 @@
  ************************************************************************/
 
 var BaliProcedure = require('bali-instruction-set/BaliProcedure');
-var analyzer = require('../assembler/ProcedureAnalyzer');
-var assembler = require('../assembler/ProcedureAssembler');
+var assembler = require('../compiler/ProcedureAssembler');
 var utilities = require('../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');
@@ -31,12 +30,11 @@ describe('Bali Cloud Environment™', function() {
                 var prefix = file.split('.').slice(0, 1);
                 var basmFile = testFolder + prefix + '.basm';
                 var codeFile = testFolder + prefix + '.code';
-                var source = fs.readFileSync(basmFile, 'utf8');
-                expect(source).to.exist;  // jshint ignore:line
-                var procedure = BaliProcedure.fromSource(source);
-                expect(procedure).to.exist;  // jshint ignore:line
-                var symbols = analyzer.extractSymbols(procedure);
-                var bytecode = assembler.assembleProcedure(procedure, symbols);
+                var instructions = fs.readFileSync(basmFile, 'utf8');
+                expect(instructions).to.exist;  // jshint ignore:line
+                var symbols = assembler.extractSymbols(instructions);
+                expect(symbols).to.exist;  // jshint ignore:line
+                var bytecode = assembler.assembleProcedure(instructions);
                 expect(bytecode).to.exist;  // jshint ignore:line
                 var formatted = utilities.bytecodeAsString(bytecode);
                 expect(formatted).to.exist;  // jshint ignore:line
@@ -46,7 +44,7 @@ describe('Bali Cloud Environment™', function() {
                 expect(formatted).to.equal(expected);
                 var disassembled = assembler.disassembleBytecode(bytecode, symbols);
                 expect(disassembled).to.exist;  // jshint ignore:line
-                expect(disassembled).to.equal(source);
+                expect(disassembled).to.equal(instructions);
             }
         });
 

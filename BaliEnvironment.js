@@ -15,16 +15,11 @@
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
 var BaliDocument = require('bali-document-notation/BaliDocument');
-var BaliProcedure = require('bali-instruction-set/BaliProcedure');
-var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var parser = require('bali-document-notation/transformers/DocumentParser');
 var analyzer = require('./compiler/TypeAnalyzer');
 var compiler = require('./compiler/ProcedureCompiler');
-var scanner = require('./assembler/ProcedureAnalyzer');
 var assembler = require('./assembler/ProcedureAssembler');
-var utilities = require('./utilities/BytecodeUtilities');
 var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
-var api = require('bali-cloud-api/BaliAPI');
 
 
 // PUBLIC FUNCTIONS
@@ -45,23 +40,20 @@ exports.compileType = function(type, verbose) {
         var source = component.getValue('$source');
         var block = source.children[0];
         var procedure = block.children[0];
-        source = compiler.compileProcedure(procedure, type);
-        var instructions = BaliProcedure.fromSource(source);
-        var symbols = scanner.extractSymbols(instructions);
-        var base16 = assembler.assembleProcedure(instructions, symbols);
+        var instructions = compiler.compileProcedure(procedure, type);
+        var bytecode = assembler.assembleProcedure(instructions);
 
         var catalog = component.children[1];
-        var value;
         catalog.deleteKey('$instructions');
         catalog.deleteKey('$bytecode');
         if (verbose) {
             // add instructions to procedure catalog
-            value = parser.parseExpression('"\n' + source.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
-            catalog.setValue('$instructions', value);
+            instructions = parser.parseExpression('"\n' + instructions.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
+            catalog.setValue('$instructions', instructions);
         }
     
         // add bytecode to procedure catalog
-        var bytecode = parser.parseExpression("'" + base16 + "\n            '" + '($mediatype: "application/bcod")');
+        bytecode = parser.parseExpression("'" + bytecode + "\n            '" + '($mediatype: "application/bcod")');
         catalog.setValue('$bytecode', bytecode);
     }
     return type;

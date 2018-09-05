@@ -9,7 +9,6 @@
  ************************************************************************/
 
 var BaliDocument = require('bali-document-notation/BaliDocument');
-var analyzer = require('../compiler/TypeAnalyzer');
 var compiler = require('../compiler/ProcedureCompiler');
 var fs = require('fs');
 var mocha = require('mocha');

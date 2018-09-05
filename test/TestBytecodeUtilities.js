@@ -19,7 +19,7 @@ describe('Bali Cloud Environment™', function() {
     describe('Test bytecode utilities on instructions', function() {
 
         it('should construct and compare instructions with and without operands', function() {
-            var bytecode = new collections.List();
+            var bytecode = '';
             var operand;
             var operation;
             var modifier;
@@ -33,7 +33,7 @@ describe('Bali Cloud Environment™', function() {
                 encoded = utilities.encodeInstruction(operation, modifier);
                 if (utilities.instructionIsValid(instruction)) {
                     expect(instruction).to.equal(encoded);
-                    bytecode.addItem(instruction);
+                    bytecode += utilities.instructionToBase16(instruction);
                 }
                 // test with operand
                 operand = i + 1;
@@ -43,7 +43,7 @@ describe('Bali Cloud Environment™', function() {
                 encoded = utilities.encodeInstruction(operation, modifier, operand);
                 if (utilities.instructionIsValid(instruction)) {
                     expect(instruction).to.equal(encoded);
-                    bytecode.addItem(instruction);
+                    bytecode += utilities.instructionToBase16(instruction);
                 }
             }
 

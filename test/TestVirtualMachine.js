@@ -11,9 +11,8 @@ var TestRepository = require('bali-cloud-api/LocalRepository');
 var BaliAPI = require('bali-cloud-api/BaliAPI');
 var BaliDocument = require('bali-document-notation/BaliDocument');
 var compiler = require('../compiler/ProcedureCompiler');
+var assembler = require('../compiler/ProcedureAssembler');
 var BaliProcedure = require('bali-instruction-set/BaliProcedure');
-var analyzer = require('../assembler/ProcedureAnalyzer');
-var assembler = require('../assembler/ProcedureAssembler');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var utilities = require('../utilities/BytecodeUtilities');
 var TaskContext = require('../processor/TaskContext');
@@ -75,7 +74,7 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = analyzer.extractSymbols(procedure);
+            var symbols = assembler.extractSymbols(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
@@ -182,7 +181,7 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = analyzer.extractSymbols(procedure);
+            var symbols = assembler.extractSymbols(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
@@ -237,7 +236,7 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = analyzer.extractSymbols(procedure);
+            var symbols = assembler.extractSymbols(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values
@@ -316,7 +315,7 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = analyzer.extractSymbols(procedure);
+            var symbols = assembler.extractSymbols(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure, symbols);
             source = TASK_TEMPLATE;
             // NOTE: must remove the back tick delimiters from the literal values

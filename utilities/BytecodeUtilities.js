@@ -24,8 +24,6 @@
  * invalid index or address.
  */
 var types = require('bali-instruction-set/Types');
-var elements = require('bali-element-types/elements');
-var collections = require('bali-collection-types/collections');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 
 
@@ -186,57 +184,35 @@ exports.instructionIsValid = function(instruction) {
 };
 
 
-/**
- * This function converts a byte string into a bytecode list.
- * 
- * @param {String} base16 The base 16 encoded bytes to be converted.
- * @returns {List} The corresponding list of 16 bit instructions.
- */
-exports.base16ToBytecode = function(base16) {
-    var buffer = codex.base16Decode(base16);
-    var bytecode = new collections.List();
-    for (var i = 0; i < buffer.length; i += 2) {
-        var word = new elements.Complex(codex.bytesToShort(buffer.slice(i)).toString());
-        bytecode.addItem(word);
-    }
-    return bytecode;
+exports.instructionToBase16 = function(instruction) {
+    var bytes = codex.shortToBytes(instruction);
+    var base16 = codex.base16Encode(bytes);
+    return base16;
 };
 
 
-/**
- * This function converts a bytecode list into a base 16 encoded string.
- * 
- * @param {List} bytecode The list of 16 bit instructions to be converted.
- * @returns {String} The corresponding base 16 encoded string.
- */
-exports.bytecodeToBase16 = function(bytecode) {
-    var length = bytecode.getSize();
-    var buffer = Buffer.alloc(length * 2);
-    var index = 0;  // JS zero based index
-    var iterator = bytecode.iterator();
-    while (iterator.hasNext()) {
-        var instruction = iterator.getNext();
-        buffer.fill(codex.shortToBytes(instruction.toNumber()), index++ * 2);
-    }
-    var base16 = codex.base16Encode(buffer, '                ');
-    return base16;
+exports.getInstruction = function(bytecode, address) {
+    var index = (address - 1) * 4;
+    var base16 = bytecode.slice(index, index + 4);
+    var instruction = codex.bytesToShort(codex.base16Decode(base16));
+    return instruction;
 };
 
 
 /**
  * This function returns a human readable version of Bali virtual machine bytecode.
  * 
- * @param {List} bytecode The list of 16 bit instructions to be formatted.
+ * @param {String} bytecode The base 16 encoded bytecode instructions.
  * @returns {String} The human readable form of the bytecode.
  */
 exports.bytecodeAsString = function(bytecode) {
     var string = ' Addr     Bytes   Bytecode                  Instruction\n';
     string += '----------------------------------------------------------------------\n';
     var address = 1;  // Bali unit based addressing
-    var iterator = bytecode.iterator();
-    while (iterator.hasNext()) {
-        var instruction = iterator.getNext();
-        string += wordAsString(address++, instruction) + '\n';
+    while (address * 4 <= bytecode.length) {
+        var instruction = exports.getInstruction(bytecode, address);
+        string += wordAsString(address, instruction) + '\n';
+        address++;
     }
     return string;
 };
