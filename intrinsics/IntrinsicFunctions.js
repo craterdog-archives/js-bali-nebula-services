@@ -13,7 +13,7 @@
  * This library encapsulates the intrinsic functions supported by the Bali
  * Virtual Machine™.
  */
-var elements = require('bali-element-types/elements');
+var Complex = require('bali-primitive-types/elements/Complex').Complex;
 
 
 // PUBLIC FUNCTIONS
@@ -54,7 +54,7 @@ exports.intrinsicFunctions = [
             return (n<2) ? 1 : f(n-1) * n;
         }
         var factorial = f(number.toNumber());
-        return new elements.Complex(String(factorial));
+        return new Complex(String(factorial));
     },
 
     // getValue
@@ -96,7 +96,7 @@ exports.intrinsicFunctions = [
     // random
     function() {
         var random = Math.random();
-        return new elements.Complex(String(random));
+        return new Complex(String(random));
     },
 
     // range
@@ -109,7 +109,7 @@ exports.intrinsicFunctions = [
     function(firstProbability, secondProbability) {},
 
     // setParameters
-    function(object, parameters) {},
+    function(state, parameters) {},
 
     // setValue
     function(catalog, key, value) {},
@@ -117,7 +117,7 @@ exports.intrinsicFunctions = [
     // sum
     function(firstNumber, secondNumber) {
         var sum = firstNumber.toNumber() + secondNumber.toNumber();
-        return new elements.Complex(String(sum));
+        return new Complex(String(sum));
     },
 
     // xor

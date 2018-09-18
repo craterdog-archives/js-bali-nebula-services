@@ -32,9 +32,11 @@
   },
   "dependencies": {
     "antlr4": "^4.7.1",
-    "bali-digital-notary": "file:../js-bali-digital-notary",
-    "bali-instruction-set": "file:../js-bali-instruction-set",
     "bali-document-notation": "file:../js-bali-document-notation",
+    "bali-digital-notary": "file:../js-bali-digital-notary",
+    "bali-primitive-types": "file:../js-bali-primitive-types",
+    "bali-instruction-set": "file:../js-bali-instruction-set",
+    "bali-cloud-api": "file:../js-bali-cloud-api",
     "moment": "^2.22.1",
     "node-forge": "^0.7.5"
   }

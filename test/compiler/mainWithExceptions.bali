@@ -1,7 +1,7 @@
 
-queue message on <bali:/queues/myqueue> handle $error matching [$type: 'bad'] with {
+queue message on <bali:/queues/myqueue> handle $error matching [$type: "bad"] with {
     any
-} handle $error matching [$type: 'horrid'] with {
+} handle $error matching [$type: "horrid"] with {
     none
 }
 

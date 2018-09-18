@@ -1,9 +1,9 @@
 
-select $selection from 'alpha' do {
+select $selection from "alpha" do {
     none
-} 'beta' do {
+} "beta" do {
     none
-} 'gamma' do {
+} "gamma" do {
     none
 } else {
     none

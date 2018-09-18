@@ -8,9 +8,10 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 'use strict';
+var parser = require('bali-document-notation/transformers/DocumentParser');
 var BaliProcedure = require('bali-instruction-set/BaliProcedure');
 var types = require('bali-instruction-set/Types');
-var collections = require('bali-collection-types/collections');
+var List = require('bali-primitive-types/collections/List');
 var utilities = require('../utilities/BytecodeUtilities');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
 
@@ -24,17 +25,16 @@ var intrinsics = require('../intrinsics/IntrinsicFunctions');
 
 /**
  * This function traverses a parse tree structure containing assembly
- * instructions and extracts label information that will be needed by the
- * assembler to generate the bytecode.
+ * instructions and extracts the literal values in the code.
  * 
- * @param {String} instructions The assembly code for the procedure to be analyzed.
- * @returns {object} The symbol table for the procedure.
+ * @param {BaliProcedure} procedure The parse tree for the procedure to be analyzed.
+ * @returns {List} A list of the literal values as Bali text elements.
  */
-exports.extractSymbols = function(instructions) {
-    var procedure = BaliProcedure.fromSource(instructions);
+exports.extractLiterals = function(procedure) {
     var visitor = new AnalyzingVisitor();
     procedure.accept(visitor);
-    return visitor.symbols;
+    var literals = List.fromCollection(visitor.symbols.literals);
+    return literals;
 };
 
 
@@ -42,116 +42,19 @@ exports.extractSymbols = function(instructions) {
  * This function traverses a parse tree structure containing assembly
  * instructions and generates the corresponding bytecode instructions.
  * 
- * @param {String} instructions The assembly code for the procedure to be assembled.
- * @returns {String} The bytecode string containing base 16 encoded instructions.
+ * @param {BaliProcedure} procedure The parse tree for the procedure to be assembled.
+ * @returns {Component} A binary component containing the bytecode instructions.
  */
-exports.assembleProcedure = function(instructions) {
-    var procedure = BaliProcedure.fromSource(instructions);
+exports.assembleProcedure = function(procedure) {
     var visitor = new AnalyzingVisitor();
     procedure.accept(visitor);
     var symbols = visitor.symbols;
     visitor = new AssemblingVisitor(symbols);
     procedure.accept(visitor);
-    return visitor.bytecode;
+    var bytecode = '\'%bytecode\'($base: 16, $mediatype: "application/bcod")';
+    bytecode = bytecode.replace(/%bytecode/, visitor.bytecode);
+    return parser.parseComponent(bytecode);
 };
-
-
-/**
- * This function analyzes bytecode and regenerates the assembly instructions
- * in the procedure that was used to generate the bytecode.
- * 
- * @param {String} bytecode The bytecode string containing base 16 encoded instructions.
- * @param {Object} symbols The symbol table for the instructions.
- * @returns {String} The regenerated assembly code for the procedure.
- */
-exports.disassembleBytecode = function(bytecode, symbols) {
-    var procedure = '';
-    var address = 1;  // bali VM unit based addressing
-    while(address * 4 <= bytecode.length) {
-        // check for a label at this address
-        var label = lookupLabel(symbols, address);
-        if (label) {
-            procedure += '\n' + label + ':\n';
-        }
-
-        // decode the instruction
-        var instruction = utilities.getInstruction(bytecode, address);
-        var operation = utilities.decodeOperation(instruction);
-        var modifier = utilities.decodeModifier(instruction);
-        var operand = utilities.decodeOperand(instruction);
-        if (utilities.operandIsAddress(instruction)) {
-            operand = lookupLabel(symbols, operand);
-        } else if (utilities.operandIsIndex(instruction)) {
-            operand = lookupSymbol(symbols, operation, modifier, operand);
-        } else {
-            operand = undefined;
-        }
-
-        // format the instruction
-        procedure += utilities.instructionAsString(instruction, operand);
-        procedure += '\n';
-
-        // increment the address
-        address++;
-    }
-    return procedure;
-};
-
-
-// PRIVATE FUNCTIONS
-
-/*
- * This function returns, from the symbol catalogs, the label corresponding
- * to the specified address.
- */
-function lookupLabel(symbols, address) {
-    var entries = Object.entries(symbols.addresses);
-    for (var i = 0; i < entries.length; i++) {
-        var entry = entries[i];
-        if (address === entry[1]) return entry[0];
-    }
-    return null;
-}
-
-
-/*
- * This function returns, from the symbol catalogs, the symbol corresponding
- * to the specified index.
- */
-function lookupSymbol(symbols, operation, modifier, index) {
-    var type;
-    switch (operation) {
-        case types.PUSH:
-            switch (modifier) {
-                case types.ELEMENT:
-                case types.CODE:
-                    type = 'literals';
-                    break;
-            }
-            break;
-        case types.LOAD:
-            switch (modifier) {
-                case types.PARAMETER:
-                    type = 'parameters';
-                    break;
-                case types.VARIABLE:
-                case types.DOCUMENT:
-                case types.MESSAGE:
-                    type = 'variables';
-                    break;
-            }
-            break;
-        case types.STORE:
-            type = 'variables';
-            break;
-        case types.INVOKE:
-            return intrinsics.intrinsicNames[index - 1];  // javascript zero based indexing
-        case types.EXECUTE:
-            type = 'procedures';
-            break;
-    }
-    return symbols[type][index - 1];  // javascript zero based indexing
-}
 
 
 // PRIVATE CLASSES
@@ -206,10 +109,10 @@ AnalyzingVisitor.prototype.visitJumpInstruction = function(instruction) {
 //     'PUSH' 'CODE' LITERAL
 AnalyzingVisitor.prototype.visitPushInstruction = function(instruction) {
     var modifier = instruction.modifier;
-    var value = instruction.operand;
     switch (modifier) {
         case types.ELEMENT:
         case types.CODE:
+            var value = '"' + instruction.operand + '"';  // wrap as a Bali text element
             if (!this.symbols.literals.includes(value)) {
                 this.symbols.literals.push(value);
             }
@@ -354,6 +257,7 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
             break;
         case types.ELEMENT:
         case types.CODE:
+            value = '"' + value + '"';  // wrap as a Bali text element
             value = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
             break;
     }

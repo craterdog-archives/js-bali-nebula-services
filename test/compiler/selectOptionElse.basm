@@ -5,7 +5,7 @@ STORE VARIABLE $_selector_1_
 
 1.1.OptionClause:
 LOAD VARIABLE $_selector_1_
-PUSH ELEMENT `'alpha'`
+PUSH ELEMENT `"alpha"`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.2.OptionClause ON FALSE
 
@@ -18,7 +18,7 @@ JUMP TO 1.SelectStatementDone
 
 1.2.OptionClause:
 LOAD VARIABLE $_selector_1_
-PUSH ELEMENT `'beta'`
+PUSH ELEMENT `"beta"`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.3.OptionClause ON FALSE
 
@@ -31,7 +31,7 @@ JUMP TO 1.SelectStatementDone
 
 1.3.OptionClause:
 LOAD VARIABLE $_selector_1_
-PUSH ELEMENT `'gamma'`
+PUSH ELEMENT `"gamma"`
 INVOKE $matches WITH 2 PARAMETERS
 JUMP TO 1.4.ElseClause ON FALSE
 

@@ -25,7 +25,7 @@ var types = require('bali-document-notation/nodes/Types');
  * by the compiler.
  * 
  * @param {TreeNode} tree The parse tree structure for the Bali type.
- * @returns {object} An object containing the type context information.
+ * @returns {Object} An object containing the type context information.
  */
 exports.analyzeType = function(tree) {
     var visitor = new AnalyzingVisitor();
@@ -69,7 +69,7 @@ Array.prototype.peek = function() {
 /*
  * This function returns the subclauses of a statement in an array.
  * 
- * @param {object} statement The statement containing zero or more subclauses.
+ * @param {Object} statement The statement containing zero or more subclauses.
  * @returns {Array} An array containing the subclauses for the statement.
  */
 function getSubClauses(statement) {
@@ -161,7 +161,7 @@ AnalyzingVisitor.prototype.visitComplementExpression = function(tree) {
 };
 
 
-// component: object parameters?
+// component: state parameters?
 AnalyzingVisitor.prototype.visitComponent = function(tree) {
     tree.children[0].accept(this);
     if (tree.children.length > 1) {
@@ -568,7 +568,7 @@ CompilingVisitor.prototype.visitAssociation = function(tree) {
  * This method compiles a procedure block.
  * NOTE: the 'block' and 'code' rules have the same syntax but different symantics.
  * A block gets compiled into the corresponding assembly instructions, but a code
- * object gets treated as a component on the component stack.
+ * component gets treated as a component on the component stack.
  */
 // block: '{' procedure '}'
 CompilingVisitor.prototype.visitBlock = function(tree) {
@@ -664,17 +664,17 @@ CompilingVisitor.prototype.visitCheckoutClause = function(tree) {
 
 
 /*
- * This method compiles a code block as an object rather than part of a statement.
+ * This method compiles a code block as a component rather than part of a statement.
  * NOTE: the 'code' and 'block' rules have the same syntax but different symantics.
  * A block gets compiled into the corresponding assembly instructions, but a code
- * object gets treated as a component on the component stack.
+ * component gets treated as a component on the component stack.
  */
 // code: '{' procedure '}'
 CompilingVisitor.prototype.visitCode = function(tree) {
     var procedure = tree.children[0];
 
     // the VM places the source code for the procedure on top of the component stack
-    var source = procedure.toBali();
+    var source = procedure.toSource();
     this.builder.insertPushInstruction('CODE', source);
 };
 
@@ -769,19 +769,19 @@ CompilingVisitor.prototype.visitComplementExpression = function(tree) {
 };
 
 
-// component: object parameters?
+// component: state parameters?
 CompilingVisitor.prototype.visitComponent = function(tree) {
-    var object = tree.children[0];
+    var state = tree.children[0];
     var parameters = tree.children[1];
 
-    // the VM places the object on top of the component stack
-    object.accept(this);
+    // the VM places the state on top of the component stack
+    state.accept(this);
 
     if (parameters) {
-        // the VM loads the parameters associated with the object onto the top of the component stack
+        // the VM loads the parameters associated with the state onto the top of the component stack
         parameters.accept(this);
 
-        // the VM sets the parameters for the object
+        // the VM sets the parameters for the state
         this.builder.insertInvokeInstruction('$setParameters', 2);
     }
 };

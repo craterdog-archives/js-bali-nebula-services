@@ -16,9 +16,8 @@
  */
 var BaliDocument = require('bali-document-notation/BaliDocument');
 var parser = require('bali-document-notation/transformers/DocumentParser');
-var analyzer = require('./compiler/TypeAnalyzer');
 var compiler = require('./compiler/ProcedureCompiler');
-var assembler = require('./assembler/ProcedureAssembler');
+var assembler = require('./compiler/ProcedureAssembler');
 var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
 
 
@@ -32,7 +31,7 @@ var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
  * @returns {TreeNode} The full parse tree for the Bali type.
  */
 exports.compileType = function(type, verbose) {
-    analyzer.analyzeType(type);
+    compiler.analyzeType(type);
     var procedures = type.getValue('$procedures');
     var iterator = procedures.iterator();
     while (iterator.hasNext()) {
@@ -53,7 +52,7 @@ exports.compileType = function(type, verbose) {
         }
     
         // add bytecode to procedure catalog
-        bytecode = parser.parseExpression("'" + bytecode + "\n            '" + '($mediatype: "application/bcod")');
+        bytecode = parser.parseExpression("'" + bytecode + "\n            '" + '($base: 16, $mediatype: "application/bcod")');
         catalog.setValue('$bytecode', bytecode);
     }
     return type;

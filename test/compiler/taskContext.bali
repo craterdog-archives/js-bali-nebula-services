@@ -23,7 +23,7 @@
             $targetComponent: [
                 'JzAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eic='
                 (3, 4i)
-                (1 e^pi i)
+                (1e^pi i)
                 ~P3M7DT8H29M54.321S
                 <2017-12-30T17:38:35.726>
                 50%
@@ -73,7 +73,7 @@
                 2801800100006002D001183260032802A80F6002D0022803D002B007B0016004B0016005B0016006
                 B001D803800760032804A80F6004B0016006B001D804800760032802A80F6002D0022803D002B007
                 B0016005B0016006B0016004B001D803800700006001E8006007E800
-            '($mediatype: "application/bcod")
+            '($base: 16, $mediatype: "application/bcod")
             $currentInstruction: 0
             $nextAddress: 2
         ]($type: ProcedureContext)

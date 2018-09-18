@@ -18,9 +18,9 @@ var expect = require('chai').expect;
 
 describe('Bali Cloud Environment™', function() {
 
-    describe('Test the assember and disassembler.', function() {
+    describe('Test the assember.', function() {
 
-        it('should assemble procedures and disassemble bytecode', function() {
+        it('should assemble procedures', function() {
             var testFolder = 'test/compiler/';
             var files = fs.readdirSync(testFolder);
             for (var i = 0; i < files.length; i++) {
@@ -32,19 +32,6 @@ describe('Bali Cloud Environment™', function() {
                 var codeFile = testFolder + prefix + '.code';
                 var instructions = fs.readFileSync(basmFile, 'utf8');
                 expect(instructions).to.exist;  // jshint ignore:line
-                var symbols = assembler.extractSymbols(instructions);
-                expect(symbols).to.exist;  // jshint ignore:line
-                var bytecode = assembler.assembleProcedure(instructions);
-                expect(bytecode).to.exist;  // jshint ignore:line
-                var formatted = utilities.bytecodeAsString(bytecode);
-                expect(formatted).to.exist;  // jshint ignore:line
-                //fs.writeFileSync(codeFile, formatted, 'utf8');
-                var expected = fs.readFileSync(codeFile, 'utf8');
-                expect(expected).to.exist;  // jshint ignore:line
-                expect(formatted).to.equal(expected);
-                var disassembled = assembler.disassembleBytecode(bytecode, symbols);
-                expect(disassembled).to.exist;  // jshint ignore:line
-                expect(disassembled).to.equal(instructions);
             }
         });
 
