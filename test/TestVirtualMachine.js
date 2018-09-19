@@ -16,6 +16,7 @@ var BaliProcedure = require('bali-instruction-set/BaliProcedure');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var utilities = require('../utilities/BytecodeUtilities');
 var importer = require('bali-primitive-types/transformers/ComponentImporter');
+var List = require('bali-primitive-types/collections/List');
 var VirtualMachine = require('../processor/VirtualMachine');
 var fs = require('fs');
 var mocha = require('mocha');
@@ -63,6 +64,16 @@ var TASK_TEMPLATE =
         '    ]($type: Stack)\n' +
         ']($type: TaskContext)';
 
+
+function extractLiterals(procedure) {
+    var visitor = new AnalyzingVisitor();
+    procedure.accept(visitor);
+    var literals = List.fromCollection(visitor.symbols.literals);
+    console.log('literals: ' + JSON.stringify(literals, null, 2));
+    return literals;
+}
+
+
 describe('Bali Virtual Machine™', function() {
     var testDirectory = 'test/config/';
     var taskContext;
@@ -74,11 +85,16 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var literals = assembler.extractLiterals(procedure);
-            var bytecodeInstructions = assembler.assembleProcedure(procedure);
+            var symbols = assembler.extractSymbols(procedure);
+            expect(symbols).to.exist;  // jshint ignore:line
+            var literals = List.fromCollection(symbols.literals);
+            expect(literals).to.exist;  // jshint ignore:line
+            var bytecode = assembler.assembleProcedure(procedure);
+            var bytes = utilities.bytecodeToBytes(bytecode);
+            var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
-            source = source.replace(/%bytecodeInstructions/, bytecodeInstructions.toSource('            '));
+            source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
             var task = parser.parseComponent(source);
             taskContext = importer.fromTree(task);
         });
@@ -180,7 +196,7 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var literals = assembler.extractLiterals(procedure);
+            var literals = extractLiterals(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure);
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('                '));
@@ -234,7 +250,7 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var literals = assembler.extractLiterals(procedure);
+            var literals = extractLiterals(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure);
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('                '));
@@ -312,7 +328,7 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var literals = assembler.extractLiterals(procedure);
+            var literals = extractLiterals(procedure);
             var bytecodeInstructions = assembler.assembleProcedure(procedure);
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('                '));

@@ -36,7 +36,7 @@ describe('Bali Cloud Environment™', function() {
                 var type = {};
                 var instructions = compiler.compileProcedure(document, type);
                 expect(instructions).to.exist;  // jshint ignore:line
-                fs.writeFileSync(basmFile, instructions, 'utf8');
+                //fs.writeFileSync(basmFile, instructions, 'utf8');
                 var expected = fs.readFileSync(basmFile, 'utf8');
                 expect(expected).to.exist;  // jshint ignore:line
                 expect(instructions).to.equal(expected);

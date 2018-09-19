@@ -191,14 +191,6 @@ exports.instructionToBase16 = function(instruction) {
 };
 
 
-exports.getInstruction = function(bytecode, address) {
-    var index = (address - 1) * 4;
-    var base16 = bytecode.slice(index, index + 4);
-    var instruction = codex.bytesToShort(codex.base16Decode(base16));
-    return instruction;
-};
-
-
 /**
  * This function converts a base 16 encoded byte string into a bytecode array.
  * 
@@ -235,20 +227,92 @@ exports.bytecodeToBytes = function(bytecode) {
 /**
  * This function returns a human readable version of Bali virtual machine bytecode.
  * 
- * @param {String} bytecode The base 16 encoded bytecode instructions.
+ * @param {Array} bytecode An array of the bytecode instructions.
  * @returns {String} The human readable form of the bytecode.
  */
-exports.bytecodeAsString = function(bytecode) {
+exports.bytecodeToString = function(bytecode) {
     var string = ' Addr     Bytes   Bytecode                  Instruction\n';
     string += '----------------------------------------------------------------------\n';
-    var address = 1;  // Bali unit based addressing
-    while (address * 4 <= bytecode.length) {
-        var instruction = exports.getInstruction(bytecode, address);
-        string += wordAsString(address, instruction) + '\n';
-        address++;
-    }
+    bytecode.forEach(function(word, index) {
+        var address = index + 1;  // Bali ordinal based indexing
+        string += wordToString(address, bytecode[index]) + '\n';
+    });
     return string;
 };
+
+
+// PRIVATE CONSTANTS
+
+// masks
+var OPCODE_MASK = 0xE000;
+var MODCODE_MASK = 0x1800;
+var OPERAND_MASK = 0x07FF;
+
+
+// PRIVATE FUNCTIONS
+
+/**
+ * This function returns the canonical string format for an index to a
+ * literal value or symbol.
+ * 
+ * @param {number} index The index to be formatted.
+ * @returns {string} The canonical string representation of the index.
+ */
+function indexToString(index) {
+    var string = index.toString();
+    return string;
+}
+
+
+/**
+ * This function returns the canonical string format for a Bali virtual
+ * machine address in hexidecimal [000..3FF].
+ * 
+ * @param {number} address The virtual machine address.
+ * @returns {string} The canonical string representation of the address.
+ */
+function addressAsString(address) {
+    var string = address.toString(16).toUpperCase();
+    while (string.length < 3) string = '0' + string;
+    string = '[' + string + ']';
+    return string;
+}
+
+
+/**
+ * This function returns a human readable version of a Bali virtual machine
+ * 16 bit (word) bytecode instruction.
+ * 
+ * @param {number} address The address of the instruction.
+ * @param {number} instruction The 16 bit bytecode instruction to be formatted.
+ * @returns {string} The human readable form of the bytecode instruction.
+ */
+function wordToString(address, instruction) {
+    address = addressAsString(address);
+    var operation = exports.decodeOperation(instruction);
+    var modifier = exports.decodeModifier(instruction);
+    var operand = exports.decodeOperand(instruction);
+    if (exports.operandIsAddress(instruction)) {
+        operand = addressAsString(operand);
+    } else {
+        operand = indexToString(operand);
+    }
+
+    // format the instruction as hexadecimal bytes
+    var bytes = instruction.toString(16).toUpperCase();
+    while (bytes.length < 4) bytes = '0' + bytes;
+
+    // format the description
+    var description = instructionToString(instruction);
+
+    // format the bytecode
+    while (operand.length < 5) operand = ' ' + operand;  // pad operand string with spaces
+    var bytecode = '' + operation + modifier + ' ' + operand;
+
+    // put them all together
+    var formatted = address + ':    ' + bytes + '    ' + bytecode + '    ' + description;
+    return formatted;
+}
 
 
 /**
@@ -259,7 +323,7 @@ exports.bytecodeAsString = function(bytecode) {
  * @param {String} optionalOperand An optional label, symbol, or element as operand.
  * @return {String} The human readable form of the instruction.
  */
-exports.instructionAsString = function(instruction, optionalOperand) {
+function instructionToString(instruction, optionalOperand) {
     var operation = exports.decodeOperation(instruction);
     var modifier = exports.decodeModifier(instruction);
 
@@ -269,7 +333,7 @@ exports.instructionAsString = function(instruction, optionalOperand) {
     } else if (exports.operandIsAddress(instruction)) {
         operand = addressAsString(operand);
     } else if (exports.operandIsIndex(instruction)) {
-        operand = indexAsString(operand);
+        operand = indexToString(operand);
     }
 
     var string = types.OPERATION_TYPES[operation] + ' ';
@@ -308,78 +372,4 @@ exports.instructionAsString = function(instruction, optionalOperand) {
             break;
     }
     return string;
-};
-
-
-// PRIVATE CONSTANTS
-
-// masks
-var OPCODE_MASK = 0xE000;
-var MODCODE_MASK = 0x1800;
-var OPERAND_MASK = 0x07FF;
-
-
-// PRIVATE FUNCTIONS
-
-/**
- * This function returns the canonical string format for an index to a
- * literal value or symbol.
- * 
- * @param {number} index The index to be formatted.
- * @returns {string} The canonical string representation of the index.
- */
-function indexAsString(index) {
-    var string = index.toString();
-    return string;
-}
-
-
-/**
- * This function returns the canonical string format for a Bali virtual
- * machine address in hexidecimal [000..3FF].
- * 
- * @param {number} address The virtual machine address.
- * @returns {string} The canonical string representation of the address.
- */
-function addressAsString(address) {
-    var string = address.toString(16).toUpperCase();
-    while (string.length < 3) string = '0' + string;
-    string = '[' + string + ']';
-    return string;
-}
-
-
-/**
- * This function returns a human readable version of a Bali virtual machine
- * 16 bit (word) bytecode instruction.
- * 
- * @param {number} address The address of the instruction.
- * @param {number} instruction The 16 bit bytecode instruction to be formatted.
- * @returns {string} The human readable form of the bytecode instruction.
- */
-function wordAsString(address, instruction) {
-    address = addressAsString(address);
-    var operation = exports.decodeOperation(instruction);
-    var modifier = exports.decodeModifier(instruction);
-    var operand = exports.decodeOperand(instruction);
-    if (exports.operandIsAddress(instruction)) {
-        operand = addressAsString(operand);
-    } else {
-        operand = indexAsString(operand);
-    }
-
-    // format the instruction as hexadecimal bytes
-    var bytes = instruction.toString(16).toUpperCase();
-    while (bytes.length < 4) bytes = '0' + bytes;
-
-    // format the description
-    var description = exports.instructionAsString(instruction);
-
-    // format the bytecode
-    while (operand.length < 5) operand = ' ' + operand;  // pad operand string with spaces
-    var bytecode = '' + operation + modifier + ' ' + operand;
-
-    // put them all together
-    var formatted = address + ':    ' + bytes + '    ' + bytecode + '    ' + description;
-    return formatted;
 }

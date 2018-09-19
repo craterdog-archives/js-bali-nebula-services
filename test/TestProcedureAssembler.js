@@ -8,12 +8,12 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var BaliProcedure = require('bali-instruction-set/BaliProcedure');
-var assembler = require('../compiler/ProcedureAssembler');
-var utilities = require('../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
+var parser = require('bali-instruction-set/transformers/ProcedureParser');
+var assembler = require('../compiler/ProcedureAssembler');
+var utilities = require('../utilities/BytecodeUtilities');
 
 
 describe('Bali Cloud Environment™', function() {
@@ -30,8 +30,20 @@ describe('Bali Cloud Environment™', function() {
                 var prefix = file.split('.').slice(0, 1);
                 var basmFile = testFolder + prefix + '.basm';
                 var codeFile = testFolder + prefix + '.code';
-                var instructions = fs.readFileSync(basmFile, 'utf8');
-                expect(instructions).to.exist;  // jshint ignore:line
+                var source = fs.readFileSync(basmFile, 'utf8');
+                expect(source).to.exist;  // jshint ignore:line
+                var procedure = parser.parseProcedure(source);
+                expect(procedure).to.exist;  // jshint ignore:line
+                var symbols = assembler.extractSymbols(procedure);
+                expect(symbols).to.exist;  // jshint ignore:line
+                var bytecode = assembler.assembleProcedure(procedure);
+                expect(bytecode).to.exist;  // jshint ignore:line
+                var formatted = utilities.bytecodeToString(bytecode);
+                expect(formatted).to.exist;  // jshint ignore:line
+                //fs.writeFileSync(codeFile, formatted, 'utf8');
+                var expected = fs.readFileSync(codeFile, 'utf8');
+                expect(expected).to.exist;  // jshint ignore:line
+                expect(formatted).to.equal(expected);
             }
         });
 

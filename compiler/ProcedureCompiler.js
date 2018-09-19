@@ -40,7 +40,7 @@ exports.analyzeType = function(tree) {
  * 
  * @param {TreeNode} procedure The parse tree structure for the procedure.
  * @param {Object} type The type defining the procedure.
- * @returns {String} The assembly instructions.
+ * @returns {String} The assembly code instructions.
  */
 exports.compileProcedure = function(procedure, type) {
     var visitor = new CompilingVisitor(type);
