@@ -8,12 +8,32 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var utilities = require('../utilities/BytecodeUtilities');
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
+var utilities = require('../utilities/BytecodeUtilities');
 
 describe('Bali Cloud Environment™', function() {
+
+    describe('Test bytecode utilities on words', function() {
+
+        it('should round trip conversions from bytes to bytecodes', function() {
+            var bytes = codex.randomBytes(16);
+            var bytecode = utilities.bytesToBytecode(bytes);
+            var bytes2 = utilities.bytecodeToBytes(bytecode);
+            expect(bytes2.toString('hex')).to.equal(bytes.toString('hex'));
+            var bytecode2 = utilities.bytesToBytecode(bytes2);
+            expect(JSON.stringify(bytecode2, null, 2)).to.equal(JSON.stringify(bytecode, null, 2));
+        });
+
+        it('should round trip conversions from bytecodes to bytes', function() {
+            var bytecode = [0, 10241, 6164];
+            var bytes = utilities.bytecodeToBytes(bytecode);
+            expect(bytes.toString('hex')).to.equal('000028011814');
+        });
+
+    });
 
     describe('Test bytecode utilities on instructions', function() {
 

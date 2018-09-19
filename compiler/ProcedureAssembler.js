@@ -112,7 +112,7 @@ AnalyzingVisitor.prototype.visitPushInstruction = function(instruction) {
     switch (modifier) {
         case types.ELEMENT:
         case types.CODE:
-            var value = '"' + instruction.operand + '"';  // wrap as a Bali text element
+            var value = instruction.operand.slice(1, -1);  // remove the '`' delimeters
             if (!this.symbols.literals.includes(value)) {
                 this.symbols.literals.push(value);
             }
@@ -257,7 +257,7 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
             break;
         case types.ELEMENT:
         case types.CODE:
-            value = '"' + value + '"';  // wrap as a Bali text element
+            value = value.slice(1, -1);  // remove the '`' delimeters
             value = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
             break;
     }

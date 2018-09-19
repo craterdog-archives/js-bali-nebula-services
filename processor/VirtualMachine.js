@@ -12,6 +12,7 @@
 /*
  * This class defines the Bali Virtual Machine™.
  */
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var parser = require('bali-document-notation/transformers/DocumentParser');
 var BaliNotary = require('bali-digital-notary/BaliNotary');
 var BaliCitation = require('bali-digital-notary/BaliCitation');
@@ -19,10 +20,11 @@ var BaliAPI = require('bali-cloud-api/BaliAPI');
 var CloudRepository = require('bali-cloud-api/CloudRepository');
 var TestRepository = require('bali-cloud-api/LocalRepository');
 var Complex = require('bali-primitive-types/elements/Complex').Complex;
-var Symbol = require('bali-primitive-types/elements/Symbol').Symbol;
+var Probability = require('bali-primitive-types/elements/Probability').Probability;
 var Template = require('bali-primitive-types/elements/Template').Template;
 var List = require('bali-primitive-types/collections/List');
 var Catalog = require('bali-primitive-types/collections/Catalog');
+var importer = require('bali-primitive-types/transformers/ComponentImporter');
 var intrinsics = require('../intrinsics/IntrinsicFunctions');
 var bytecode = require('../utilities/BytecodeUtilities');
 
@@ -49,9 +51,7 @@ exports.fromTask = function(task, testDirectory) {
          */
         step: function() {
             var wasFetched = fetchInstruction(this);
-            if (wasFetched) {
-                executeInstruction(this);
-            }
+            if (wasFetched) executeInstruction(this);
             return wasFetched;
         },
 
@@ -61,10 +61,15 @@ exports.fromTask = function(task, testDirectory) {
          * to receive a message from a queue.
          */
         run: function() {
-            while (fetchInstruction(this)) {
-                executeInstruction(this);
-            }
+            while (fetchInstruction(this)) executeInstruction(this);
             finalizeProcessing(this);
+        },
+
+        toString: function() {
+            var task = exportTask(taskContext);
+            var procedure = exportProcedure(procedureContext);
+            var string = '$task: ' + task + '\n$procedure: ' + procedure;
+            return string;
         }
     };
 };
@@ -75,7 +80,7 @@ exports.fromTask = function(task, testDirectory) {
  */
 function isRunnable(processor) {
     var hasInstructions = processor.procedureContext &&
-            processor.procedureContext.nextAddress * 4 <=
+            processor.procedureContext.nextAddress <=
             processor.procedureContext.bytecodeInstructions.length;
     var isActive = processor.taskContext.processorStatus === ACTIVE;
     var hasTokens = processor.taskContext.accountBalance > 0;
@@ -221,22 +226,27 @@ function importProcedure(procedure) {
     procedureContext.parameterValues = procedure.getValue('$parameterValues');
     procedureContext.literalValues = procedure.getValue('$literalValues');
     procedureContext.variableValues = procedure.getValue('$variableValues');
-    var bytecodeInstructions = procedure.getValue('$bytecodeInstructions').children[0].toBase16();
-    procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytecodeInstructions);
+    var bytes = procedure.getValue('$bytecodeInstructions').value;
+    procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
+    procedureContext.currentInstruction = procedure.getValue('$currentInstruction').toNumber();
     procedureContext.nextAddress = procedure.getValue('$nextAddress').toNumber();
     return procedureContext;
 }
 
 
 /*
- * This function imports a virtual machine procedure context to a Bali component.
+ * This function exports a virtual machine procedure context to a Bali component.
  */
 function exportProcedure(procedureContext) {
-    var bytecodeInstructions = bytecode.bytecodeToBase16(procedureContext.bytecodeInstructions, '                ');
+    var bytes = bytecode.bytecodeToBytes(procedureContext.bytecodeInstructions);
+    var base16 = codex.base16Encode(bytes);
     var source = "'%bytecodeInstructions'($base: 16, $mediatype: \"application/bcod\")";
-    source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
-    procedureContext.bytecodeInstructions = parser.parseComponent(source);
+    source = source.replace(/%bytecodeInstructions/, base16);
+    var tree = parser.parseComponent(source);
+    var bytecodeInstructions = procedureContext.bytecodeInstructions;  // must save and restore!!!
+    procedureContext.bytecodeInstructions = importer.fromTree(tree);
     var procedure = Catalog.fromCollection(procedureContext);
+    procedureContext.bytecodeInstructions = bytecodeInstructions;
     return procedure;
 }
 
@@ -251,7 +261,7 @@ var instructionHandlers = [
         // otherwise it is a SKIP INSTRUCTION (aka NOOP)
         if (operand) {
             var nextAddress = operand;
-            processor.procedureContext.nextAddress = nextAddress;
+            processor.procedureContext.nextAddress = nextAddress - 1;  // account for auto-increment
         }
     },
 
@@ -263,7 +273,7 @@ var instructionHandlers = [
         var condition = processor.taskContext.componentStack.popItem();
         // if the condition is 'none' then use the address as the next instruction to be executed
         if (Template.NONE.equalTo(condition)) {
-            processor.procedureContext.nextAddress = nextAddress;
+            processor.procedureContext.nextAddress = nextAddress - 1;  // account for auto-increment
         }
     },
 
@@ -274,8 +284,8 @@ var instructionHandlers = [
         // pop the condition component off the component stack
         var condition = processor.taskContext.componentStack.popItem();
         // if the condition is 'true' then use the address as the next instruction to be executed
-        if (Template.TRUE.equalTo(condition)) {
-            processor.procedureContext.nextAddress = nextAddress;
+        if (Probability.TRUE.equalTo(condition)) {
+            processor.procedureContext.nextAddress = nextAddress - 1;  // account for auto-increment
         }
     },
 
@@ -286,8 +296,8 @@ var instructionHandlers = [
         // pop the condition component off the component stack
         var condition = processor.taskContext.componentStack.popItem();
         // if the condition is 'false' then use the address as the next instruction to be executed
-        if (Template.FALSE.equalTo(condition)) {
-            processor.procedureContext.nextAddress = nextAddress;
+        if (Probability.FALSE.equalTo(condition)) {
+            processor.procedureContext.nextAddress = nextAddress - 1;  // account for auto-increment
         }
     },
 
@@ -530,7 +540,8 @@ var instructionHandlers = [
         procedureContext.literalValues = type.literalValues;
         procedureContext.parameterValues = List.fromScratch();
         procedureContext.variableValues = processor.extractVariables(procedure);
-        procedureContext.bytecodeInstructions = procedure.getValue('$bytecodeInstructions').value;
+        var bytes = procedure.getValue('$bytecodeInstructions').value;
+        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
         procedureContext.nextAddress = 1;
         processor.procedureContext = procedureContext;
         processor.taskContext.procedureStack.pushItem(exportProcedure(procedureContext));
@@ -553,7 +564,7 @@ var instructionHandlers = [
         procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
+        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
         procedureContext.nextAddress = 1;
         processor.procedureContext = procedureContext;
         processor.taskContext.procedureStack.pushItem(procedureContext);
@@ -575,7 +586,7 @@ var instructionHandlers = [
         procedureContext.parameterValues = List.fromScratch();
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
+        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
         procedureContext.nextAddress = 1;
         processor.procedureContext = procedureContext;
         processor.taskContext.procedureStack.pushItem(procedureContext);
@@ -598,7 +609,7 @@ var instructionHandlers = [
         procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
         procedureContext.variableValues = this.extractVariables(procedure);
         var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = bytecode.base16ToBytecode(bytes);
+        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
         procedureContext.nextAddress = 1;
         processor.procedureContext = procedureContext;
         processor.taskContext.procedureStack.pushItem(procedureContext);

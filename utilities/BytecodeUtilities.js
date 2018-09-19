@@ -202,14 +202,14 @@ exports.getInstruction = function(bytecode, address) {
 /**
  * This function converts a base 16 encoded byte string into a bytecode array.
  * 
- * @param {String} base16 The base 16 encoded byte string to be converted.
+ * @param {Buffer} bytes The byte byffer containing the bytecode to be converted.
  * @returns {Array} The corresponding bytecode array.
  */
-exports.base16ToBytecode = function(base16) {
-    var bytes = codex.base16Decode(base16);
+exports.bytesToBytecode = function(bytes) {
     var bytecode = [];
     for (var i = 0; i < bytes.length; i += 2) {
-        var word = codex.bytesToShort(bytes.slice(i));
+        var word = bytes[i] << 8;
+        word |= bytes[i + 1] & 0xFF;
         bytecode.push(word);
     }
     return bytecode;
@@ -217,19 +217,18 @@ exports.base16ToBytecode = function(base16) {
 
 
 /**
- * This function converts a bytecode array into a byte string.
+ * This function converts a bytecode array into a buffer containing a byte string.
  * 
  * @param {Array} bytecode The bytecode array to be converted.
- * @param {String} indentation The indentation string to be prefixed to each line. 
- * @returns {String} The base 16 encoded byte string.
+ * @returns {Buffer} A buffer containing the byte string for the bytecode.
  */
-exports.bytecodeTobase16 = function(bytecode, indentation) {
-    var bytes = '';
+exports.bytecodeToBytes = function(bytecode) {
+    var bytes = Buffer.alloc(bytecode.length * 2);
     for (var i = 0; i < bytecode.length; i++) {
-        bytes += codex.shortToBytes(bytecode[i]);
+        bytes[2 * i] = bytecode[i] >> 8 & 0xFF;
+        bytes[2 * i + 1] = bytecode[i] & 0xFF;
     }
-    var base16 = codex.base16Encode(bytes, indentation);
-    return base16;
+    return bytes;
 };
 
 

@@ -79,11 +79,8 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, bytecodeInstructions.toSource('            '));
-            console.log('source: ' + source);
             var task = parser.parseComponent(source);
-            console.log('task: ' + task);
             taskContext = importer.fromTree(task);
-            console.log('taskContext: ' + taskContext);
         });
 
         it('should execute the test instructions', function() {
@@ -171,7 +168,7 @@ describe('Bali Virtual Machine™', function() {
             expect(processor.taskContext.clockCycles).to.equal(17);
             expect(processor.taskContext.accountBalance).to.equal(983);
             expect(processor.taskContext.processorStatus).to.equal('$active');
-            expect(processor.taskContext.componentStack.length).to.equal(0);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(0);
         });
 
     });
