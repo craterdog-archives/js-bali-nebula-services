@@ -22,6 +22,7 @@ var TestRepository = require('bali-cloud-api/LocalRepository');
 var Complex = require('bali-primitive-types/elements/Complex').Complex;
 var Probability = require('bali-primitive-types/elements/Probability').Probability;
 var Template = require('bali-primitive-types/elements/Template').Template;
+var Parameters = require('bali-primitive-types/collections/Parameters');
 var List = require('bali-primitive-types/collections/List');
 var Catalog = require('bali-primitive-types/collections/Catalog');
 var importer = require('bali-primitive-types/transformers/ComponentImporter');
@@ -468,9 +469,9 @@ var instructionHandlers = [
     // INVOKE symbol
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // create an empty parameters list for the intrinsic function call
-        var parameters = List.fromScratch();
+        var parameters = Parameters.fromCollection([]);
         // call the intrinsic function associated with the index operand
         var result = intrinsics.intrinsicFunctions[index].apply(processor, parameters);
         // push the result of the function call onto the top of the component stack
@@ -480,13 +481,11 @@ var instructionHandlers = [
     // INVOKE symbol WITH PARAMETER
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
-        var parameters = List.fromScratch();
         var parameter = processor.taskContext.componentStack.popItem();
-        parameters.addItem(parameter);
         // call the intrinsic function associated with the index operand
-        var result = intrinsics.intrinsicFunctions[index].apply(processor, parameters);
+        var result = intrinsics.intrinsicFunctions[index].apply(processor, [parameter]);
         // push the result of the function call onto the top of the component stack
         processor.taskContext.componentStack.pushItem(result);
     },
@@ -494,15 +493,12 @@ var instructionHandlers = [
     // INVOKE symbol WITH 2 PARAMETERS
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
-        var parameters = List.fromScratch();
-        var parameter = processor.taskContext.componentStack.popItem();
-        parameters.addItem(parameter);
-        parameter = processor.taskContext.componentStack.popItem();
-        parameters.addItem(parameter);
+        var parameter1 = processor.taskContext.componentStack.popItem();
+        var parameter2 = processor.taskContext.componentStack.popItem();
         // call the intrinsic function associated with the index operand
-        var result = intrinsics.intrinsicFunctions[index].apply(processor, parameters);
+        var result = intrinsics.intrinsicFunctions[index].apply(processor, [parameter1, parameter2]);
         // push the result of the function call onto the top of the component stack
         processor.taskContext.componentStack.pushItem(result);
     },
@@ -510,17 +506,13 @@ var instructionHandlers = [
     // INVOKE symbol WITH 3 PARAMETERS
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
+        var index = operand - 1;  // JS zero based indexing
         // pop the parameters to the intrinsic function call off of the component stack
-        var parameters = List.fromScratch();
-        var parameter = processor.taskContext.componentStack.popItem();
-        parameters.addItem(parameter);
-        parameter = processor.taskContext.componentStack.popItem();
-        parameters.addItem(parameter);
-        parameter = processor.taskContext.componentStack.popItem();
-        parameters.addItem(parameter);
+        var parameter1 = processor.taskContext.componentStack.popItem();
+        var parameter2 = processor.taskContext.componentStack.popItem();
+        var parameter3 = processor.taskContext.componentStack.popItem();
         // call the intrinsic function associated with the index operand
-        var result = intrinsics.intrinsicFunctions[index].apply(processor, parameters);
+        var result = intrinsics.intrinsicFunctions[index].apply(processor, [parameter1, parameter2, parameter3]);
         // push the result of the function call onto the top of the component stack
         processor.taskContext.componentStack.pushItem(result);
     },

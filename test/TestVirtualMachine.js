@@ -69,7 +69,6 @@ function extractLiterals(procedure) {
     var visitor = new AnalyzingVisitor();
     procedure.accept(visitor);
     var literals = List.fromCollection(visitor.symbols.literals);
-    console.log('literals: ' + JSON.stringify(literals, null, 2));
     return literals;
 }
 
@@ -196,13 +195,18 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var literals = extractLiterals(procedure);
-            var bytecodeInstructions = assembler.assembleProcedure(procedure);
+            var symbols = assembler.extractSymbols(procedure);
+            expect(symbols).to.exist;  // jshint ignore:line
+            var literals = List.fromCollection(symbols.literals);
+            expect(literals).to.exist;  // jshint ignore:line
+            var bytecode = assembler.assembleProcedure(procedure);
+            var bytes = utilities.bytecodeToBytes(bytecode);
+            var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
-            source = source.replace(/%literalValues/, literals.toSource('                '));
-            source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
-            var document = parser.parseComponent(source);
-            taskContext = importer.fromTree(document);
+            source = source.replace(/%literalValues/, literals.toSource('            '));
+            source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
+            var task = parser.parseComponent(source);
+            taskContext = importer.fromTree(task);
         });
 
         it('should execute the test instructions', function() {
@@ -212,27 +216,27 @@ describe('Bali Virtual Machine™', function() {
             // 1.PushHandler:
             // PUSH HANDLER 3.PushCode
             processor.step();
-            expect(processor.taskContext.handlerStack.length).to.equal(1);
+            expect(processor.taskContext.handlerStack.getSize()).to.equal(1);
 
             // 2.PushElement:
             // PUSH ELEMENT "five"
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
 
             // 3.PushCode:
             // PUSH CODE `{return prefix + name + suffix}`
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(2);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(2);
 
             // 4.PopHandler:
             // POP HANDLER
             processor.step();
-            expect(processor.taskContext.handlerStack.length).to.equal(0);
+            expect(processor.taskContext.handlerStack.getSize()).to.equal(0);
 
             // 5.PopComponent:
             // POP COMPONENT
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
 
             // EOF
             expect(processor.step()).to.equal(false);
@@ -250,13 +254,18 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var literals = extractLiterals(procedure);
-            var bytecodeInstructions = assembler.assembleProcedure(procedure);
+            var symbols = assembler.extractSymbols(procedure);
+            expect(symbols).to.exist;  // jshint ignore:line
+            var literals = List.fromCollection(symbols.literals);
+            expect(literals).to.exist;  // jshint ignore:line
+            var bytecode = assembler.assembleProcedure(procedure);
+            var bytes = utilities.bytecodeToBytes(bytecode);
+            var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
-            source = source.replace(/%literalValues/, literals.toSource('                '));
-            source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
-            var document = parser.parseComponent(source);
-            taskContext = importer.fromTree(document);
+            source = source.replace(/%literalValues/, literals.toSource('            '));
+            source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
+            var task = parser.parseComponent(source);
+            taskContext = importer.fromTree(task);
         });
 
         it('should execute the test instructions', function() {
@@ -266,51 +275,51 @@ describe('Bali Virtual Machine™', function() {
             // 1.LoadParameter:
             // LOAD PARAMETER $x
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
-            expect(processor.taskContext.componentStack.peek().toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
+            expect(processor.taskContext.componentStack.getTop().toSource()).to.equal('"This is a text string."');
 
             // 2.StoreVariable:
             // STORE VARIABLE $foo
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(0);
-            expect(processor.procedureContext.variableValues[0].toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(0);
+            expect(processor.procedureContext.variableValues.getItem(1).toSource()).to.equal('"This is a text string."');
 
             // 3.LoadVariable:
             // LOAD VARIABLE $foo
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
-            expect(processor.taskContext.componentStack.peek().toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
+            expect(processor.taskContext.componentStack.getTop().toSource()).to.equal('"This is a text string."');
 
             // 4.StoreDraft:
             // STORE DRAFT $document
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(0);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(0);
             // LOAD DOCUMENT $document
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
-            expect(processor.taskContext.componentStack.peek().documentContent.toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
+            expect(processor.taskContext.componentStack.getTop().documentContent.toSource()).to.equal('"This is a text string."');
 
             // 5.StoreDocument:
             // STORE DOCUMENT $document
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(0);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(0);
 
             // 6.LoadDocument:
             // LOAD DOCUMENT $document
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
-            expect(processor.taskContext.componentStack.peek().documentContent.toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
+            expect(processor.taskContext.componentStack.getTop().documentContent.toSource()).to.equal('"This is a text string."');
 
             // 7.StoreMessage:
             // STORE MESSAGE $queue
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(0);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(0);
 
             // 8.LoadMessage:
             // LOAD MESSAGE $queue
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
-            expect(processor.taskContext.componentStack.peek().documentContent.toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
+            expect(processor.taskContext.componentStack.getTop().documentContent.toSource()).to.equal('"This is a text string."');
 
             // EOF
             expect(processor.step()).to.equal(false);
@@ -328,13 +337,18 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var literals = extractLiterals(procedure);
-            var bytecodeInstructions = assembler.assembleProcedure(procedure);
+            var symbols = assembler.extractSymbols(procedure);
+            expect(symbols).to.exist;  // jshint ignore:line
+            var literals = List.fromCollection(symbols.literals);
+            expect(literals).to.exist;  // jshint ignore:line
+            var bytecode = assembler.assembleProcedure(procedure);
+            var bytes = utilities.bytecodeToBytes(bytecode);
+            var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
-            source = source.replace(/%literalValues/, literals.toSource('                '));
-            source = source.replace(/%bytecodeInstructions/, bytecodeInstructions);
-            var document = parser.parseComponent(source);
-            taskContext = importer.fromTree(document);
+            source = source.replace(/%literalValues/, literals.toSource('            '));
+            source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
+            var task = parser.parseComponent(source);
+            taskContext = importer.fromTree(task);
         });
 
         it('should execute the test instructions', function() {
@@ -344,31 +358,31 @@ describe('Bali Virtual Machine™', function() {
             // 1.Invoke:
             // INVOKE $random
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
 
             // 2.InvokeWithParameter:
             // PUSH ELEMENT `3`
             processor.step();
             // INVOKE $factorial WITH PARAMETER
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(2);
-            expect(processor.taskContext.componentStack.peek().toSource()).to.equal('6');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(2);
+            expect(processor.taskContext.componentStack.getTop().toSource()).to.equal('6');
 
             // 3.InvokeWith2Parameters:
             // PUSH ELEMENT `5`
             processor.step();
             // INVOKE $sum WITH 2 PARAMETERS
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(2);
-            expect(processor.taskContext.componentStack.peek().toSource()).to.equal('11');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(2);
+            expect(processor.taskContext.componentStack.getTop().toSource()).to.equal('11');
 
             // 4.InvokeWith3Parameters:
             // PUSH ELEMENT `13`
             processor.step();
             // INVOKE $default WITH 3 PARAMETERS
             processor.step();
-            expect(processor.taskContext.componentStack.length).to.equal(1);
-            expect(processor.taskContext.componentStack.peek().toSource()).to.equal('11');
+            expect(processor.taskContext.componentStack.getSize()).to.equal(1);
+            expect(processor.taskContext.componentStack.getTop().toSource()).to.equal('11');
 
             // EOF
             expect(processor.step()).to.equal(false);
