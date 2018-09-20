@@ -15,9 +15,12 @@
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
 var BaliDocument = require('bali-document-notation/BaliDocument');
-var parser = require('bali-document-notation/transformers/DocumentParser');
+var documentParser = require('bali-document-notation/transformers/DocumentParser');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
+var procedureParser = require('bali-instruction-set/transformers/ProcedureParser');
 var compiler = require('./compiler/ProcedureCompiler');
 var assembler = require('./compiler/ProcedureAssembler');
+var utilities = require('./utilities/BytecodeUtilities');
 var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
 
 
@@ -35,25 +38,33 @@ exports.compileType = function(type, verbose) {
     var procedures = type.getValue('$procedures');
     var iterator = procedures.iterator();
     while (iterator.hasNext()) {
+        // retrieve the source code for the procedure
         var component = iterator.getNext();
         var source = component.getValue('$source');
         var block = source.children[0];
         var procedure = block.children[0];
-        var instructions = compiler.compileProcedure(procedure, type);
-        var bytecode = assembler.assembleProcedure(instructions);
 
+        // compile and assemble the source code
+        var instructions = compiler.compileProcedure(procedure, type);
+        procedure = procedureParser.parseProcedure(instructions);
+        var bytecode = assembler.assembleProcedure(procedure);
+
+        // remove any existing assembly instructions and bytecode from the procedure definition
         var catalog = component.children[1];
         catalog.deleteKey('$instructions');
         catalog.deleteKey('$bytecode');
+
+        // add the assembly instructions to the procedure definition if desired
         if (verbose) {
-            // add instructions to procedure catalog
-            instructions = parser.parseExpression('"\n' + instructions.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
+            instructions = documentParser.parseExpression('"\n' + instructions.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
             catalog.setValue('$instructions', instructions);
         }
     
-        // add bytecode to procedure catalog
-        bytecode = parser.parseExpression("'" + bytecode + "\n            '" + '($base: 16, $mediatype: "application/bcod")');
+        // add the bytecode to the procedure definition
+        var base16 = codex.base16Encode(utilities.bytecodeToBytes(bytecode), '            ');
+        bytecode = documentParser.parseExpression("'" + base16 + "\n            '" + '($base: 16, $mediatype: "application/bcod")');
         catalog.setValue('$bytecode', bytecode);
+
     }
     return type;
 };

@@ -1,23 +1,25 @@
 [
     $description: "
-This class encapsulates a /Tower of Hanoi/ game with three pegs (A, B, and C) and a
-parameterized number of disks. To play the game do the following:
- # Initialize a game with 3 disks.
-`$game := [:]($type: <bali:/?name=bali.games.TowerOfHanoi>, $disks: 3)`
- # Play the game.
-`game.play()`
-
-The output should be:
-`
- 1. Move top disk on peg A to peg C
- 2. Move top disk on peg A to peg B
- 3. Move top disk on peg C to peg B
- 4. Move top disk on peg A to peg C
- 5. Move top disk on peg B to peg A
- 6. Move top disk on peg B to peg C
- 7. Move top disk on peg A to peg C
-`
-"($mediatype: "application/bsmd")
+        This class encapsulates a /Tower of Hanoi/ game with three pegs (A, B, and C) and a
+        parameterized number of disks. To play the game do the following:
+         # Initialize a game with 3 disks.
+        `$game := [:]($type: <bali:/?name=bali.games.TowerOfHanoi>, $disks: 3)`
+         # Play the game.
+        `game.play()`
+        
+        The output should be:
+        `
+         1. Move top disk on peg A to peg C
+         2. Move top disk on peg A to peg B
+         3. Move top disk on peg C to peg B
+         4. Move top disk on peg A to peg C
+         5. Move top disk on peg B to peg A
+         6. Move top disk on peg B to peg C
+         7. Move top disk on peg A to peg C
+        `
+    "(
+        $mediatype: "application/bsmd"
+    )
     $parameters: [
         $disks: [
             $description: "The number of disks."
@@ -28,7 +30,10 @@ The output should be:
     $attributes: [
         $pegs: [
             $description: "The three pegs (A, B and C) that are used to hold the disks."
-            $type: $Catalog($Symbol, $Stack($Number(1..infinity)))
+            $type: $Catalog(
+                $Symbol
+                $Stack($Number(1..infinity))
+            )
             $default: 5
         ]
         $steps: [
@@ -39,7 +44,10 @@ The output should be:
     $messages: [
         $play: [
             $description: "This message causes the game to (re)initialize itself and play the game."
-            $result: $Catalog($Number(1..infinity), $Text)
+            $result: $Catalog(
+                $Number(1..infinity)
+                $Text
+            )
         ]
         $moveTower: [
             $description: "This message causes the game to move a tower of disks of a certain height from one peg to another peg using a third peg as a buffer."
@@ -80,57 +88,92 @@ The output should be:
         $play: [
             $source: {
                 $pegs := [
-                    "peg A": []($type: $Stack($Number(1..infinity)))
-                    "peg B": []($type: $Stack($Number(1..infinity)))
-                    "peg C": []($type: $Stack($Number(1..infinity)))
+                    "peg A": [](
+                        $type: $Stack($Number(1..infinity))
+                    )
+                    "peg B": [](
+                        $type: $Stack($Number(1..infinity))
+                    )
+                    "peg C": [](
+                        $type: $Stack($Number(1..infinity))
+                    )
                 ]
                 $steps := []
                 with each $n in [disks..1] do {
                     pegs["peg A"].push(n)
                 }
-                target.moveTower(disks, "peg A", "peg C", "peg B")
+                target.moveTower(
+                    disks
+                    "peg A"
+                    "peg C"
+                    "peg B"
+                )
                 return steps.asCatalog()
             }
             $bytecode: '
-                2801A80328022803A80F2804A803280528062804A80F280728042808B018B01BB001B01BB81CB01B
-                B81C28092803A80F2804A803280528062804A80F280728042808B018B01BB001B01BB81CB01BB81C
-                280A2803A80F2804A803280528062804A80F280728042808B018B01BB001B01BB81CB01BB81C8001
-                2803A80F800260032804B018D001D00280046004D00318576004D00480056001D0012802B00B2804
-                A80F6005B001D8058006004600006007280BA80F6003B0012802B001280AB0012809B001D8068006
-                6002D007E8006006E800
-            '($base: 16, $mediatype: "application/bcod")
+                2801A80328022803A80F2804A803280528062804A80F280728042808B018
+                B01BB001B01BB81CB01BB81C28092803A80F2804A803280528062804A80F
+                280728042808B018B01BB001B01BB81CB01BB81C280A2803A80F2804A803
+                280528062804A80F280728042808B018B01BB001B01BB81CB01BB81C8001
+                2803A80F800260032804B018D001D00280046004D00318576004D0048005
+                6001D0012802B00B2804A80F6005B001D8058006004600006007280BA80F
+                6003B0012802B001280AB0012809B001D80680066002D007E8006006E800
+            '(
+                $base: 16
+                $mediatype: "application/bcod"
+            )
         ]
         $moveTower: [
             $source: {
                 $result := ""
                 if height then {
-                    target.moveTower(height - 1, fromPeg, withPeg, toPeg)
+                    target.moveTower(
+                        height - 1
+                        fromPeg
+                        withPeg
+                        toPeg
+                    )
                     target.moveDisk(fromPeg, toPeg)
-                    target.moveTower(height - 1, withPeg, toPeg, fromPeg)
+                    target.moveTower(
+                        height - 1
+                        withPeg
+                        toPeg
+                        fromPeg
+                    )
                 }
                 return result
             }
             $bytecode: '
-                2801800100006002D001183260032802A80F6002D0022803D002B007B0016004B0016005B0016006
-                B001D803800760032804A80F6004B0016006B001D804800760032802A80F6002D0022803D002B007
-                B0016005B0016006B0016004B001D803800700006001E8006007E800
-            '($base: 16, $mediatype: "application/bcod")
+                2801800100006002D001183260032802A80F6002D0022803D002B007B001
+                6004B0016005B0016006B001D803800760032804A80F6004B0016006B001
+                D804800760032802A80F6002D0022803D002B007B0016005B0016006B001
+                6004B001D803800700006001E8006007E800
+            '(
+                $base: 16
+                $mediatype: "application/bcod"
+            )
         ]
         $moveDisk: [
             $source: {
                 $disk := pegs[fromPeg].pop()
                 pegs[toPeg].push(disk)
-                steps.append("Move disk {disk} from {fromPeg} to {toPeg}.")
+                steps.append(
+                    "Move disk {disk} from {fromPeg} to {toPeg}."
+                )
             }
             $bytecode: '
-                6001D0016002B00BD00280036001D0016004B00B2801A80F6003B001D803800560062801A80F2802
-                B001D80480056005E800
-            '($base: 16, $mediatype: "application/bcod")
+                6001D0016002B00BD00280036001D0016004B00B2801A80F6003B001D803
+                800560062801A80F2802B001D80480056005E800
+            '(
+                $base: 16
+                $mediatype: "application/bcod"
+            )
         ]
     ]
 ]($type: $Class)
 <bali:NTKKQLHTZL24RFZBF6WPHAG3NL96TX9F?version=v1&hash=KSNZY1QX3RTA5KCTFQANM2CDTXYZFC8SWHYL8G9WKGY5Z922AZAFA0HN2Y74QWBTSFR8CNKXV4XA3MAYTYTLYSXNQMBFMF2H568CVSR> '
-    620RF0K202SDFS5QGDYWKM1Y99LJMK9GBPL1GN4XJ7ZSAG8JRLBX5ZKNHD2Q5W7QTG657FKCWDTK00NQ
-    M3XHCTX6JZKX5LWM0L6Z19GZKZ2A32DX3C142S4MDMJPXCL3JKVBV6VCL422115G0LHTSG1N1D9M472W
-    C2HCAPMBB3J4NVXFGL0VMSJFDBL0Z9LYRJKLK00RA8VY2CW66MFRQ81TPVZFH
+    620RF0K202SDFS5QGDYWKM1Y99LJMK9GBPL1GN4XJ7ZSAG8JRLBX5ZKNHD2Q
+    5W7QTG657FKCWDTK00NQM3XHCTX6JZKX5LWM0L6Z19GZKZ2A32DX3C142S4M
+    DMJPXCL3JKVBV6VCL422115G0LHTSG1N1D9M472WC2HCAPMBB3J4NVXFGL0V
+    MSJFDBL0Z9LYRJKLK00RA8VY2CW66MFRQ81TPVZFH
 '
