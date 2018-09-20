@@ -95,7 +95,7 @@ describe('Bali Virtual Machine™', function() {
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
             var task = parser.parseComponent(source);
-            taskContext = importer.fromTree(task);
+            taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {
@@ -206,7 +206,7 @@ describe('Bali Virtual Machine™', function() {
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
             var task = parser.parseComponent(source);
-            taskContext = importer.fromTree(task);
+            taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {
@@ -265,7 +265,7 @@ describe('Bali Virtual Machine™', function() {
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
             var task = parser.parseComponent(source);
-            taskContext = importer.fromTree(task);
+            taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {
@@ -348,7 +348,7 @@ describe('Bali Virtual Machine™', function() {
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
             var task = parser.parseComponent(source);
-            taskContext = importer.fromTree(task);
+            taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {

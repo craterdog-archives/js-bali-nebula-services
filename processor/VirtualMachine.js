@@ -181,7 +181,7 @@ function publishSuspensionEvent(processor) {
  * This function places the current task context on the queue for tasks awaiting messages
  */
 function queueTaskContext(processor) {
-    // generate a parse tree from the task context
+    // convert the task context into its corresponding Bali source document
     var task = exportTask(processor.taskContext);
     var document = task.toSource();
     // queue up the task for a new virtual machine
