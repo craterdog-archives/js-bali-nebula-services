@@ -35,7 +35,7 @@ repository.storeCertificate(citation.tag, citation.version, certificate);
 var TASK_TEMPLATE =
         '[\n' +
         '    $taskTag: #Y29YH82BHG4SPTGWGFRYBL4RQ33GTX59\n' +
-        '    $accountTag: #641ZH7VZKQW47HBJGXRCAHKT859YX25G\n' +
+        '    $accountTag: #GTDHQ9B8ZGS7WCBJJJBFF6KDCCF55R2P\n' +
         '    $accountBalance: 1000\n' +
         '    $processorStatus: $active\n' +
         '    $clockCycles: 0\n' +

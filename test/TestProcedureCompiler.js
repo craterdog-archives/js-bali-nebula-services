@@ -8,7 +8,7 @@
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
 
-var BaliDocument = require('bali-document-notation/BaliDocument');
+var parser = require('bali-document-notation/transformers/DocumentParser');
 var compiler = require('../compiler/ProcedureCompiler');
 var fs = require('fs');
 var mocha = require('mocha');
@@ -31,7 +31,7 @@ describe('Bali Cloud Environment™', function() {
                 var basmFile = testFolder + prefix + '.basm';
                 var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
-                var document = BaliDocument.fromSource(source);
+                var document = parser.parseDocument(source);
                 expect(document).to.exist;  // jshint ignore:line
                 var type = {};
                 var instructions = compiler.compileProcedure(document, type);

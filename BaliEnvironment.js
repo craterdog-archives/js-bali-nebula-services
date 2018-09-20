@@ -14,7 +14,6 @@
  * Bali Cloud Operating System™. For more information about the Bali Cloud
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
-var BaliDocument = require('bali-document-notation/BaliDocument');
 var documentParser = require('bali-document-notation/transformers/DocumentParser');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var procedureParser = require('bali-instruction-set/transformers/ProcedureParser');
