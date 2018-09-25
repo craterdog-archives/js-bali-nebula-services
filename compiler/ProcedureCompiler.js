@@ -13,7 +13,7 @@
  * This library provides functions that compile a Bali Procedure into the
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
-var types = require('bali-document-notation/nodes/Types');
+var types = require('bali-document-notation/Types');
 
 
 // PUBLIC FUNCTIONS
