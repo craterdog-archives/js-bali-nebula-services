@@ -13,6 +13,8 @@ hs_err_pid*
 target/
 dist/
 test/config/repository/documents/
+test/config/repository/drafts/
+test/config/repository/queues/
 
 # Development Repositories
 CVS

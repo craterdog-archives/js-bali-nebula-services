@@ -7,9 +7,12 @@
  * under the terms of The MIT License (MIT), as published by the Open   *
  * Source Initiative. (See http://opensource.org/licenses/MIT)          *
  ************************************************************************/
+var fs = require('fs');
+var mocha = require('mocha');
+var expect = require('chai').expect;
+var BaliDocument = require('bali-document-notation/BaliDocument');
 var TestRepository = require('bali-cloud-api/LocalRepository');
 var BaliAPI = require('bali-cloud-api/BaliAPI');
-var parser = require('bali-document-notation/transformers/DocumentParser');
 var compiler = require('../compiler/ProcedureCompiler');
 var assembler = require('../compiler/ProcedureAssembler');
 var BaliProcedure = require('bali-instruction-set/BaliProcedure');
@@ -18,9 +21,6 @@ var utilities = require('../utilities/BytecodeUtilities');
 var importer = require('bali-primitive-types/transformers/ComponentImporter');
 var List = require('bali-primitive-types/collections/List');
 var VirtualMachine = require('../processor/VirtualMachine');
-var fs = require('fs');
-var mocha = require('mocha');
-var expect = require('chai').expect;
 
 
 /*  uncomment to generate a new notary key and certificate
@@ -94,7 +94,7 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = parser.parseComponent(source);
+            var task = BaliDocument.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 
@@ -205,7 +205,7 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = parser.parseComponent(source);
+            var task = BaliDocument.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 
@@ -264,7 +264,7 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = parser.parseComponent(source);
+            var task = BaliDocument.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 
@@ -297,7 +297,7 @@ describe('Bali Virtual Machine™', function() {
             // LOAD DOCUMENT $document
             processor.step();
             expect(processor.taskContext.componentStack.getSize()).to.equal(1);
-            expect(processor.taskContext.componentStack.getTop().documentContent.toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getTop().getDocumentContent().toSource()).to.equal('"This is a text string."');
 
             // 5.StoreDocument:
             // STORE DOCUMENT $document
@@ -308,7 +308,7 @@ describe('Bali Virtual Machine™', function() {
             // LOAD DOCUMENT $document
             processor.step();
             expect(processor.taskContext.componentStack.getSize()).to.equal(1);
-            expect(processor.taskContext.componentStack.getTop().documentContent.toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getTop().getDocumentContent().toSource()).to.equal('"This is a text string."');
 
             // 7.StoreMessage:
             // STORE MESSAGE $queue
@@ -319,7 +319,7 @@ describe('Bali Virtual Machine™', function() {
             // LOAD MESSAGE $queue
             processor.step();
             expect(processor.taskContext.componentStack.getSize()).to.equal(1);
-            expect(processor.taskContext.componentStack.getTop().documentContent.toSource()).to.equal('"This is a text string."');
+            expect(processor.taskContext.componentStack.getTop().getDocumentContent().toSource()).to.equal('"This is a text string."');
 
             // EOF
             expect(processor.step()).to.equal(false);
@@ -347,7 +347,7 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = parser.parseComponent(source);
+            var task = BaliDocument.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 

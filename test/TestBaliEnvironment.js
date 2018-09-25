@@ -11,7 +11,7 @@
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
-var parser = require('bali-document-notation/transformers/DocumentParser');
+var BaliDocument = require('bali-document-notation/BaliDocument');
 var environment = require('../BaliEnvironment');
 
 
@@ -30,7 +30,7 @@ describe('Bali Cloud Environment™', function() {
                 var baliFile = testFolder + prefix + '.bali';
                 var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
-                var type = parser.parseDocument(source);
+                var type = BaliDocument.fromSource(source);
                 var tree = environment.compileType(type);
                 //var tree = environment.compileType(type, true);  // includes assembly instructions
                 expect(tree).to.exist;  // jshint ignore:line

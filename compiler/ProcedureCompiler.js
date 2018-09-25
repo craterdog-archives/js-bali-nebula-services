@@ -74,11 +74,9 @@ Array.prototype.peek = function() {
  */
 function getSubClauses(statement) {
     var subClauses = [];
-    var count = statement.children.length;
-    for (var i = 0; i < count; i++) {
-        var child = statement.children[i];
+    statement.children.forEach(function(child) {
         if (child.type === types.BLOCK) subClauses.push(child);
-    }
+    });
     return subClauses;
 }
 
@@ -122,9 +120,9 @@ AnalyzingVisitor.prototype.visitBreakClause = function(tree) {
 //     ':' /*empty catalog*/
 AnalyzingVisitor.prototype.visitCatalog = function(tree) {
     var associations = tree.children;
-    for (var i = 0; i < associations.length; i++) {
-        associations[i].accept(this);
-    }
+    associations.forEach(function(association) {
+        association.accept(this);
+    }, this);
 };
 
 
@@ -196,14 +194,9 @@ AnalyzingVisitor.prototype.visitDiscardClause = function(tree) {
 
 // document: NEWLINE* (reference NEWLINE)? content (NEWLINE seal)* NEWLINE* EOF
 AnalyzingVisitor.prototype.visitDocument = function(tree) {
-    if (tree.previousReference) {
-        tree.previousReference.accept(this);
-    }
-    tree.documentContent.accept(this);
-    for (var i = 0; i < tree.notarySeals.length; i++) {
-        tree.notarySeals[i].certificateReference.accept(this);
-        tree.notarySeals[i].digitalSignature.accept(this);
-    }
+    tree.children.forEach(function(child) {
+        child.accept(this);
+    }, this);
 };
 
 
@@ -306,9 +299,9 @@ AnalyzingVisitor.prototype.visitInversionExpression = function(tree) {
 //     /*empty list*/
 AnalyzingVisitor.prototype.visitList = function(tree) {
     var expressions = tree.children;
-    for (var i = 0; i < expressions.length; i++) {
-        expressions[i].accept(this);
-    }
+    expressions.forEach(function(expression) {
+        expression.accept(this);
+    }, this);
 };
 
 
@@ -356,9 +349,9 @@ AnalyzingVisitor.prototype.visitPrecedenceExpression = function(tree) {
 //     /*empty procedure*/
 AnalyzingVisitor.prototype.visitProcedure = function(tree) {
     var statements = tree.children;
-    for (var i = 0; i < statements.length; i++) {
-        statements[i].accept(this);
-    }
+    statements.forEach(function(statement) {
+        statement.accept(this);
+    }, this);
 };
 
 
@@ -392,6 +385,13 @@ AnalyzingVisitor.prototype.visitReturnClause = function(tree) {
 
 // saveClause: 'save' expression 'to' expression
 AnalyzingVisitor.prototype.visitSaveClause = function(tree) {
+    tree.children[0].accept(this);
+    tree.children[1].accept(this);
+};
+
+
+// seal: reference binary
+AnalyzingVisitor.prototype.visitSeal = function(tree) {
     tree.children[0].accept(this);
     tree.children[1].accept(this);
 };
@@ -618,17 +618,18 @@ CompilingVisitor.prototype.visitCatalog = function(tree) {
     var size = tree.children.length;
     this.builder.insertPushInstruction('ELEMENT', size);
 
-    // the VM replaces the size value on the component stack with a new catalog containing the associations
+    // the VM replaces the size value on the component stack with a new catalog of that size
     this.builder.insertInvokeInstruction('$catalog', 1);
-    for (var i = 0; i < tree.children.length; i++) {
-        var association = tree.children[i];
 
+    // the VM adds each association to the catalog
+    var associations = tree.children;
+    associations.forEach(function(association) {
         // the VM places the association's key and value onto the top of the component stack
         association.accept(this);
 
         // the VM sets the key in the catalog to the value
         this.builder.insertInvokeInstruction('$setValue', 3);
-    }
+    }, this);
     // the catalog remains on the component stack
 };
 
@@ -894,7 +895,11 @@ CompilingVisitor.prototype.visitDiscardClause = function(tree) {
 
 // document: NEWLINE* (reference NEWLINE)? content (NEWLINE seal)* NEWLINE* EOF
 CompilingVisitor.prototype.visitDocument = function(tree) {
-    tree.documentContent.accept(this);
+    if (tree.children.length > 1 && tree.children[1].type !== types.SEAL) {
+        tree.children[1].accept(this);  // there is a previous version reference so skip it
+    } else {
+        tree.children[0].accept(this);  // the content is the first child
+    }
 };
 
 
@@ -1232,13 +1237,15 @@ CompilingVisitor.prototype.visitList = function(tree) {
     var size = tree.children.length;
     this.builder.insertPushInstruction('ELEMENT', size);
 
-    // the VM replaces the size value on the component stack with a new list containing the items
+    // the VM replaces the size value on the component stack with a new list of that size
     this.builder.insertInvokeInstruction('$list', 1);
-    for (var i = 0; i < tree.children.length; i++) {
-        var item = tree.children[i];
-        item.accept(this);
+
+    // the VM adds each expression to the list
+    var expressions = tree.children;
+    expressions.forEach(function(expression) {
+        expression.accept(this);
         this.builder.insertInvokeInstruction('$addItem', 2);
-    }
+    }, this);
 
     // the list remains on the component stack
 };
@@ -1385,10 +1392,10 @@ CompilingVisitor.prototype.visitProcedure = function(tree) {
 
     // the VM executes each statement
     var statements = tree.children;
-    for (var i = 0; i < statements.length; i++) {
-        statements[i].accept(this);
+    statements.forEach(function(statement) {
+        statement.accept(this);
         this.builder.incrementStatementCount();
-    }
+    }, this);
 
     // throw away the current compiler procedure context in the instruction builder
     this.builder.popProcedureContext();
@@ -1627,9 +1634,9 @@ CompilingVisitor.prototype.visitStatement = function(tree) {
 
             // the VM tries each handler for the exception
             var handlers = statement.handleClauses;
-            for (var i = 0; i < handlers.length; i++) {
-                handlers[i].accept(this);
-            }
+            handlers.forEach(function(handler) {
+                handler.accept(this);
+            }, this);
 
             // none of the exception handlers matched so the VM must try the parent handlers
             this.builder.insertLabel(statement.failureLabel);

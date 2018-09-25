@@ -39,7 +39,8 @@ exports.compileType = function(type, verbose) {
     while (iterator.hasNext()) {
         // retrieve the source code for the procedure
         var component = iterator.getNext();
-        var source = component.getValue('$source');
+        var key = documentParser.parseElement('$source');
+        var source = component.getValue(key);
         var block = source.children[0];
         var procedure = block.children[0];
 
@@ -50,19 +51,21 @@ exports.compileType = function(type, verbose) {
 
         // remove any existing assembly instructions and bytecode from the procedure definition
         var catalog = component.children[1];
-        catalog.deleteKey('$instructions');
-        catalog.deleteKey('$bytecode');
 
         // add the assembly instructions to the procedure definition if desired
+        key = documentParser.parseElement('$instructions');
+        catalog.deleteKey(key);
         if (verbose) {
             instructions = documentParser.parseExpression('"\n' + instructions.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
-            catalog.setValue('$instructions', instructions);
+            catalog.setValue(key, instructions);
         }
     
         // add the bytecode to the procedure definition
+        key = documentParser.parseElement('$bytecode');
+        catalog.deleteKey(key);
         var base16 = codex.base16Encode(utilities.bytecodeToBytes(bytecode), '            ');
         bytecode = documentParser.parseExpression("'" + base16 + "\n            '" + '($base: 16, $mediatype: "application/bcod")');
-        catalog.setValue('$bytecode', bytecode);
+        catalog.setValue(key, bytecode);
 
     }
     return type;
