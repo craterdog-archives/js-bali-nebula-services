@@ -24,7 +24,9 @@ module.exports = function(grunt) {
     clean: {
       build: [
         'dist/*',
-        'test/config/repository/documents/*'
+        'test/config/repository/documents/*',
+        'test/config/repository/drafts/*',
+        'test/config/repository/queues/*'
       ],
       options: {
         force: false
