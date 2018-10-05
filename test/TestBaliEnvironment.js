@@ -31,8 +31,7 @@ describe('Bali Cloud Environment™', function() {
                 var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
                 var type = BaliDocument.fromSource(source);
-                var tree = environment.compileType(type);
-                //var tree = environment.compileType(type, true);  // includes assembly instructions
+                var tree = environment.compileType(environment, type);
                 expect(tree).to.exist;  // jshint ignore:line
                 var formatted = tree.toSource();
                 //fs.writeFileSync(baliFile, formatted, 'utf8');

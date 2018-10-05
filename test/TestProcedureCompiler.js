@@ -31,10 +31,15 @@ describe('Bali Cloud Environment™', function() {
                 var basmFile = testFolder + prefix + '.basm';
                 var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
-                var document = BaliDocument.fromSource(source);
-                expect(document).to.exist;  // jshint ignore:line
-                var type = {};
-                var instructions = compiler.compileProcedure(document, type);
+                var procedure = BaliDocument.fromSource(source);
+                expect(procedure).to.exist;  // jshint ignore:line
+                var context = {
+                    ancestry: [],
+                    dependencies: [],
+                    literals: [],
+                    procedures: ['$fibonacci', '$find']
+                };
+                var instructions = compiler.compileProcedure(undefined, procedure, context);
                 expect(instructions).to.exist;  // jshint ignore:line
                 //fs.writeFileSync(basmFile, instructions, 'utf8');
                 var expected = fs.readFileSync(basmFile, 'utf8');

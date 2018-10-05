@@ -15,12 +15,11 @@ LOAD VARIABLE $variable
 STORE VARIABLE $_result_
 
 3.EvaluateStatement:
-PUSH ELEMENT `<bali:/bali/types/SomeType>`
 PUSH ELEMENT `1`
 INVOKE $list WITH PARAMETER
 PUSH ELEMENT `13`
 INVOKE $addItem WITH 2 PARAMETERS
-EXECUTE $isPrime WITH PARAMETERS
+INVOKE $isPrime WITH PARAMETER
 STORE VARIABLE $_result_
 
 4.EvaluateStatement:

@@ -5,7 +5,7 @@ if a < b then {
     throw exception
 } else if a > 0 then {
     false
-    $c := fibonacci(b)
+    $c := factorial(b)
     return c
 } else {
     $d := b.find($tag)

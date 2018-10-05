@@ -16,6 +16,8 @@
  */
 var documentParser = require('bali-document-notation/transformers/DocumentParser');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
+var Catalog = require('bali-primitive-types/collections/Catalog');
+var List = require('bali-primitive-types/collections/List');
 var procedureParser = require('bali-instruction-set/transformers/ProcedureParser');
 var compiler = require('./compiler/ProcedureCompiler');
 var assembler = require('./compiler/ProcedureAssembler');
@@ -28,47 +30,75 @@ var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
 /**
  * This function compiles a Bali Document Notation™ type.
  * 
- * @param {BaliDocument} type The Bali document containing the type definition to be compiled.
- * @param {Boolean} verbose Whether or not the assembly instructions should be included.
- * @returns {TreeNode} The full parse tree for the Bali type.
+ * @param {Object} environment The client API to the cloud environment.
+ * @param {Reference} citation The citation referencing the type definition to be compiled.
+ * @returns {Reference} A citation referencing the compiled type.
  */
-exports.compileType = function(type, verbose) {
-    compiler.analyzeType(type);
-    var procedures = type.getValue('$procedures');
-    var iterator = procedures.iterator();
+exports.compileType = function(environment, citation) {
+    // create the compilation context
+    var context = {
+        ancestry: [citation],
+        dependencies: []
+    };
+
+    // retrieve the type definition
+    var type = environment.retrieveDocument(citation);
+
+    // traverse the ancestry for the type
+    var parent = type.getValue('$parent');
+    while (parent) {
+        context.ancestry.push(parent);
+        var superType = environment.retrieveDocument(parent);
+        parent = superType.getValue('$parent');
+    }
+
+    // retrieve any dependencies
+    var dependencies = type.getValue('$dependencies');
+    var iterator = dependencies.iterator();
     while (iterator.hasNext()) {
+        var dependency = iterator.getNext();
+        context.dependencies.push(dependency);
+    }
+
+    // extract the literals and procedure names from the type definition parse tree
+    compiler.analyzeType(type, context);
+
+    // construct the context for the compiled type
+    var typeContext = Catalog.fromScratch();
+    typeContext.setValue('$ancestry', List.fromCollection(context.ancestry));
+    typeContext.setValue('$dependencies', List.fromCollection(context.dependencies));
+    typeContext.setValue('$literals', List.fromCollection(context.literals));
+    typeContext.setValue('$names', List.fromCollection(context.names));
+    var procedures = Catalog.fromScratch();
+    typeContext.setValue('$procedures', procedures);
+
+    // compile each procedure defined in the type definition
+    iterator = type.getValue('$procedures').iterator();
+    while (iterator.hasNext()) {
+        var procedureContext = Catalog.fromScratch();
+
         // retrieve the source code for the procedure
-        var component = iterator.getNext();
-        var key = documentParser.parseElement('$source');
-        var source = component.getValue(key);
-        var block = source.children[0];
-        var procedure = block.children[0];
+        var association = iterator.getNext();
+        var procedureName = association.children[0].toString();
+        var code = association.getValue('$code');
+        var procedure = code.children[0];
 
         // compile and assemble the source code
-        var instructions = compiler.compileProcedure(procedure, type);
+        var instructions = compiler.compileProcedure(environment, procedure, context);
+        procedureContext.setValue('$intructions', instructions);
         procedure = procedureParser.parseProcedure(instructions);
         var bytecode = assembler.assembleProcedure(procedure);
-
-        // remove any existing assembly instructions and bytecode from the procedure definition
-        var catalog = component.children[1];
-
-        // add the assembly instructions to the procedure definition if desired
-        key = documentParser.parseElement('$instructions');
-        catalog.deleteKey(key);
-        if (verbose) {
-            instructions = documentParser.parseExpression('"\n' + instructions.replace(/^/gm, '                ') + '\n"($mediatype: "application/basm")');
-            catalog.setValue(key, instructions);
-        }
-    
-        // add the bytecode to the procedure definition
-        key = documentParser.parseElement('$bytecode');
-        catalog.deleteKey(key);
         var base16 = codex.base16Encode(utilities.bytecodeToBytes(bytecode), '            ');
         bytecode = documentParser.parseExpression("'" + base16 + "\n            '" + '($base: 16, $mediatype: "application/bcod")');
-        catalog.setValue(key, bytecode);
+        procedureContext.setValue('$bytecode', bytecode);
 
+        procedures.setValue(procedureName, procedureContext);
     }
-    return type;
+
+    // checkin the new compiled type
+    //TODO: add implementation
+
+    return citation;
 };
 
 

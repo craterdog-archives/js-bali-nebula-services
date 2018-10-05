@@ -34,9 +34,12 @@ describe('Bali Cloud Environment™', function() {
                 expect(source).to.exist;  // jshint ignore:line
                 var procedure = parser.parseProcedure(source);
                 expect(procedure).to.exist;  // jshint ignore:line
-                var symbols = assembler.extractSymbols(procedure);
-                expect(symbols).to.exist;  // jshint ignore:line
-                var bytecode = assembler.assembleProcedure(procedure);
+                var context = {
+                    literals: [],
+                    procedures: []
+                };
+                assembler.analyzeProcedure(procedure, context);
+                var bytecode = assembler.assembleProcedure(procedure, context);
                 expect(bytecode).to.exist;  // jshint ignore:line
                 var formatted = utilities.bytecodeToString(bytecode);
                 expect(formatted).to.exist;  // jshint ignore:line

@@ -40,12 +40,11 @@ PUSH ELEMENT `false`
 STORE VARIABLE $_result_
 
 1.2.2.EvaluateStatement:
-PUSH ELEMENT `<bali:/bali/types/SomeType>`
 PUSH ELEMENT `1`
 INVOKE $list WITH PARAMETER
 LOAD VARIABLE $b
 INVOKE $addItem WITH 2 PARAMETERS
-EXECUTE $fibonacci WITH PARAMETERS
+INVOKE $factorial WITH PARAMETER
 STORE VARIABLE $c
 
 1.2.3.ReturnStatement:

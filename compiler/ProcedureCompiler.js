@@ -14,23 +14,25 @@
  * corresponding assembly instructions for the Bali Virtual Machine™.
  */
 var types = require('bali-document-notation/Types');
+var intrinsics = require('../intrinsics/IntrinsicFunctions');
 
 
 // PUBLIC FUNCTIONS
 
 /**
  * This function traverses a parse tree structure for a Bali type
- * analyzing it for correctness and filling in missing type information.
- * The function returns the context information that will be needed
- * by the compiler.
+ * analyzing it for correctness.
  * 
- * @param {TreeNode} tree The parse tree structure for the Bali type.
- * @returns {Object} An object containing the type context information.
+ * @param {Tree} type The parse tree structure for the Bali type.
+ * @param {Object} context The compilation context.
  */
-exports.analyzeType = function(tree) {
-    var visitor = new AnalyzingVisitor();
-    tree.accept(visitor);
-};
+function analyzeType(type, context) {
+    context.literals = [];
+    context.names = [];
+    var visitor = new AnalyzingVisitor(context);
+    type.accept(visitor);
+}
+exports.analyzeType = analyzeType;
 
 
 /**
@@ -38,15 +40,18 @@ exports.analyzeType = function(tree) {
  * generating the corresponding assembly instructions for the Bali Virtual
  * Machine™.
  * 
- * @param {TreeNode} procedure The parse tree structure for the procedure.
- * @param {Object} type The type defining the procedure.
+ * @param {Object} environment The client API to the cloud environment.
+ * @param {Tree} procedure The parse tree structure for the procedure.
+ * @param {Object} context The type context.
  * @returns {String} The assembly code instructions.
  */
-exports.compileProcedure = function(procedure, type) {
-    var visitor = new CompilingVisitor(type);
+function compileProcedure(environment, procedure, context) {
+    var visitor = new CompilingVisitor(environment, context);
     procedure.accept(visitor);
-    return visitor.getResult();
-};
+    var instructions = visitor.getResult();
+    return instructions;
+}
+exports.compileProcedure = compileProcedure;
 
 
 // PRIVATE FUNCTIONS
@@ -83,7 +88,8 @@ function getSubClauses(statement) {
 
 // PRIVATE CLASSES
 
-function AnalyzingVisitor() {
+function AnalyzingVisitor(context) {
+    this.context = context;
     return this;
 }
 AnalyzingVisitor.prototype.constructor = AnalyzingVisitor;
@@ -215,6 +221,10 @@ AnalyzingVisitor.prototype.visitDocument = function(tree) {
 //     text |
 //     version
 AnalyzingVisitor.prototype.visitElement = function(terminal) {
+    var literal = terminal.value;
+    if (!this.context.literals.includes(literal)) {
+        this.context.literals.push(literal);
+    }
 };
 
 
@@ -222,9 +232,11 @@ AnalyzingVisitor.prototype.visitElement = function(terminal) {
 AnalyzingVisitor.prototype.visitEvaluateClause = function(tree) {
     var count = tree.children.length;
     if (count > 1) {
-        tree.children[0].accept(this);
+        var recipient = tree.children[0];
+        recipient.accept(this);
     }
-    tree.children[count - 1].accept(this);
+    var expression = tree.children[count - 1];
+    expression.accept(this);
 };
 
 
@@ -248,7 +260,10 @@ AnalyzingVisitor.prototype.visitFunction = function(terminal) {
 
 // functionExpression: function parameters
 AnalyzingVisitor.prototype.visitFunctionExpression = function(tree) {
-    tree.children[0].accept(this);
+    var name = tree.children[0].value;
+    if (!this.context.names.includes(name)) {
+        this.context.names.push(name);
+    }
     tree.children[1].accept(this);
 };
 
@@ -326,7 +341,10 @@ AnalyzingVisitor.prototype.visitMessage = function(terminal) {
 // messageExpression: expression '.' message parameters
 AnalyzingVisitor.prototype.visitMessageExpression = function(tree) {
     tree.children[0].accept(this);
-    tree.children[1].accept(this);
+    var name = tree.children[1].value;
+    if (!this.context.names.includes(name)) {
+        this.context.names.push(name);
+    }
     tree.children[2].accept(this);
 };
 
@@ -489,8 +507,9 @@ AnalyzingVisitor.prototype.visitWithClause = function(tree) {
  * to construct the corresponding Bali Virtual Machine™ instructions for the
  * syntax tree is it traversing.
  */
-function CompilingVisitor(type) {
-    this.type = type;
+function CompilingVisitor(environment, context) {
+    this.environment = environment;
+    this.context = context;
     this.builder = new InstructionBuilder();
     this.temporaryVariableCount = 1;
     return this;
@@ -1014,27 +1033,39 @@ CompilingVisitor.prototype.visitFactorialExpression = function(tree) {
 CompilingVisitor.prototype.visitFunctionExpression = function(tree) {
     var funxtion = tree.children[0];
     var parameters = tree.children[1];
+    var numberOfParameters = parameters.children[0].children.length;
 
     // the VM places a reference to the type that defines the function on top of the component stack
-    var name = '$' + funxtion.value;
-    //TODO: fix this
-    //var typeReference = this.type.procedures[name];
-    var typeReference = '<bali:/bali/types/SomeType>';
-    this.builder.insertPushInstruction('ELEMENT', typeReference);  // use PUSH instead of LOAD since VM may cache types
+    var procedureName = '$' + funxtion.value;
+    var typeReference = this.getTypeReference(procedureName);
+    if (typeReference) {
+        this.builder.insertPushInstruction('ELEMENT', typeReference);
 
-    // if there are parameters then compile accordingly
-    if (parameters.children[0].children.length > 0) {
-        // the VM places the function parameters on top of the component stack
-        parameters.accept(this);
+        // if there are parameters then compile accordingly
+        if (numberOfParameters > 0) {
+            // the VM places the function parameters on top of the component stack
+            parameters.accept(this);
 
-        // the VM executes the <name>(<parameters>) method
-        this.builder.insertExecuteInstruction(name, 'WITH PARAMETERS');
+            // the VM executes the <procedureName>(<parameters>) method
+            this.builder.insertExecuteInstruction(procedureName, 'WITH PARAMETERS');
+        } else {
+            // the VM executes the <procedureName>() method
+            this.builder.insertExecuteInstruction(procedureName);
+        }
+
     } else {
-        // the VM executes the <name>() method
-        this.builder.insertExecuteInstruction(name);
+        var index = intrinsics.intrinsicNames.includes(procedureName);
+        if (index < 0) {
+            throw new Error('COMPILER: An invalid function name was specified: ' + procedureName);
+        }
+        // the VM places each parameter on top of the component stack
+        parameters.children.forEach(function(parameter) {
+            parameter.accept(this);
+        }, this);
+        this.builder.insertInvokeInstruction(procedureName, numberOfParameters);
     }
 
-    // the result of the executed method remains on top of the component stack
+    // the result of the executed function remains on top of the component stack
 };
 
 
@@ -1899,6 +1930,28 @@ CompilingVisitor.prototype.setRecipient = function(recipient) {
         // the VM sets the value of the subcomponent at the given index of the parent component
         // to the value that is on top of the component stack
         this.builder.insertInvokeInstruction('$setValue', 3);
+    }
+};
+
+
+CompilingVisitor.prototype.getTypeReference = function(procedureName) {
+    var index = this.context.ancestry.findIndex(function(reference) {
+        var type = this.environment.retrieveDocument(reference);
+        var procedures = type.getValue('$procedures');
+        var procedure = procedures.getValue(procedureName);
+        return !!procedure;
+    }, this);
+    if (index > -1) {
+        return this.context.ancestry[index];
+    }
+    index = this.context.dependencies.findIndex(function(reference) {
+        var type = this.environment.retrieveDocument(reference);
+        var procedures = type.getValue('$procedures');
+        var procedure = procedures.getValue(procedureName);
+        return !!procedure;
+    }, this);
+    if (index > -1) {
+        return this.context.dependencies[index];
     }
 };
 

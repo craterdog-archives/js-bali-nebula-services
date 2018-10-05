@@ -1,0 +1,17 @@
+
+1.Execute:
+PUSH ELEMENT <bali:...>
+EXECUTE $method
+
+2.ExecuteWithParameters:
+PUSH ELEMENT `3`
+INVOKE $factorial WITH PARAMETER
+
+3.ExecuteWithTarget:
+PUSH ELEMENT `5`
+INVOKE $sum WITH 2 PARAMETERS
+
+4.ExecuteWithTargetAndParameters:
+PUSH ELEMENT `13`
+INVOKE $default WITH 3 PARAMETERS
+

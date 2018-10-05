@@ -14,9 +14,8 @@
  */
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var parser = require('bali-document-notation/transformers/DocumentParser');
-var BaliNotary = require('bali-digital-notary/BaliNotary');
-var BaliCitation = require('bali-digital-notary/BaliCitation');
-var BaliAPI = require('bali-cloud-api/BaliAPI');
+var notary = require('bali-digital-notary/BaliNotary');
+var api = require('bali-cloud-api/BaliAPI');
 var CloudRepository = require('bali-cloud-api/CloudRepository');
 var TestRepository = require('bali-cloud-api/LocalRepository');
 var Complex = require('bali-primitive-types/elements/Complex').Complex;
@@ -35,9 +34,9 @@ var DONE = '$done';
 
 
 exports.fromTask = function(task, testDirectory) {
-    var notary = BaliNotary.notary(testDirectory);
+    var notaryKey = notary.notaryKey(testDirectory);
     var repository = testDirectory ? TestRepository.repository(testDirectory) : CloudRepository.repository();
-    var environment = BaliAPI.environment(notary, repository);
+    var environment = api.environment(notaryKey, repository);
     var taskContext = importTask(task);
     var procedureContext = importProcedure(taskContext.procedureStack.popItem());
 
@@ -381,15 +380,14 @@ var instructionHandlers = [
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
         var index = operand;
         // lookup the reference associated with the index
-        var reference = processor.procedureContext.variableValues.getItem(index);
+        var reference = processor.procedureContext.variableValues.getItem(index).toString();
         // TODO: jump to exception handler if reference isn't a reference
         // retrieve the referenced document from the cloud repository
-        var citation = BaliCitation.fromReference(reference.toString());
         var document;
-        if (citation.digest === 'none') {
-            document = processor.environment.retrieveDraft(citation.tag, citation.version);
+        if (reference.includes('$digest:') && !reference.includes('$digest:none')) {
+            document = processor.environment.retrieveDocument(reference);
         } else {
-            document = processor.environment.retrieveDocument(citation);
+            document = processor.environment.retrieveDraft(reference);
         }
         // push the document on top of the component stack
         processor.taskContext.componentStack.pushItem(document);
@@ -399,11 +397,11 @@ var instructionHandlers = [
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
         var index = operand;
-        // lookup the referenced queue associated with the index
+        // lookup the queue tag associated with the index
         var queue = processor.procedureContext.variableValues.getItem(index);
-        // TODO: jump to exception handler if queue isn't a reference
-        // attempt to receive a message from the referenced queue in the cloud
-        var message = processor.environment.receiveMessage(queue.toString());
+        // TODO: jump to exception handler if queue isn't a tag
+        // attempt to receive a message from the queue in the cloud
+        var message = processor.environment.receiveMessage(queue);
         if (message) {
             processor.taskContext.componentStack.pushItem(message);
         } else {
@@ -434,8 +432,7 @@ var instructionHandlers = [
         var reference = processor.procedureContext.variableValues.getItem(index);
         // TODO: jump to exception handler if reference isn't a reference
         // write the referenced draft to the cloud repository
-        var citation = BaliCitation.fromReference(reference);
-        processor.environment.saveDraft(citation.tag, citation.version, draft);
+        processor.environment.saveDraft(reference, draft);
     },
 
     // STORE DOCUMENT symbol
@@ -448,9 +445,8 @@ var instructionHandlers = [
         var reference = processor.procedureContext.variableValues.getItem(index);
         // TODO: jump to exception handler if reference isn't a reference
         // write the referenced document to the cloud repository
-        var citation = BaliCitation.fromReference(reference);
-        citation = processor.environment.commitDocument(citation.tag, citation.version, document);
-        processor.procedureContext.variableValues.setItem(index, citation.toReference());
+        var citation = processor.environment.commitDocument(reference, document);
+        processor.procedureContext.variableValues.setItem(index, citation);
     },
 
     // STORE MESSAGE symbol
@@ -459,10 +455,10 @@ var instructionHandlers = [
         var index = operand;
         // pop the message that is on top of the component stack off the stack
         var message = processor.taskContext.componentStack.popItem();
-        // lookup the referenced queue associated with the index operand
+        // lookup the queue tag associated with the index operand
         var queue = processor.procedureContext.variableValues.getItem(index);
-        // TODO: jump to exception handler if queue isn't a reference
-        // send the message to the referenced queue in the cloud
+        // TODO: jump to exception handler if queue isn't a tag
+        // send the message to the queue in the cloud
         processor.environment.queueMessage(queue, message);
     },
 
@@ -520,21 +516,31 @@ var instructionHandlers = [
     // EXECUTE symbol
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
-        var procedureContext = {};
-        procedureContext.targetComponent = Template.NONE;
-        procedureContext.typeReference = processor.taskContext.componentStack.popItem();
-        var type = processor.environment.retrieveDocument(procedureContext.typeReference);
-        var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
-        procedureContext.procedureName = association.key;
+        var index = operand - 1;  // JS zero based indexing
+        var targetComponent = Template.NONE;
+        var typeReference = processor.taskContext.componentStack.popItem();
+        var type = processor.environment.retrieveDocument(typeReference);
+        var context = parser.analyzeType(type);
+        var key = context.names[index];
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getValue(key);
+        var procedureName = association.key;
         var procedure = association.value;
-        procedureContext.literalValues = type.literalValues;
-        procedureContext.parameterValues = List.fromScratch();
-        procedureContext.variableValues = processor.extractVariables(procedure);
-        var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
-        procedureContext.nextAddress = 1;
+        var parameterValues = List.fromScratch();
+        var variableValues = List.fromScratch();
+        var bytes = procedure.getValue('$bytecode').value;
+        var bytecodeInstructions = bytecode.bytesToBytecode(bytes);
+        var procedureContext = {
+            targetComponent: targetComponent,
+            typeReference: typeReference,
+            procedureName: procedureName,
+            parameterValues: parameterValues,
+            literalValues: context.literals,
+            variableValues: variableValues,
+            bytecodeInstructions: bytecodeInstructions,
+            currentInstruction: 0,
+            nextAddress: 1
+        };
         processor.procedureContext = procedureContext;
         processor.taskContext.procedureStack.pushItem(exportProcedure(procedureContext));
     },
@@ -542,69 +548,97 @@ var instructionHandlers = [
     // EXECUTE symbol WITH PARAMETERS
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
-        var procedureContext = {};
-        procedureContext.targetComponent = Template.NONE;
-        procedureContext.typeReference = processor.taskContext.componentStack.popItem();
-        var type = processor.environment.retrieveDocument(procedureContext.typeReference);
-        var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
-        procedureContext.procedureName = association.key;
+        var index = operand - 1;  // JS zero based indexing
+        var targetComponent = Template.NONE;
+        var typeReference = processor.taskContext.componentStack.popItem();
+        var type = processor.environment.retrieveDocument(typeReference);
+        var context = parser.analyzeType(type);
+        var key = context.names[index];
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getValue(key);
+        var procedureName = association.key;
         var procedure = association.value;
-        procedureContext.literalValues = type.literalValues;
         var parameterValues = processor.taskContext.componentStack.popItem();
-        procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
-        procedureContext.variableValues = this.extractVariables(procedure);
-        var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
-        procedureContext.nextAddress = 1;
+        var variableValues = List.fromScratch();
+        var bytes = procedure.getValue('$bytecode').value;
+        var bytecodeInstructions = bytecode.bytesToBytecode(bytes);
+        var procedureContext = {
+            targetComponent: targetComponent,
+            typeReference: typeReference,
+            procedureName: procedureName,
+            parameterValues: parameterValues,
+            literalValues: context.literals,
+            variableValues: variableValues,
+            bytecodeInstructions: bytecodeInstructions,
+            currentInstruction: 0,
+            nextAddress: 1
+        };
         processor.procedureContext = procedureContext;
-        processor.taskContext.procedureStack.pushItem(procedureContext);
+        processor.taskContext.procedureStack.pushItem(exportProcedure(procedureContext));
     },
 
     // EXECUTE symbol ON TARGET
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
-        var procedureContext = {};
-        procedureContext.targetComponent = processor.taskContext.componentStack.popItem();
-        procedureContext.typeReference = this.extractType(procedureContext.targetComponent);
-        var type = processor.environment.retrieveDocument(procedureContext.typeReference);
-        var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
-        procedureContext.procedureName = association.key;
+        var index = operand - 1;  // JS zero based indexing
+        var targetComponent = processor.taskContext.componentStack.popItem();
+        var typeReference = processor.taskContext.componentStack.popItem();
+        var type = processor.environment.retrieveDocument(typeReference);
+        var context = parser.analyzeType(type);
+        var key = context.names[index];
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getValue(key);
+        var procedureName = association.key;
         var procedure = association.value;
-        procedureContext.literalValues = type.literalValues;
-        procedureContext.parameterValues = List.fromScratch();
-        procedureContext.variableValues = this.extractVariables(procedure);
-        var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
-        procedureContext.nextAddress = 1;
+        var parameterValues = List.fromScratch();
+        var variableValues = List.fromScratch();
+        var bytes = procedure.getValue('$bytecode').value;
+        var bytecodeInstructions = bytecode.bytesToBytecode(bytes);
+        var procedureContext = {
+            targetComponent: targetComponent,
+            typeReference: typeReference,
+            procedureName: procedureName,
+            parameterValues: parameterValues,
+            literalValues: context.literals,
+            variableValues: variableValues,
+            bytecodeInstructions: bytecodeInstructions,
+            currentInstruction: 0,
+            nextAddress: 1
+        };
         processor.procedureContext = procedureContext;
-        processor.taskContext.procedureStack.pushItem(procedureContext);
+        processor.taskContext.procedureStack.pushItem(exportProcedure(procedureContext));
     },
 
     // EXECUTE symbol ON TARGET WITH PARAMETERS
     function(processor, operand) {
         if (!operand) throw new Error('PROCESSOR: The current instruction has a zero index operand.');
-        var index = operand;
-        var procedureContext = {};
-        procedureContext.targetComponent = processor.taskContext.componentStack.popItem();
-        procedureContext.typeReference = this.extractType(procedureContext.targetComponent);
-        var type = processor.environment.retrieveDocument(procedureContext.typeReference);
-        var procedureDefinitions = type.getValue('$procedureDefinitions');
-        var association = procedureDefinitions.getItem(index);
-        procedureContext.procedureName = association.key;
+        var index = operand - 1;  // JS zero based indexing
+        var targetComponent = processor.taskContext.componentStack.popItem();
+        var typeReference = processor.taskContext.componentStack.popItem();
+        var type = processor.environment.retrieveDocument(typeReference);
+        var context = parser.analyzeType(type);
+        var key = context.names[index];
+        var procedures = type.getValue('$procedures');
+        var association = procedures.getValue(key);
+        var procedureName = association.key;
         var procedure = association.value;
-        procedureContext.literalValues = type.literalValues;
         var parameterValues = processor.taskContext.componentStack.popItem();
-        procedureContext.parameterValues = this.extractParameters(procedure, parameterValues);
-        procedureContext.variableValues = this.extractVariables(procedure);
-        var bytes = procedure.getValue('$bytecodeInstructions').value;
-        procedureContext.bytecodeInstructions = bytecode.bytesToBytecode(bytes);
-        procedureContext.nextAddress = 1;
+        var variableValues = List.fromScratch();
+        var bytes = procedure.getValue('$bytecode').value;
+        var bytecodeInstructions = bytecode.bytesToBytecode(bytes);
+        var procedureContext = {
+            targetComponent: targetComponent,
+            typeReference: typeReference,
+            procedureName: procedureName,
+            parameterValues: parameterValues,
+            literalValues: context.literals,
+            variableValues: variableValues,
+            bytecodeInstructions: bytecodeInstructions,
+            currentInstruction: 0,
+            nextAddress: 1
+        };
         processor.procedureContext = procedureContext;
-        processor.taskContext.procedureStack.pushItem(procedureContext);
+        processor.taskContext.procedureStack.pushItem(exportProcedure(procedureContext));
     },
 
     // HANDLE EXCEPTION

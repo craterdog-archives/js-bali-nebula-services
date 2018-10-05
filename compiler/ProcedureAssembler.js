@@ -24,13 +24,12 @@ var intrinsics = require('../intrinsics/IntrinsicFunctions');
  * This function traverses a parse tree structure containing assembly
  * instructions and extracts the symbol table.
  * 
- * @param {BaliProcedure} procedure The parse tree for the procedure to be analyzed.
- * @returns {Array} A list of the literal values as Bali text elements.
+ * @param {Procedure} procedure The parse tree for the procedure to be analyzed.
+ * @param {Object} context The type context.
  */
-exports.extractSymbols = function(procedure) {
-    var visitor = new AnalyzingVisitor();
+exports.analyzeProcedure = function(procedure, context) {
+    var visitor = new AnalyzingVisitor(context);
     procedure.accept(visitor);
-    return visitor.symbols;
 };
 
 
@@ -38,14 +37,14 @@ exports.extractSymbols = function(procedure) {
  * This function traverses a parse tree structure containing assembly
  * instructions and generates the corresponding bytecode instructions.
  * 
- * @param {BaliProcedure} procedure The parse tree for the procedure to be assembled.
+ * @param {Procedure} procedure The parse tree for the procedure to be assembled.
+ * @param {Object} context The type context.
  * @returns {Component} A binary component containing the bytecode instructions.
  */
-exports.assembleProcedure = function(procedure) {
-    var visitor = new AnalyzingVisitor();
+exports.assembleProcedure = function(procedure, context) {
+    var visitor = new AnalyzingVisitor(context);
     procedure.accept(visitor);
-    var symbols = visitor.symbols;
-    visitor = new AssemblingVisitor(symbols);
+    visitor = new AssemblingVisitor(context);
     procedure.accept(visitor);
     return visitor.bytecode;
 };
@@ -53,14 +52,11 @@ exports.assembleProcedure = function(procedure) {
 
 // PRIVATE CLASSES
 
-function AnalyzingVisitor() {
-    this.symbols = {
-        addresses: {},
-        parameters: [],
-        literals: [],
-        variables: [],
-        procedures: []
-    };
+function AnalyzingVisitor(context) {
+    context.parameters = [];
+    context.variables = [];
+    context.addresses = {};
+    this.context = context;
     this.address = 1;  // bali VM unit based addressing
     return this;
 }
@@ -81,7 +77,10 @@ AnalyzingVisitor.prototype.visitProcedure = function(procedure) {
 AnalyzingVisitor.prototype.visitStep = function(step) {
     var label = step.label;
     if (label) {
-        this.symbols.addresses[label] = this.address;
+        if (this.context.addresses[label]) {
+            throw new Error('ASSEMBLER: The following label already exists: ' + label);
+        }
+        this.context.addresses[label] = this.address;
     }
     step.instruction.accept(this);
 };
@@ -107,8 +106,8 @@ AnalyzingVisitor.prototype.visitPushInstruction = function(instruction) {
         case types.ELEMENT:
         case types.CODE:
             var value = instruction.operand.slice(1, -1);  // remove the '`' delimeters
-            if (!this.symbols.literals.includes(value)) {
-                this.symbols.literals.push(value);
+            if (!this.context.literals.includes(value)) {
+                this.context.literals.push(value);
             }
             break;
     }
@@ -143,8 +142,8 @@ AnalyzingVisitor.prototype.visitLoadInstruction = function(instruction) {
             type = 'variables';
             break;
     }
-    if (!this.symbols[type].includes(symbol)) {
-        this.symbols[type].push(symbol);
+    if (!this.context[type].includes(symbol)) {
+        this.context[type].push(symbol);
     }
     this.address++;
 };
@@ -157,8 +156,8 @@ AnalyzingVisitor.prototype.visitLoadInstruction = function(instruction) {
 //     'STORE' 'MESSAGE' SYMBOL
 AnalyzingVisitor.prototype.visitStoreInstruction = function(instruction) {
     var symbol = instruction.operand;
-    if (!this.symbols.variables.includes(symbol)) {
-        this.symbols.variables.push(symbol);
+    if (!this.context.variables.includes(symbol)) {
+        this.context.variables.push(symbol);
     }
     this.address++;
 };
@@ -180,8 +179,8 @@ AnalyzingVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 AnalyzingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var symbol = instruction.operand;
-    if (!this.symbols.procedures.includes(symbol)) {
-        this.symbols.procedures.push(symbol);
+    if (!this.context.procedures.includes(symbol)) {
+        this.context.procedures.push(symbol);
     }
     this.address++;
 };
@@ -195,8 +194,8 @@ AnalyzingVisitor.prototype.visitHandleInstruction = function(instruction) {
 };
 
 
-function AssemblingVisitor(symbols) {
-    this.symbols = symbols;
+function AssemblingVisitor(context) {
+    this.context = context;
     this.bytecode = [];
     return this;
 }
@@ -231,7 +230,7 @@ AssemblingVisitor.prototype.visitJumpInstruction = function(instruction) {
     var label = instruction.operand;
     var address = 0;
     if (label && label !== 0) {
-        address = this.symbols.addresses[label];
+        address = this.context.addresses[label];
     }
     var word = utilities.encodeInstruction(types.JUMP, modifier, address);
     this.bytecode.push(word);
@@ -247,12 +246,12 @@ AssemblingVisitor.prototype.visitPushInstruction = function(instruction) {
     var value = instruction.operand;
     switch(modifier) {
         case types.HANDLER:
-            value = this.symbols.addresses[value];
+            value = this.context.addresses[value];
             break;
         case types.ELEMENT:
         case types.CODE:
             value = value.slice(1, -1);  // remove the '`' delimeters
-            value = this.symbols.literals.indexOf(value) + 1;  // unit based indexing
+            value = this.context.literals.indexOf(value) + 1;  // unit based indexing
             break;
     }
     var word = utilities.encodeInstruction(types.PUSH, modifier, value);
@@ -289,7 +288,7 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
             type = 'variables';
             break;
     }
-    var index = this.symbols[type].indexOf(symbol) + 1;  // unit based indexing
+    var index = this.context[type].indexOf(symbol) + 1;  // unit based indexing
     var word = utilities.encodeInstruction(types.LOAD, modifier, index);
     this.bytecode.push(word);
 };
@@ -303,7 +302,7 @@ AssemblingVisitor.prototype.visitLoadInstruction = function(instruction) {
 AssemblingVisitor.prototype.visitStoreInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
-    var index = this.symbols.variables.indexOf(symbol) + 1;  // unit based indexing
+    var index = this.context.variables.indexOf(symbol) + 1;  // unit based indexing
     var word = utilities.encodeInstruction(types.STORE, modifier, index);
     this.bytecode.push(word);
 };
@@ -330,7 +329,7 @@ AssemblingVisitor.prototype.visitInvokeInstruction = function(instruction) {
 AssemblingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
-    var index = this.symbols.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
+    var index = this.context.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
     var word = utilities.encodeInstruction(types.EXECUTE, modifier, index);
     this.bytecode.push(word);
 };

@@ -12,7 +12,6 @@ var mocha = require('mocha');
 var expect = require('chai').expect;
 var BaliDocument = require('bali-document-notation/BaliDocument');
 var TestRepository = require('bali-cloud-api/LocalRepository');
-var BaliAPI = require('bali-cloud-api/BaliAPI');
 var compiler = require('../compiler/ProcedureCompiler');
 var assembler = require('../compiler/ProcedureAssembler');
 var BaliProcedure = require('bali-instruction-set/BaliProcedure');
@@ -21,16 +20,46 @@ var utilities = require('../utilities/BytecodeUtilities');
 var importer = require('bali-primitive-types/transformers/ComponentImporter');
 var List = require('bali-primitive-types/collections/List');
 var VirtualMachine = require('../processor/VirtualMachine');
+var environment = require('../BaliEnvironment');
 
 
 /*  uncomment to generate a new notary key and certificate
 var testDirectory = 'test/config/';
-var notary = require('bali-digital-notary/BaliNotary').notary(testDirectory);
-var certificate = notary.generateKeys();
-var citation = notary.citation();
+var notaryKey = require('bali-digital-notary/BaliNotary').notaryKey(testDirectory);
+var certificate = notaryKey.generateKeys();
+var citation = notaryKey.certificateCitation();
 var repository = TestRepository.repository(testDirectory);
-repository.storeCertificate(citation.tag, citation.version, certificate);
-*/
+repository.storeCertificate(certificate);
+/*                                                         */
+
+var TYPE_REFERENCE = "<bali:[$protocol:v1,$tag:#WAKWFXPMN7FCG8CF95N7L2P4JHJXH4SD,$version:v1,$digest:none]>";
+
+var TYPE_SOURCE = 
+        '[\n' +
+        '    $procedures: [\n' +
+        '        $functionWithException: [\n' +
+        '            $source: {\n' +
+        '                throw [$type: $test]\n' +
+        '            }\n' +
+        '        ]\n' +
+        '        $functionWithParameters: [\n' +
+        '            $source: {\n' +
+        '                return param1 + param2\n' +
+        '            }\n' +
+        '        ]\n' +
+        '        $message: [\n' +
+        '            $source: {\n' +
+        '                return "It worked."\n' +
+        '            }\n' +
+        '        ]\n' +
+        '        $messageWithException: [\n' +
+        '            $source: {\n' +
+        '                throw [$parameter: param]\n' +
+        '            }\n' +
+        '        ]\n' +
+        '    ]\n' +
+        ']($type: Class)';
+
 
 var TASK_TEMPLATE =
         '[\n' +
@@ -65,14 +94,6 @@ var TASK_TEMPLATE =
         ']($type: TaskContext)';
 
 
-function extractLiterals(procedure) {
-    var visitor = new AnalyzingVisitor();
-    procedure.accept(visitor);
-    var literals = List.fromCollection(visitor.symbols.literals);
-    return literals;
-}
-
-
 describe('Bali Virtual Machine™', function() {
     var testDirectory = 'test/config/';
     var taskContext;
@@ -84,11 +105,14 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = assembler.extractSymbols(procedure);
-            expect(symbols).to.exist;  // jshint ignore:line
-            var literals = List.fromCollection(symbols.literals);
+            var context = {
+                literals: [],
+                procedures: []
+            };
+            assembler.analyzeProcedure(procedure, context);
+            var literals = List.fromCollection(context.literals);
             expect(literals).to.exist;  // jshint ignore:line
-            var bytecode = assembler.assembleProcedure(procedure);
+            var bytecode = assembler.assembleProcedure(procedure, context);
             var bytes = utilities.bytecodeToBytes(bytecode);
             var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
@@ -195,11 +219,14 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = assembler.extractSymbols(procedure);
-            expect(symbols).to.exist;  // jshint ignore:line
-            var literals = List.fromCollection(symbols.literals);
+            var context = {
+                literals: [],
+                procedures: []
+            };
+            assembler.analyzeProcedure(procedure, context);
+            var literals = List.fromCollection(context.literals);
             expect(literals).to.exist;  // jshint ignore:line
-            var bytecode = assembler.assembleProcedure(procedure);
+            var bytecode = assembler.assembleProcedure(procedure, context);
             var bytes = utilities.bytecodeToBytes(bytecode);
             var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
@@ -254,11 +281,14 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = assembler.extractSymbols(procedure);
-            expect(symbols).to.exist;  // jshint ignore:line
-            var literals = List.fromCollection(symbols.literals);
+            var context = {
+                literals: [],
+                procedures: []
+            };
+            assembler.analyzeProcedure(procedure, context);
+            var literals = List.fromCollection(context.literals);
             expect(literals).to.exist;  // jshint ignore:line
-            var bytecode = assembler.assembleProcedure(procedure);
+            var bytecode = assembler.assembleProcedure(procedure, context);
             var bytes = utilities.bytecodeToBytes(bytecode);
             var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
@@ -337,11 +367,14 @@ describe('Bali Virtual Machine™', function() {
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
             var procedure = BaliProcedure.fromSource(source);
-            var symbols = assembler.extractSymbols(procedure);
-            expect(symbols).to.exist;  // jshint ignore:line
-            var literals = List.fromCollection(symbols.literals);
+            var context = {
+                literals: [],
+                procedures: []
+            };
+            assembler.analyzeProcedure(procedure, context);
+            var literals = List.fromCollection(context.literals);
             expect(literals).to.exist;  // jshint ignore:line
-            var bytecode = assembler.assembleProcedure(procedure);
+            var bytecode = assembler.assembleProcedure(procedure, context);
             var bytes = utilities.bytecodeToBytes(bytecode);
             var base16 = codex.base16Encode(bytes, '            ');
             source = TASK_TEMPLATE;
