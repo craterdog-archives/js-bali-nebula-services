@@ -14,10 +14,6 @@
  */
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var parser = require('bali-document-notation/transformers/DocumentParser');
-var notary = require('bali-digital-notary/BaliNotary');
-var api = require('bali-cloud-api/BaliAPI');
-var CloudRepository = require('bali-cloud-api/CloudRepository');
-var TestRepository = require('bali-cloud-api/LocalRepository');
 var Complex = require('bali-primitive-types/elements/Complex').Complex;
 var Probability = require('bali-primitive-types/elements/Probability').Probability;
 var Template = require('bali-primitive-types/elements/Template').Template;
@@ -33,16 +29,13 @@ var WAITING = '$waiting';
 var DONE = '$done';
 
 
-exports.fromTask = function(task, testDirectory) {
-    var notaryKey = notary.notaryKey(testDirectory);
-    var repository = testDirectory ? TestRepository.repository(testDirectory) : CloudRepository.repository();
-    var environment = api.environment(notaryKey, repository);
+exports.fromTask = function(cloud, task) {
     var taskContext = importTask(task);
     var procedureContext = importProcedure(taskContext.procedureStack.popItem());
 
     return {
 
-        environment: environment,
+        cloud: cloud,
         taskContext: taskContext,
         procedureContext: procedureContext,
 
@@ -158,7 +151,7 @@ function publishCompletionEvent(processor) {
         '    $clockCycles: ' + processor.taskContext.clockCycles + '\n' +
         '    $result: ' + processor.taskContext.result.toSource('    ') + '\n' +
         ']';
-    processor.environment.publishEvent(event);
+    processor.cloud.publishEvent(event);
 }
 
 
@@ -172,7 +165,7 @@ function publishSuspensionEvent(processor) {
         '    $taskTag: ' + task.taskTag + '\n' +
         '    $taskContext: ' + task.toSource('    ') + '\n' +
         ']';
-    processor.environment.publishEvent(event);
+    processor.cloud.publishEvent(event);
 }
 
 
@@ -185,7 +178,7 @@ function queueTaskContext(processor) {
     var document = task.toSource();
     // queue up the task for a new virtual machine
     var WAIT_QUEUE = '#3F8TVTX4SVG5Z12F3RMYZCTWHV2VPX4K';
-    processor.environment.queueMessage(WAIT_QUEUE, document);
+    processor.cloud.queueMessage(WAIT_QUEUE, document);
 }
 
 
@@ -385,9 +378,9 @@ var instructionHandlers = [
         // retrieve the referenced document from the cloud repository
         var document;
         if (reference.includes('$digest:') && !reference.includes('$digest:none')) {
-            document = processor.environment.retrieveDocument(reference);
+            document = processor.cloud.retrieveDocument(reference);
         } else {
-            document = processor.environment.retrieveDraft(reference);
+            document = processor.cloud.retrieveDraft(reference);
         }
         // push the document on top of the component stack
         processor.taskContext.componentStack.pushItem(document);
@@ -401,7 +394,7 @@ var instructionHandlers = [
         var queue = processor.procedureContext.variableValues.getItem(index);
         // TODO: jump to exception handler if queue isn't a tag
         // attempt to receive a message from the queue in the cloud
-        var message = processor.environment.receiveMessage(queue);
+        var message = processor.cloud.receiveMessage(queue);
         if (message) {
             processor.taskContext.componentStack.pushItem(message);
         } else {
@@ -432,7 +425,7 @@ var instructionHandlers = [
         var reference = processor.procedureContext.variableValues.getItem(index);
         // TODO: jump to exception handler if reference isn't a reference
         // write the referenced draft to the cloud repository
-        processor.environment.saveDraft(reference, draft);
+        processor.cloud.saveDraft(reference, draft);
     },
 
     // STORE DOCUMENT symbol
@@ -445,7 +438,7 @@ var instructionHandlers = [
         var reference = processor.procedureContext.variableValues.getItem(index);
         // TODO: jump to exception handler if reference isn't a reference
         // write the referenced document to the cloud repository
-        var citation = processor.environment.commitDocument(reference, document);
+        var citation = processor.cloud.commitDocument(reference, document);
         processor.procedureContext.variableValues.setItem(index, citation);
     },
 
@@ -459,7 +452,7 @@ var instructionHandlers = [
         var queue = processor.procedureContext.variableValues.getItem(index);
         // TODO: jump to exception handler if queue isn't a tag
         // send the message to the queue in the cloud
-        processor.environment.queueMessage(queue, message);
+        processor.cloud.queueMessage(queue, message);
     },
 
     // INVOKE symbol
@@ -519,7 +512,7 @@ var instructionHandlers = [
         var index = operand - 1;  // JS zero based indexing
         var targetComponent = Template.NONE;
         var typeReference = processor.taskContext.componentStack.popItem();
-        var type = processor.environment.retrieveDocument(typeReference);
+        var type = processor.cloud.retrieveDocument(typeReference);
         var context = parser.analyzeType(type);
         var key = context.names[index];
         var procedures = type.getValue('$procedures');
@@ -551,7 +544,7 @@ var instructionHandlers = [
         var index = operand - 1;  // JS zero based indexing
         var targetComponent = Template.NONE;
         var typeReference = processor.taskContext.componentStack.popItem();
-        var type = processor.environment.retrieveDocument(typeReference);
+        var type = processor.cloud.retrieveDocument(typeReference);
         var context = parser.analyzeType(type);
         var key = context.names[index];
         var procedures = type.getValue('$procedures');
@@ -583,7 +576,7 @@ var instructionHandlers = [
         var index = operand - 1;  // JS zero based indexing
         var targetComponent = processor.taskContext.componentStack.popItem();
         var typeReference = processor.taskContext.componentStack.popItem();
-        var type = processor.environment.retrieveDocument(typeReference);
+        var type = processor.cloud.retrieveDocument(typeReference);
         var context = parser.analyzeType(type);
         var key = context.names[index];
         var procedures = type.getValue('$procedures');
@@ -615,7 +608,7 @@ var instructionHandlers = [
         var index = operand - 1;  // JS zero based indexing
         var targetComponent = processor.taskContext.componentStack.popItem();
         var typeReference = processor.taskContext.componentStack.popItem();
-        var type = processor.environment.retrieveDocument(typeReference);
+        var type = processor.cloud.retrieveDocument(typeReference);
         var context = parser.analyzeType(type);
         var key = context.names[index];
         var procedures = type.getValue('$procedures');

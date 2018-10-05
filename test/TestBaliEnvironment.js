@@ -11,9 +11,15 @@
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
-var BaliDocument = require('bali-document-notation/BaliDocument');
+var documents = require('bali-document-notation/BaliDocument');
+var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var environment = require('../BaliEnvironment');
 
+var testDirectory = 'test/config/';
+var notaryKey = require('bali-digital-notary/BaliNotary').notaryKey(testDirectory);
+var repository = require('bali-cloud-api/LocalRepository').repository(testDirectory);
+var api = require('bali-cloud-api/BaliAPI');
+var cloud = api.cloud(notaryKey, repository);
 
 describe('Bali Cloud Environment™', function() {
 
@@ -30,12 +36,13 @@ describe('Bali Cloud Environment™', function() {
                 var baliFile = testFolder + prefix + '.bali';
                 var source = fs.readFileSync(baliFile, 'utf8');
                 expect(source).to.exist;  // jshint ignore:line
-                var type = BaliDocument.fromSource(source);
-                var tree = environment.compileType(environment, type);
+                var type = documents.fromSource(source);
+                var tag = codex.randomTag();
+                var version = 'v1';
+                var reference = api.getReference(tag, version);
+                var typeCitation = cloud.commitDocument(reference, type);
+                var tree = environment.compileType(cloud, typeCitation);
                 expect(tree).to.exist;  // jshint ignore:line
-                var formatted = tree.toSource();
-                //fs.writeFileSync(baliFile, formatted, 'utf8');
-                expect(formatted).to.equal(source);
             }
         });
 

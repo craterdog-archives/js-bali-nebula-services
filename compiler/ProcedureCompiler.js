@@ -40,13 +40,13 @@ exports.analyzeType = analyzeType;
  * generating the corresponding assembly instructions for the Bali Virtual
  * Machine™.
  * 
- * @param {Object} environment The client API to the cloud environment.
+ * @param {Object} cloud The client API to the cloud environment.
  * @param {Tree} procedure The parse tree structure for the procedure.
  * @param {Object} context The type context.
  * @returns {String} The assembly code instructions.
  */
-function compileProcedure(environment, procedure, context) {
-    var visitor = new CompilingVisitor(environment, context);
+function compileProcedure(cloud, procedure, context) {
+    var visitor = new CompilingVisitor(cloud, context);
     procedure.accept(visitor);
     var instructions = visitor.getResult();
     return instructions;
@@ -507,8 +507,8 @@ AnalyzingVisitor.prototype.visitWithClause = function(tree) {
  * to construct the corresponding Bali Virtual Machine™ instructions for the
  * syntax tree is it traversing.
  */
-function CompilingVisitor(environment, context) {
-    this.environment = environment;
+function CompilingVisitor(cloud, context) {
+    this.cloud = cloud;
     this.context = context;
     this.builder = new InstructionBuilder();
     this.temporaryVariableCount = 1;
@@ -1936,7 +1936,7 @@ CompilingVisitor.prototype.setRecipient = function(recipient) {
 
 CompilingVisitor.prototype.getTypeReference = function(procedureName) {
     var index = this.context.ancestry.findIndex(function(reference) {
-        var type = this.environment.retrieveDocument(reference);
+        var type = this.cloud.retrieveDocument(reference);
         var procedures = type.getValue('$procedures');
         var procedure = procedures.getValue(procedureName);
         return !!procedure;
@@ -1945,7 +1945,7 @@ CompilingVisitor.prototype.getTypeReference = function(procedureName) {
         return this.context.ancestry[index];
     }
     index = this.context.dependencies.findIndex(function(reference) {
-        var type = this.environment.retrieveDocument(reference);
+        var type = this.cloud.retrieveDocument(reference);
         var procedures = type.getValue('$procedures');
         var procedure = procedures.getValue(procedureName);
         return !!procedure;

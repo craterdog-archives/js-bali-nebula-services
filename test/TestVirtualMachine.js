@@ -10,8 +10,7 @@
 var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
-var BaliDocument = require('bali-document-notation/BaliDocument');
-var TestRepository = require('bali-cloud-api/LocalRepository');
+var documents = require('bali-document-notation/BaliDocument');
 var compiler = require('../compiler/ProcedureCompiler');
 var assembler = require('../compiler/ProcedureAssembler');
 var BaliProcedure = require('bali-instruction-set/BaliProcedure');
@@ -20,15 +19,14 @@ var utilities = require('../utilities/BytecodeUtilities');
 var importer = require('bali-primitive-types/transformers/ComponentImporter');
 var List = require('bali-primitive-types/collections/List');
 var VirtualMachine = require('../processor/VirtualMachine');
-var environment = require('../BaliEnvironment');
 
-
-/*  uncomment to generate a new notary key and certificate
 var testDirectory = 'test/config/';
 var notaryKey = require('bali-digital-notary/BaliNotary').notaryKey(testDirectory);
+var repository = require('bali-cloud-api/LocalRepository').repository(testDirectory);
+var cloud = require('bali-cloud-api/BaliAPI').cloud(notaryKey, repository);
+/*  uncomment to generate a new notary key and certificate
 var certificate = notaryKey.generateKeys();
 var citation = notaryKey.certificateCitation();
-var repository = TestRepository.repository(testDirectory);
 repository.storeCertificate(certificate);
 /*                                                         */
 
@@ -95,7 +93,6 @@ var TASK_TEMPLATE =
 
 
 describe('Bali Virtual Machine™', function() {
-    var testDirectory = 'test/config/';
     var taskContext;
 
     describe('Test the JUMP instruction.', function() {
@@ -118,12 +115,12 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = BaliDocument.fromSource(source);
+            var task = documents.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {
-            var processor = VirtualMachine.fromTask(taskContext, testDirectory);
+            var processor = VirtualMachine.fromTask(cloud, taskContext);
             expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.IfStatement:
@@ -232,12 +229,12 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = BaliDocument.fromSource(source);
+            var task = documents.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {
-            var processor = VirtualMachine.fromTask(taskContext, testDirectory);
+            var processor = VirtualMachine.fromTask(cloud, taskContext);
             expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.PushHandler:
@@ -294,12 +291,12 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = BaliDocument.fromSource(source);
+            var task = documents.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {
-            var processor = VirtualMachine.fromTask(taskContext, testDirectory);
+            var processor = VirtualMachine.fromTask(cloud, taskContext);
             expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.LoadParameter:
@@ -380,12 +377,12 @@ describe('Bali Virtual Machine™', function() {
             source = TASK_TEMPLATE;
             source = source.replace(/%literalValues/, literals.toSource('            '));
             source = source.replace(/%bytecodeInstructions/, "'" + base16 + "'");
-            var task = BaliDocument.fromSource(source);
+            var task = documents.fromSource(source);
             taskContext = importer.importComponent(task);
         });
 
         it('should execute the test instructions', function() {
-            var processor = VirtualMachine.fromTask(taskContext, testDirectory);
+            var processor = VirtualMachine.fromTask(cloud, taskContext);
             expect(processor.procedureContext.nextAddress).to.equal(1);
 
             // 1.Invoke:

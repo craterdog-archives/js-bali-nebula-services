@@ -16,6 +16,7 @@
  */
 var documentParser = require('bali-document-notation/transformers/DocumentParser');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
+var importer = require('bali-primitive-types/transformers/ComponentImporter');
 var Catalog = require('bali-primitive-types/collections/Catalog');
 var List = require('bali-primitive-types/collections/List');
 var procedureParser = require('bali-instruction-set/transformers/ProcedureParser');
@@ -30,11 +31,11 @@ var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
 /**
  * This function compiles a Bali Document Notation™ type.
  * 
- * @param {Object} environment The client API to the cloud environment.
+ * @param {Object} cloud The client API to the cloud environment.
  * @param {Reference} citation The citation referencing the type definition to be compiled.
  * @returns {Reference} A citation referencing the compiled type.
  */
-exports.compileType = function(environment, citation) {
+exports.compileType = function(cloud, citation) {
     // create the compilation context
     var context = {
         ancestry: [citation],
@@ -42,22 +43,25 @@ exports.compileType = function(environment, citation) {
     };
 
     // retrieve the type definition
-    var type = environment.retrieveDocument(citation);
+    var type = cloud.retrieveDocument(citation);
 
     // traverse the ancestry for the type
     var parent = type.getValue('$parent');
     while (parent) {
         context.ancestry.push(parent);
-        var superType = environment.retrieveDocument(parent);
+        var superType = cloud.retrieveDocument(parent);
         parent = superType.getValue('$parent');
     }
 
     // retrieve any dependencies
+    var iterator;
     var dependencies = type.getValue('$dependencies');
-    var iterator = dependencies.iterator();
-    while (iterator.hasNext()) {
-        var dependency = iterator.getNext();
-        context.dependencies.push(dependency);
+    if (dependencies) {
+        iterator = dependencies.iterator();
+        while (iterator.hasNext()) {
+            var dependency = iterator.getNext();
+            context.dependencies.push(dependency);
+        }
     }
 
     // extract the literals and procedure names from the type definition parse tree
@@ -80,16 +84,19 @@ exports.compileType = function(environment, citation) {
         // retrieve the source code for the procedure
         var association = iterator.getNext();
         var procedureName = association.children[0].toString();
-        var code = association.getValue('$code');
-        var procedure = code.children[0];
+        var code = association.children[1].getValue('$code');
+        var procedure = code.children[0].children[0];
 
         // compile and assemble the source code
-        var instructions = compiler.compileProcedure(environment, procedure, context);
-        procedureContext.setValue('$intructions', instructions);
+        var instructions = compiler.compileProcedure(cloud, procedure, context);
         procedure = procedureParser.parseProcedure(instructions);
-        var bytecode = assembler.assembleProcedure(procedure);
+        instructions = documentParser.parseExpression('"\n' + instructions.replace(/^/gm, '    ') + '\n"($mediatype: "application/basm")');
+        instructions = importer.importComponent(instructions);
+        procedureContext.setValue('$intructions', instructions);
+        var bytecode = assembler.assembleProcedure(procedure, context);
         var base16 = codex.base16Encode(utilities.bytecodeToBytes(bytecode), '            ');
         bytecode = documentParser.parseExpression("'" + base16 + "\n            '" + '($base: 16, $mediatype: "application/bcod")');
+        bytecode = importer.importComponent(bytecode);
         procedureContext.setValue('$bytecode', bytecode);
 
         procedures.setValue(procedureName, procedureContext);
@@ -98,7 +105,8 @@ exports.compileType = function(environment, citation) {
     // checkin the new compiled type
     //TODO: add implementation
 
-    return citation;
+    //return citation;
+    return typeContext;
 };
 
 

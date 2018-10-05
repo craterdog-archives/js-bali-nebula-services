@@ -36,7 +36,7 @@ describe('Bali Cloud Environment™', function() {
                 expect(procedure).to.exist;  // jshint ignore:line
                 var context = {
                     literals: [],
-                    procedures: []
+                    names: []
                 };
                 assembler.analyzeProcedure(procedure, context);
                 var bytecode = assembler.assembleProcedure(procedure, context);

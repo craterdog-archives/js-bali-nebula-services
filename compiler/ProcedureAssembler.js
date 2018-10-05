@@ -179,8 +179,8 @@ AnalyzingVisitor.prototype.visitInvokeInstruction = function(instruction) {
 //     'EXECUTE' SYMBOL 'ON' 'TARGET' 'WITH' 'PARAMETERS'
 AnalyzingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var symbol = instruction.operand;
-    if (!this.context.procedures.includes(symbol)) {
-        this.context.procedures.push(symbol);
+    if (!this.context.names.includes(symbol)) {
+        this.context.names.push(symbol);
     }
     this.address++;
 };
@@ -329,7 +329,7 @@ AssemblingVisitor.prototype.visitInvokeInstruction = function(instruction) {
 AssemblingVisitor.prototype.visitExecuteInstruction = function(instruction) {
     var modifier = instruction.modifier;
     var symbol = instruction.operand;
-    var index = this.context.procedures.indexOf(symbol) + 1;  // bali VM unit based indexing
+    var index = this.context.names.indexOf(symbol) + 1;  // bali VM unit based indexing
     var word = utilities.encodeInstruction(types.EXECUTE, modifier, index);
     this.bytecode.push(word);
 };
