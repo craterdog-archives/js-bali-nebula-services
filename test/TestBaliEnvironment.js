@@ -41,8 +41,10 @@ describe('Bali Cloud Environment™', function() {
                 var version = 'v1';
                 var reference = api.getReference(tag, version);
                 var typeCitation = cloud.commitDocument(reference, type);
-                var tree = environment.compileType(cloud, typeCitation);
-                expect(tree).to.exist;  // jshint ignore:line
+                var expected = environment.compileType(cloud, typeCitation);
+                expect(expected).to.exist;  // jshint ignore:line
+                var compiled = cloud.retrieveType(typeCitation);
+                expect(compiled.toSource()).to.equal(expected.toSource());
             }
         });
 

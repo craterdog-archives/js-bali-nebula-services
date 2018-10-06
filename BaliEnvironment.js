@@ -14,6 +14,7 @@
  * Bali Cloud Operating System™. For more information about the Bali Cloud
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
+var documents = require('bali-document-notation/BaliDocument');
 var documentParser = require('bali-document-notation/transformers/DocumentParser');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var importer = require('bali-primitive-types/transformers/ComponentImporter');
@@ -68,6 +69,7 @@ exports.compileType = function(cloud, citation) {
     compiler.analyzeType(type, context);
 
     // construct the context for the compiled type
+    //TODO: this section should not require Bali primitive collection types but use a parse tree
     var typeContext = Catalog.fromScratch();
     typeContext.setValue('$ancestry', List.fromCollection(context.ancestry));
     typeContext.setValue('$dependencies', List.fromCollection(context.dependencies));
@@ -103,10 +105,11 @@ exports.compileType = function(cloud, citation) {
     }
 
     // checkin the new compiled type
-    //TODO: add implementation
+    var source = typeContext.toSource();
+    var document = documents.fromSource(source);
+    cloud.commitType(citation, document);
 
-    //return citation;
-    return typeContext;
+    return document;
 };
 
 
