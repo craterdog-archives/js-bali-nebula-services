@@ -13,13 +13,13 @@ var mocha = require('mocha');
 var expect = require('chai').expect;
 var documents = require('bali-document-notation/BaliDocument');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
-var environment = require('../BaliEnvironment');
 
 var testDirectory = 'test/config/';
 var notaryKey = require('bali-digital-notary/BaliNotary').notaryKey(testDirectory);
 var repository = require('bali-cloud-api/LocalRepository').repository(testDirectory);
 var api = require('bali-cloud-api/BaliAPI');
 var cloud = api.cloud(notaryKey, repository);
+var environment = require('../BaliEnvironment').environment(cloud);
 
 describe('Bali Cloud Environment™', function() {
 
@@ -41,7 +41,7 @@ describe('Bali Cloud Environment™', function() {
                 var version = 'v1';
                 var reference = api.getReference(tag, version);
                 var typeCitation = cloud.commitDocument(reference, type);
-                var expected = environment.compileType(cloud, typeCitation);
+                var expected = environment.compileType(typeCitation);
                 expect(expected).to.exist;  // jshint ignore:line
                 var compiled = cloud.retrieveType(typeCitation);
                 expect(compiled.toSource()).to.equal(expected.toSource());
