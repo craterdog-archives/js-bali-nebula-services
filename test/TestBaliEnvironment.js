@@ -17,8 +17,7 @@ var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var testDirectory = 'test/config/';
 var notaryKey = require('bali-digital-notary/BaliNotary').notaryKey(testDirectory);
 var repository = require('bali-cloud-api/LocalRepository').repository(testDirectory);
-var api = require('bali-cloud-api/BaliAPI');
-var cloud = api.cloud(notaryKey, repository);
+var cloud = require('bali-cloud-api/BaliAPI').cloud(notaryKey, repository);
 var environment = require('../BaliEnvironment').environment(cloud);
 
 describe('Bali Cloud Environment™', function() {
@@ -39,7 +38,7 @@ describe('Bali Cloud Environment™', function() {
                 var type = documents.fromSource(source);
                 var tag = codex.randomTag();
                 var version = 'v1';
-                var reference = api.getReference(tag, version);
+                var reference = cloud.getReference(tag, version);
                 var typeCitation = cloud.commitDocument(reference, type);
                 var expected = environment.compileType(typeCitation);
                 expect(expected).to.exist;  // jshint ignore:line
