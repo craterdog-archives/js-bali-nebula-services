@@ -11,20 +11,9 @@
 
 /*
  * This library provides access to functions that are needed within the
- * Bali Cloud Operating System™. For more information about the Bali Cloud
+ * Bali Cloud Environment™. For more information about the Bali Cloud Environment
  * see <https://github.com/craterdog-bali/bali-reference-guide/wiki>.
  */
-var documents = require('bali-document-notation/BaliDocument');
-var documentParser = require('bali-document-notation/transformers/DocumentParser');
-var codex = require('bali-document-notation/utilities/EncodingUtilities');
-var importer = require('bali-primitive-types/transformers/ComponentImporter');
-var Catalog = require('bali-primitive-types/collections/Catalog');
-var List = require('bali-primitive-types/collections/List');
-var procedureParser = require('bali-instruction-set/transformers/ProcedureParser');
-var compiler = require('./compiler/ProcedureCompiler');
-var assembler = require('./compiler/ProcedureAssembler');
-var utilities = require('./utilities/BytecodeUtilities');
-var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
 
 
 // PUBLIC FUNCTIONS
@@ -37,115 +26,6 @@ var VirtualMachine = require('./processor/VirtualMachine').VirtualMachine;
 exports.environment = function(cloud) {
 
     return {
-        /**
-         * This function compiles a Bali Document Notation™ type.
-         * 
-         * @param {Reference} citation The citation referencing the type definition to be compiled.
-         * @returns {Document} The compiled type.
-         */
-        compileType: function(citation) {
-            // create the compilation context
-            var context = {
-                ancestry: [citation],
-                dependencies: []
-            };
-        
-            // retrieve the type definition
-            var type = cloud.retrieveDocument(citation);
-        
-            // traverse the ancestry for the type
-            var parent = type.getValue('$parent');
-            while (parent) {
-                context.ancestry.push(parent);
-                var superType = cloud.retrieveDocument(parent);
-                parent = superType.getValue('$parent');
-            }
-        
-            // retrieve any dependencies
-            var iterator;
-            var dependencies = type.getValue('$dependencies');
-            if (dependencies) {
-                iterator = dependencies.iterator();
-                while (iterator.hasNext()) {
-                    var dependency = iterator.getNext();
-                    context.dependencies.push(dependency);
-                }
-            }
-        
-            // extract the literals and procedure names from the type definition parse tree
-            compiler.analyzeType(type, context);
-        
-            // construct the context for the compiled type
-            //TODO: this section should not require Bali primitive collection types but use a parse tree
-            var typeContext = Catalog.fromScratch();
-            typeContext.setValue('$ancestry', List.fromCollection(context.ancestry));
-            typeContext.setValue('$dependencies', List.fromCollection(context.dependencies));
-            typeContext.setValue('$literals', List.fromCollection(context.literals));
-            typeContext.setValue('$names', List.fromCollection(context.names));
-            var procedures = Catalog.fromScratch();
-            typeContext.setValue('$procedures', procedures);
-        
-            // compile each procedure defined in the type definition
-            iterator = type.getValue('$procedures').iterator();
-            while (iterator.hasNext()) {
-                var procedureContext = Catalog.fromScratch();
-        
-                // retrieve the source code for the procedure
-                var association = iterator.getNext();
-                var procedureName = association.children[0].toString();
-                var code = association.children[1].getValue('$code');
-                var procedure = code.children[0].children[0];
-        
-                // compile and assemble the source code
-                var instructions = compiler.compileProcedure(cloud, procedure, context);
-                procedure = procedureParser.parseProcedure(instructions);
-                instructions = documentParser.parseExpression('"\n' + instructions.replace(/^/gm, '    ') + '\n"($mediatype: "application/basm")');
-                instructions = importer.importComponent(instructions);
-                procedureContext.setValue('$intructions', instructions);
-                var bytecode = assembler.assembleProcedure(procedure, context);
-                var base16 = codex.base16Encode(utilities.bytecodeToBytes(bytecode), '            ');
-                bytecode = documentParser.parseExpression("'" + base16 + "\n            '" + '($base: 16, $mediatype: "application/bcod")');
-                bytecode = importer.importComponent(bytecode);
-                procedureContext.setValue('$bytecode', bytecode);
-        
-                procedures.setValue(procedureName, procedureContext);
-            }
-        
-            // checkin the new compiled type
-            var source = typeContext.toSource();
-            var document = documents.fromSource(source);
-            cloud.commitType(citation, document);
-        
-            return document;
-        },
-        
-        
-        /**
-         * This function processes a message that was sent to a target component using
-         * the Bali Virtual Machine™.
-         * 
-         * @param {Component} target The target component whose type supports the message.
-         * @param {Symbol} message The symbol for the message to be processed.
-         * @param {Collection} parameters The list or catalog of parameters that were passed with the message.
-         */
-        processMessage: function(target, message, parameters) {
-            var taskContext;
-            // TODO: create the initial task context...
-            var virtualMachine = VirtualMachine.fromTask(cloud, taskContext);
-            virtualMachine.processInstructions();
-        },
-        
-        
-        /**
-         * This function continues processing a previous submitted message using the
-         * Bali Virtual Machine™. The task context is retrieved from the Bali Document Repository™.
-         * 
-         * @param {Reference} taskContext An existing task context to continue processing.
-         */
-        continueProcessing: function(taskContext) {
-            var virtualMachine = VirtualMachine.fromTask(cloud, taskContext);
-            virtualMachine.processProcedure();
-        }
         
     };
 

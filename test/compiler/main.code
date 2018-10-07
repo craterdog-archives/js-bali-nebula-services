@@ -1,5 +1,0 @@
- Addr     Bytes   Bytecode                  Instruction
-----------------------------------------------------------------------
-[001]:    2801    11     1    PUSH ELEMENT 1
-[002]:    6001    30     1    LOAD VARIABLE 1
-[003]:    E800    71     0    HANDLE RESULT
