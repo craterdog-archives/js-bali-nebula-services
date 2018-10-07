@@ -11,9 +11,8 @@ var fs = require('fs');
 var mocha = require('mocha');
 var expect = require('chai').expect;
 var documents = require('bali-document-notation/BaliDocument');
-var compiler = require('../compiler/ProcedureCompiler');
 var assembler = require('../compiler/ProcedureAssembler');
-var BaliProcedure = require('bali-instruction-set/BaliProcedure');
+var instructions = require('bali-instruction-set/BaliProcedure');
 var codex = require('bali-document-notation/utilities/EncodingUtilities');
 var utilities = require('../utilities/BytecodeUtilities');
 var importer = require('bali-primitive-types/transformers/ComponentImporter');
@@ -101,7 +100,7 @@ describe('Bali Virtual Machine™', function() {
             var testFile = 'test/processor/JUMP.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
-            var procedure = BaliProcedure.fromSource(source);
+            var procedure = instructions.fromSource(source);
             var context = {
                 literals: [],
                 procedures: []
@@ -215,7 +214,7 @@ describe('Bali Virtual Machine™', function() {
             var testFile = 'test/processor/PUSH-POP.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
-            var procedure = BaliProcedure.fromSource(source);
+            var procedure = instructions.fromSource(source);
             var context = {
                 literals: [],
                 procedures: []
@@ -277,7 +276,7 @@ describe('Bali Virtual Machine™', function() {
             var testFile = 'test/processor/LOAD-STORE.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
-            var procedure = BaliProcedure.fromSource(source);
+            var procedure = instructions.fromSource(source);
             var context = {
                 literals: [],
                 procedures: []
@@ -363,7 +362,7 @@ describe('Bali Virtual Machine™', function() {
             var testFile = 'test/processor/INVOKE.basm';
             var source = fs.readFileSync(testFile, 'utf8');
             expect(source).to.exist;  // jshint ignore:line
-            var procedure = BaliProcedure.fromSource(source);
+            var procedure = instructions.fromSource(source);
             var context = {
                 literals: [],
                 procedures: []
