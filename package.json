@@ -1,7 +1,7 @@
 {
   "name": "bali-cloud-environment",
   "version": "1.0.0",
-  "description": "This library provides a JavaScript based implementation for the Bali Virtual Machine.",
+  "description": "This library provides the JavaScript script needed to deploy the Bali Cloud Environment™.",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/craterdog-bali/js-bali-cloud-environment.git"
@@ -30,7 +30,7 @@
     "mocha": "^5.2.0"
   },
   "dependencies": {
-    "bali-digital-notary": "file:../js-bali-digital-notary",
-    "bali-cloud-api": "file:../js-bali-cloud-api"
+    "bali-digital-notary": "^1.1.1",
+    "bali-cloud-api": "^1.1.0"
   }
 }
