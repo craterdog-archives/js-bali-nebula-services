@@ -1,36 +1,33 @@
 {
-  "name": "bali-cloud-environment",
+  "name": "bali-nebula",
   "version": "1.0.0",
-  "description": "This library provides the JavaScript script needed to deploy the Bali Cloud Environment™.",
+  "description": "This library provides the JavaScript script needed to deploy the Bali Nebula™.",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/craterdog-bali/js-bali-cloud-environment.git"
+    "url": "git+ssh://git@github.com/craterdog-bali/js-bali-nebula.git"
   },
   "keywords": [
     "JavaScript",
-    "Bali Cloud OS",
-    "Virtual Machine",
-    "Compiler",
-    "Assembler"
+    "Bali Nebula"
   ],
   "author": "Derk Norton",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/craterdog-bali/js-bali-cloud-environment/issues"
+    "url": "https://github.com/craterdog-bali/js-bali-nebula/issues"
   },
-  "homepage": "https://github.com/craterdog-bali/js-bali-cloud-environment#readme",
+  "homepage": "https://github.com/craterdog-bali/js-bali-nebula#readme",
   "devDependencies": {
-    "chai": "^4.1.2",
+    "chai": "^4.2.0",
     "grunt": "^1.0.3",
-    "grunt-contrib-clean": "^1.1.0",
+    "grunt-contrib-clean": "^2.0.0",
     "grunt-contrib-concat": "^1.0.1",
-    "grunt-contrib-jshint": "^1.1.0",
-    "grunt-contrib-uglify": "^3.3.0",
+    "grunt-contrib-jshint": "^2.0.0",
+    "grunt-contrib-uglify": "^4.0.0",
     "grunt-mocha-test": "^0.13.3",
     "mocha": "^5.2.0"
   },
   "dependencies": {
-    "bali-digital-notary": "^1.1.1",
-    "bali-cloud-api": "^1.1.0"
+    "bali-component-framework": "^1.4.1",
+    "bali-digital-notary": "^1.2.0"
   }
 }
