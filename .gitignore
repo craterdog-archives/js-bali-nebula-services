@@ -12,10 +12,7 @@ config.gypi
 hs_err_pid*
 target/
 dist/
-test/config/repository/types/
-test/config/repository/documents/
-test/config/repository/drafts/
-test/config/repository/queues/
+test/config/
 
 # Development Repositories
 CVS
