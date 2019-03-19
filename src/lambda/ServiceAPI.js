@@ -12,7 +12,7 @@
 const debug = true;
 const repository = require('../s3/S3Repository').repository(debug);
 const bali = require('bali-component-framework');
-const notary = require('bali-digital-notary').v1Public;
+const notary = require('bali-digital-notary').publicAPI(debug);
 
 
 if (debug) console.log('Loading the "PingCertificate" lambda function');
@@ -22,7 +22,11 @@ exports.handler = async function(request) {
     // validate the security credentials
     try {
         const credentials = bali.parse(request.headers['Nebula-Credentials']);
-        await validateCredentials(credentials);
+        const citation = credentials.getValue('$document');
+        const certificateId = citation.getValue('$tag').getValue() + citation.getValue('$version');
+        const certificate = await repository.fetchCertificate(certificateId);
+        const isValid = notary.documentIsValid(credentials, certificate);
+        if (!isValid) throw Error();
     } catch (exception) {
         return {
             statusCode: 403  // Forbidden
@@ -47,52 +51,27 @@ exports.handler = async function(request) {
     }
     
     // execute the request
-    var response;
     try {
-        response = await executeRequest(method, type, identifier, document);
+        switch (type) {
+            case 'certificate':
+                return await certificateRequest(method, identifier, document);
+            case 'type':
+                return await typeRequest(method, identifier, document);
+            case 'draft':
+                return await draftRequest(method, identifier, document);
+            case 'document':
+                return await documentRequest(method, identifier, document);
+            case 'queue':
+                return await queueRequest(method, identifier, document);
+            default:
+                return {
+                    statusCode: 400  // Bad Request
+                };
+        }
     } catch (exception) {
         return {
             statusCode: 503  // Service Unavailable
         };
-    }
-    return response;
-};
-
-
-const validateCredentials = async function(credentials) {
-    const citation = credentials.getValue('$component');
-    const certificateId = citation.getValue('$tag').getValue() + citation.getValue('$version');
-    const certificate = repository.fetchCertificate(certificateId);
-    const catalog = bali.catalog.extraction(citation, bali.list([
-        '$protocol',
-        '$timestamp',
-        '$previous',
-        '$component',
-        '$citation'
-    ]));  // everything but the signature
-    const publicKey = certificate.getValue('$publicKey');
-    const signature = credentials.getValue('$signature');
-    const isValid = notary.verify(catalog, publicKey, signature);
-    if (!isValid) throw Error();
-};
-
-
-const executeRequest = async function(method, type, identifier, document) {
-    switch (type) {
-        case 'certificate':
-            return await certificateRequest(method, identifier, document);
-        case 'type':
-            return await typeRequest(method, identifier, document);
-        case 'draft':
-            return await draftRequest(method, identifier, document);
-        case 'document':
-            return await documentRequest(method, identifier, document);
-        case 'queue':
-            return await queueRequest(method, identifier, document);
-        default:
-            return {
-                statusCode: 400  // Bad Request
-            };
     }
 };
 
@@ -316,3 +295,4 @@ const queueRequest = async function(method, identifier, document) {
             };
     }
 };
+

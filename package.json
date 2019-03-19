@@ -1,6 +1,6 @@
 {
   "name": "bali-nebula-agents",
-  "version": "1.0.3",
+  "version": "1.0.0",
   "description": "This library provides JavaScript based AWS lambda functions that implement the agents for the Bali Nebula™.",
   "repository": {
     "type": "git",
@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.418.0",
-    "bali-component-framework": "^1.10.0",
-    "bali-digital-notary": "^1.6.0"
+    "bali-component-framework": "file:../js-bali-component-framework",
+    "bali-digital-notary": "file:../js-bali-digital-notary"
   }
 }
