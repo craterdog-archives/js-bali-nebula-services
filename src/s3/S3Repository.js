@@ -20,7 +20,8 @@
  * repository. It treats documents as UTF-8 encoded strings.
  */
 const config = require('./Configuration.js');
-const s3 = require('aws-sdk/client/s3')({apiVersion: '2006-03-01'});
+const aws = new require('aws-sdk/clients/s3');
+const s3 = new aws({apiVersion: '2006-03-01'});
 const bali = require('bali-component-framework');
 const EOL = '\n';  // POSIX compliant end of line
 
@@ -121,7 +122,7 @@ exports.repository = function(debug) {
                 const filename = certificateId + '.ndoc';
                 const exists = await doesExist(config.certificateBucket, filename);
                 if (exists) {
-                    certificate = await s3.getObject({Bucket: config.certificateBucket, Key: filename});
+                    certificate = await getObject(config.certificateBucket, filename);
                     certificate = certificate.toString().slice(0, -1);  // remove POSIX compliant <EOL>
                 }
                 return certificate;
@@ -159,7 +160,7 @@ exports.repository = function(debug) {
                     });
                 }
                 const document = certificate + EOL;  // add POSIX compliant <EOL>
-                await s3.putObject({Bucket: config.certificateBucket, Key: filename});
+                await putObject(config.certificateBucket, filename, document);
             } catch (exception) {
                 throw bali.exception({
                     $module: '$S3Repository',
@@ -212,7 +213,7 @@ exports.repository = function(debug) {
                 const filename = draftId + '.ndoc';
                 const exists = await doesExist(config.draftBucket, filename);
                 if (exists) {
-                    draft = await s3.getObject({Bucket: config.draftBucket, Key: filename});
+                    draft = await getObject(config.draftBucket, filename);
                     draft = draft.toString().slice(0, -1);  // remove POSIX compliant <EOL>
                 }
                 return draft;
@@ -238,23 +239,12 @@ exports.repository = function(debug) {
         saveDraft: async function(draftId, draft) {
             try {
                 const filename = draftId + '.ndoc';
-                const exists = await doesExist(config.draftBucket, filename);
-                if (!exists) {
-                    throw bali.exception({
-                        $module: '$S3Repository',
-                        $function: '$updateDraft',
-                        $exception: '$fileMissing',
-                        $url: this.getURL(),
-                        $file: bali.text(filename),
-                        $text: bali.text('The file to be updated does not exist.')
-                    });
-                }
                 const document = draft + EOL;  // add POSIX compliant <EOL>
-                await s3.putObject({Bucket: config.draftBucket, Key: filename});
+                await putObject(config.draftBucket, filename, document);
             } catch (exception) {
                 throw bali.exception({
                     $module: '$S3Repository',
-                    $function: '$updateDraft',
+                    $function: '$saveDraft',
                     $exception: '$directoryAccess',
                     $url: this.getURL(),
                     $draftId: draftId ? bali.text(draftId) : bali.NONE,
@@ -275,7 +265,7 @@ exports.repository = function(debug) {
                 const filename = draftId + '.ndoc';
                 const exists = await doesExist(config.draftBucket, filename);
                 if (exists) {
-                    await s3.deleteObject({Bucket: config.draftBucket, Key: filename});
+                    await deleteObject(config.draftBucket, filename);
                 }
             } catch (exception) {
                 throw bali.exception({
@@ -328,7 +318,7 @@ exports.repository = function(debug) {
                 const filename = documentId + '.ndoc';
                 const exists = await doesExist(config.documentBucket, filename);
                 if (exists) {
-                    document = await s3.getObject({Bucket: config.documentBucket, Key: filename});
+                    document = await getObject(config.documentBucket, filename);
                     document = document.toString().slice(0, -1);  // remove POSIX compliant <EOL>
                 }
                 return document;
@@ -366,7 +356,7 @@ exports.repository = function(debug) {
                     });
                 }
                 document = document + EOL;  // add POSIX compliant <EOL>
-                await s3.putObject({Bucket: config.documentBucket, Key: filename});
+                await putObject(config.documentBucket, filename, document);
             } catch (exception) {
                 throw bali.exception({
                     $module: '$S3Repository',
@@ -419,7 +409,7 @@ exports.repository = function(debug) {
                 const filename = typeId + '.ndoc';
                 const exists = await doesExist(config.typeBucket, filename);
                 if (exists) {
-                    type = await s3.getObject({Bucket: config.typeBucket, Key: filename});
+                    type = await getObject(config.typeBucket, filename);
                     type = type.toString().slice(0, -1);  // remove POSIX compliant <EOL>
                 }
                 return type;
@@ -457,7 +447,7 @@ exports.repository = function(debug) {
                     });
                 }
                 const document = type + EOL;  // add POSIX compliant <EOL>
-                await s3.putObject({Bucket: config.typeBucket, Key: filename});
+                await putObject(config.typeBucket, filename, document);
             } catch (exception) {
                 throw bali.exception({
                     $module: '$S3Repository',
@@ -492,7 +482,7 @@ exports.repository = function(debug) {
                     });
                 }
                 const document = message + EOL;  // add POSIX compliant <EOL>
-                await s3.putObject({Bucket: config.queueBucket, Key: filename});
+                await putObject(config.queueBucket, filename, document);
             } catch (exception) {
                 throw bali.exception({
                     $module: '$S3Repository',
@@ -500,7 +490,7 @@ exports.repository = function(debug) {
                     $exception: '$queueAccess',
                     $queueId: queueId ? bali.text(queueId) : bali.NONE,
                     $messageId: messageId ? bali.text(messageId) : bali.NONE,
-                    $text: bali.text('The S3 repository not be accessed.')
+                    $text: bali.text('The S3 repository could not be accessed.')
                 }, exception);
             }
         },
@@ -515,16 +505,16 @@ exports.repository = function(debug) {
             try {
                 var message;
                 while (true) {
-                    const messages = (await s3.listObjects({Bucket: config.queueBucket, Prefix: queueId, MaxKeys: 64})).Contents;
-                    const count = messages.length;
-                    if (count) {
+                    const messages = (await listObjects(config.queueBucket, queueId)).Contents;
+                    if (messages && messages.length) {
                         // select a message a random since a distributed queue cannot guarantee FIFO
+                        const count = messages.length;
                         const index = bali.random.index(count) - 1;  // convert to zero based indexing
                         const filename = messages[index].Key;
-                        message = await s3.getObject({Bucket: config.queueBucket, Key: filename});
+                        message = await getObject(config.queueBucket, filename);
                         message = message.toString().slice(0, -1);  // remove POSIX compliant <EOL>
                         try {
-                            await s3.deleteObject({Bucket: config.queueBucket, Key: filename});
+                            await deleteObject(config.queueBucket, filename);
                             break; // we got there first
                         } catch (exception) {
                             // another process got there first
@@ -541,7 +531,7 @@ exports.repository = function(debug) {
                     $function: '$dequeueMessage',
                     $exception: '$queueAccess',
                     $queueId: queueId ? bali.text(queueId) : bali.NONE,
-                    $text: bali.text('The S3 repository not be accessed.')
+                    $text: bali.text('The S3 repository could not be accessed.')
                 }, exception);
             }
         }
@@ -552,19 +542,86 @@ exports.repository = function(debug) {
 
 // PRIVATE FUNCTIONS
 
-const doesExist = async function(bucket, filename) {
-    var exists = true;
-    try {
-        await s3.headObject({Bucket: bucket, Key: filename});
-    } catch (exception) {
-        if (exception.code === 'NotFound') {
-            // the file does not exist
-            exists = false;
-        } else {
-            // something else went wrong
-            throw exception;
+const listObjects = async function(bucket, prefix) {
+    return new Promise(function(resolve, reject) {
+        try {
+            s3.listObjectsV2({Bucket: config.queueBucket, Prefix: prefix, MaxKeys: 64}, function(error, data) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(data.Contents);
+                }
+            });
+        } catch (cause) {
+            reject(cause);
         }
-    }
-    // the file exists
-    return exists;
+    });
+};
+
+
+const doesExist = async function(bucket, key) {
+    return new Promise(function(resolve, reject) {
+        try {
+            s3.headObject({Bucket: bucket, Key: key}, function(error, data) {
+                if (error || data.DeleteMarker || !data.ContentLength) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            });
+        } catch (cause) {
+            reject(cause);
+        }
+    });
+};
+
+
+const getObject = async function(bucket, key) {
+    return new Promise(function(resolve, reject) {
+        try {
+            s3.getObject({Bucket: bucket, Key: key}, function(error, data) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(data.Body.toString());
+                }
+            });
+        } catch (cause) {
+            reject(cause);
+        }
+    });
+};
+
+
+const putObject = async function(bucket, key, object) {
+    return new Promise(function(resolve, reject) {
+        try {
+            s3.putObject({Bucket: bucket, Key: key, Body: object.toString()}, function(error, data) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        } catch (cause) {
+            reject(cause);
+        }
+    });
+};
+
+
+const deleteObject = async function(bucket, key) {
+    return new Promise(function(resolve, reject) {
+        try {
+            s3.deleteObject({Bucket: bucket, Key: key}, function(error, data) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        } catch (cause) {
+            reject(cause);
+        }
+    });
 };
