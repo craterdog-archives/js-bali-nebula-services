@@ -38,6 +38,62 @@ describe('Bali Nebula API™', function() {
             };
         });
 
+        it('should perform a notary certificate lifecycle', async function() {
+            const identifier = 'VRYA45CS3K1QL7AGY9TSAAHQK4Y2BJRXv3';
+
+            // store a new certificate in the repository
+            await repository.createCertificate(identifier, source);
+
+            // make sure the new certificate exists in the repository
+            exists = await repository.certificateExists(identifier);
+            expect(exists).is.true;  // jshint ignore:line
+
+            // fetch the new certificate from the repository
+            const certificate = await repository.fetchCertificate(identifier);
+            expect(certificate).to.equal(source);
+
+            // make sure the new certificate still exists in the repository
+            exists = await repository.certificateExists(identifier);
+            expect(exists).is.true;  // jshint ignore:line
+
+            // attempt to store the same certificate in the repository
+            try {
+                await repository.createCertificate(identifier, source);
+                assert.fail('The attempt to store the same certificate should have failed.');
+            } catch (error) {
+                // expected
+            };
+
+        });
+
+        it('should perform a component type lifecycle', async function() {
+            const identifier = '8M5H4ZA99FB6XAK2BZ13JGL7TGZZ69N2v1';
+
+            // store a new type in the repository
+            await repository.createType(identifier, source);
+
+            // make sure the new type exists in the repository
+            exists = await repository.typeExists(identifier);
+            expect(exists).is.true;  // jshint ignore:line
+
+            // fetch the new type from the repository
+            const type = await repository.fetchType(identifier);
+            expect(type).to.equal(source);
+
+            // make sure the new type still exists in the repository
+            exists = await repository.typeExists(identifier);
+            expect(exists).is.true;  // jshint ignore:line
+
+            // attempt to store the same type in the repository
+            try {
+                await repository.createType(identifier, source);
+                assert.fail('The attempt to store the same type should have failed.');
+            } catch (error) {
+                // expected
+            };
+
+        });
+
         it('should perform a draft document lifecycle', async function() {
             const identifier = 'BXC15F9H0V4AJVTHJHN1B6VA8PZP4S51v1.2.3';
 
@@ -94,7 +150,7 @@ describe('Bali Nebula API™', function() {
             try {
                 await repository.createDocument(identifier, source);
                 assert.fail('The attempt to store the same document should have failed.');
-            } catch(error) {
+            } catch (error) {
                 // expected
             };
 
