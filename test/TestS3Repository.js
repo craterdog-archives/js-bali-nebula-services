@@ -26,7 +26,7 @@ const source =
 
 describe('Bali Nebula API™', function() {
 
-    describe('Test Local Repository', function() {
+    describe('Test S3 Repository', function() {
 
         it('should initialize the API once and only once', async function() {
             await repository.initializeAPI();
@@ -46,7 +46,7 @@ describe('Bali Nebula API™', function() {
 
             // make sure the new certificate exists in the repository
             exists = await repository.certificateExists(identifier);
-            expect(exists).is.true;  // jshint ignore:line
+            expect(exists).is.true;
 
             // fetch the new certificate from the repository
             const certificate = await repository.fetchCertificate(identifier);
@@ -54,7 +54,7 @@ describe('Bali Nebula API™', function() {
 
             // make sure the new certificate still exists in the repository
             exists = await repository.certificateExists(identifier);
-            expect(exists).is.true;  // jshint ignore:line
+            expect(exists).is.true;
 
             // attempt to store the same certificate in the repository
             try {
@@ -74,7 +74,7 @@ describe('Bali Nebula API™', function() {
 
             // make sure the new type exists in the repository
             exists = await repository.typeExists(identifier);
-            expect(exists).is.true;  // jshint ignore:line
+            expect(exists).is.true;
 
             // fetch the new type from the repository
             const type = await repository.fetchType(identifier);
@@ -82,7 +82,7 @@ describe('Bali Nebula API™', function() {
 
             // make sure the new type still exists in the repository
             exists = await repository.typeExists(identifier);
-            expect(exists).is.true;  // jshint ignore:line
+            expect(exists).is.true;
 
             // attempt to store the same type in the repository
             try {
@@ -102,11 +102,11 @@ describe('Bali Nebula API™', function() {
 
             // make sure the new draft exists in the repository
             var exists = await repository.draftExists(identifier);
-            expect(exists).is.true;  // jshint ignore:line
+            expect(exists).is.true;
 
             // make sure the same document does not exist in the repository
             exists = await repository.documentExists(identifier);
-            expect(exists).is.false;  // jshint ignore:line
+            expect(exists).is.false;
 
             // fetch the new draft from the repository
             const draft = await repository.fetchDraft(identifier);
@@ -117,7 +117,7 @@ describe('Bali Nebula API™', function() {
 
             // make sure the new draft no longer exists in the repository
             exists = await repository.draftExists(identifier);
-            expect(exists).is.false;  // jshint ignore:line
+            expect(exists).is.false;
 
             // delete a non-existent draft from the repository
             await repository.deleteDraft(identifier);
@@ -132,11 +132,11 @@ describe('Bali Nebula API™', function() {
 
             // make sure the same draft does not exist in the repository
             var exists = await repository.draftExists(identifier);
-            expect(exists).is.false;  // jshint ignore:line
+            expect(exists).is.false;
 
             // make sure the new document exists in the repository
             exists = await repository.documentExists(identifier);
-            expect(exists).is.true;  // jshint ignore:line
+            expect(exists).is.true;
 
             // fetch the new document from the repository
             const document = await repository.fetchDocument(identifier);
@@ -144,7 +144,7 @@ describe('Bali Nebula API™', function() {
 
             // make sure the new document still exists in the repository
             exists = await repository.documentExists(identifier);
-            expect(exists).is.true;  // jshint ignore:line
+            expect(exists).is.true;
 
             // attempt to store the same document in the repository
             try {
@@ -161,7 +161,7 @@ describe('Bali Nebula API™', function() {
 
             // make sure the message queue is empty
             var none = await repository.dequeueMessage(queueId);
-            expect(none).to.not.exist;  // jshint ignore:line
+            expect(none).to.not.exist;
 
             // queue up some messages
             await repository.queueMessage(queueId, "$first");
@@ -169,13 +169,16 @@ describe('Bali Nebula API™', function() {
             await repository.queueMessage(queueId, "$third");
 
             // dequeue the messages
-            await repository.dequeueMessage(queueId);
-            await repository.dequeueMessage(queueId);
-            await repository.dequeueMessage(queueId);
+            var message = await repository.dequeueMessage(queueId);
+            expect(message).to.exist;
+            message = await repository.dequeueMessage(queueId);
+            expect(message).to.exist;
+            message = await repository.dequeueMessage(queueId);
+            expect(message).to.exist;
 
             // make sure the message queue is empty
             none = await repository.dequeueMessage(queueId);
-            expect(none).to.not.exist;  // jshint ignore:line
+            expect(none).to.not.exist;
 
         });
 

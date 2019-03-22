@@ -1,0 +1,7 @@
+#!/bin/bash
+
+aws s3api delete-object --bucket craterdog-bali-certificates-us-west-2 --key VRYA45CS3K1QL7AGY9TSAAHQK4Y2BJRXv3.ndoc
+aws s3api delete-object --bucket craterdog-bali-types-us-west-2 --key 8M5H4ZA99FB6XAK2BZ13JGL7TGZZ69N2v1.ndoc
+aws s3api delete-object --bucket craterdog-bali-drafts-us-west-2 --key BXC15F9H0V4AJVTHJHN1B6VA8PZP4S51v1.2.3.ndoc
+aws s3api delete-object --bucket craterdog-bali-documents-us-west-2 --key 454J79TXY3799ZL8VNG2G4SBMVDFVPBVv3.4.ndoc
+#aws s3api delete-object --bucket craterdog-bali-queues-us-west-2 --key TGKQJ6B4Y5KPCQGRXB1817MLN2WSV6FM

@@ -505,7 +505,7 @@ exports.repository = function(debug) {
             try {
                 var message;
                 while (true) {
-                    const messages = (await listObjects(config.queueBucket, queueId)).Contents;
+                    const messages = (await listObjects(config.queueBucket, queueId));
                     if (messages && messages.length) {
                         // select a message a random since a distributed queue cannot guarantee FIFO
                         const count = messages.length;

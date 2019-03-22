@@ -34,13 +34,8 @@ module.exports = function(grunt) {
     },
 
     exec: {
-      cleanDrafts: {
-        command: 'aws s3api delete-object --bucket craterdog-bali-drafts-us-west-2 --key BXC15F9H0V4AJVTHJHN1B6VA8PZP4S51v1.2.3.ndoc',
-        stdout: false,
-        stderr: false
-      },
-      cleanDocuments: {
-        command: 'aws s3api delete-object --bucket craterdog-bali-documents-us-west-2 --key 454J79TXY3799ZL8VNG2G4SBMVDFVPBVv3.4.ndoc',
+      cleanRepository: {
+        command: 'scripts/cleanRepository',
         stdout: false,
         stderr: false
       }
