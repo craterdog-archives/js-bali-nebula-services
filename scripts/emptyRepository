@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Emptying the certificates bucket..."
+./scripts/emptyBucket craterdog-bali-certificates-us-west-2
+
+echo "Emptying the types bucket..."
+./scripts/emptyBucket craterdog-bali-types-us-west-2
+
+echo "Emptying the drafts bucket..."
+./scripts/emptyBucket craterdog-bali-drafts-us-west-2
+
+echo "Emptying the documents bucket..."
+./scripts/emptyBucket craterdog-bali-documents-us-west-2
+
+echo "Emptying the queues bucket..."
+./scripts/emptyBucket craterdog-bali-queues-us-west-2
+

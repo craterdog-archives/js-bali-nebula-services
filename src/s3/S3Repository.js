@@ -91,7 +91,7 @@ exports.repository = function(debug) {
          */
         certificateExists: async function(certificateId) {
             try {
-                const filename = certificateId + '.ndoc';
+                const filename = certificateId + '.bali';
                 const exists = await doesExist(config.certificateBucket, filename);
                 return exists;
             } catch (cause) {
@@ -119,7 +119,7 @@ exports.repository = function(debug) {
         fetchCertificate: async function(certificateId) {
             try {
                 var certificate;
-                const filename = certificateId + '.ndoc';
+                const filename = certificateId + '.bali';
                 const exists = await doesExist(config.certificateBucket, filename);
                 if (exists) {
                     certificate = await getObject(config.certificateBucket, filename);
@@ -147,7 +147,7 @@ exports.repository = function(debug) {
          */
         createCertificate: async function(certificateId, certificate) {
             try {
-                const filename = certificateId + '.ndoc';
+                const filename = certificateId + '.bali';
                 const exists = await doesExist(config.certificateBucket, filename);
                 if (exists) {
                     throw bali.exception({
@@ -184,7 +184,7 @@ exports.repository = function(debug) {
          */
         draftExists: async function(draftId) {
             try {
-                const filename = draftId + '.ndoc';
+                const filename = draftId + '.bali';
                 const exists = await doesExist(config.draftBucket, filename);
                 return exists;
             } catch (exception) {
@@ -210,7 +210,7 @@ exports.repository = function(debug) {
         fetchDraft: async function(draftId) {
             try {
                 var draft;
-                const filename = draftId + '.ndoc';
+                const filename = draftId + '.bali';
                 const exists = await doesExist(config.draftBucket, filename);
                 if (exists) {
                     draft = await getObject(config.draftBucket, filename);
@@ -238,7 +238,7 @@ exports.repository = function(debug) {
          */
         saveDraft: async function(draftId, draft) {
             try {
-                const filename = draftId + '.ndoc';
+                const filename = draftId + '.bali';
                 const document = draft + EOL;  // add POSIX compliant <EOL>
                 await putObject(config.draftBucket, filename, document);
             } catch (exception) {
@@ -262,7 +262,7 @@ exports.repository = function(debug) {
          */
         deleteDraft: async function(draftId) {
             try {
-                const filename = draftId + '.ndoc';
+                const filename = draftId + '.bali';
                 const exists = await doesExist(config.draftBucket, filename);
                 if (exists) {
                     await deleteObject(config.draftBucket, filename);
@@ -289,7 +289,7 @@ exports.repository = function(debug) {
          */
         documentExists: async function(documentId) {
             try {
-                const filename = documentId + '.ndoc';
+                const filename = documentId + '.bali';
                 const exists = await doesExist(config.documentBucket, filename);
                 return exists;
             } catch (exception) {
@@ -315,7 +315,7 @@ exports.repository = function(debug) {
         fetchDocument: async function(documentId) {
             try {
                 var document;
-                const filename = documentId + '.ndoc';
+                const filename = documentId + '.bali';
                 const exists = await doesExist(config.documentBucket, filename);
                 if (exists) {
                     document = await getObject(config.documentBucket, filename);
@@ -343,7 +343,7 @@ exports.repository = function(debug) {
          */
         createDocument: async function(documentId, document) {
             try {
-                const filename = documentId + '.ndoc';
+                const filename = documentId + '.bali';
                 const exists = await doesExist(config.documentBucket, filename);
                 if (exists) {
                     throw bali.exception({
@@ -380,7 +380,7 @@ exports.repository = function(debug) {
          */
         typeExists: async function(typeId) {
             try {
-                const filename = typeId + '.ndoc';
+                const filename = typeId + '.bali';
                 const exists = await doesExist(config.typeBucket, filename);
                 return exists;
             } catch (exception) {
@@ -406,7 +406,7 @@ exports.repository = function(debug) {
         fetchType: async function(typeId) {
             try {
                 var type;
-                const filename = typeId + '.ndoc';
+                const filename = typeId + '.bali';
                 const exists = await doesExist(config.typeBucket, filename);
                 if (exists) {
                     type = await getObject(config.typeBucket, filename);
@@ -434,7 +434,7 @@ exports.repository = function(debug) {
          */
         createType: async function(typeId, type) {
             try {
-                const filename = typeId + '.ndoc';
+                const filename = typeId + '.bali';
                 const exists = await doesExist(config.typeBucket, filename);
                 if (exists) {
                     throw bali.exception({
@@ -470,7 +470,7 @@ exports.repository = function(debug) {
         queueMessage: async function(queueId, message) {
             const messageId = bali.tag().getValue();
             try {
-                const filename = queueId + '/' + messageId + '.ndoc';
+                const filename = queueId + '/' + messageId + '.bali';
                 const exists = await doesExist(config.queueBucket, filename);
                 if (exists) {
                     throw bali.exception({

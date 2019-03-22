@@ -14,8 +14,15 @@ const repository = require('../s3/S3Repository').repository(debug);
 const bali = require('bali-component-framework');
 const notary = require('bali-digital-notary').publicAPI(debug);
 
+// SUPPORTED HTTP METHODS
+const HEAD = 'HEAD';
+const POST = 'POST';
+const GET = 'GET';
+const PUT = 'PUT';
+const DELETE = 'DELETE';
 
-if (debug) console.log('Loading the "PingCertificate" lambda function');
+
+if (debug) console.log('Loading the "Nebula Repository API" lambda function');
  
 exports.handler = async function(request) {
 
@@ -26,7 +33,7 @@ exports.handler = async function(request) {
         const certificateId = citation.getValue('$tag').getValue() + citation.getValue('$version');
         const certificate = await repository.fetchCertificate(certificateId);
         const isValid = notary.documentIsValid(credentials, certificate);
-        if (!isValid) throw Error();
+        if (!isValid) throw Error('Invalid credentials were passed with the request.');
     } catch (exception) {
         return {
             statusCode: 403  // Forbidden
@@ -39,7 +46,7 @@ exports.handler = async function(request) {
     var identifier;
     var document;
     try {
-        method = request.httpMethod.toLowerCase();
+        method = request.httpMethod.toUpperCase();
         const tokens = request.path.split('/');
         type = tokens[0];
         identifier = tokens[1];
@@ -78,7 +85,7 @@ exports.handler = async function(request) {
 
 const certificateRequest = async function(method, identifier, document) {
     switch (method) {
-        case 'head':
+        case HEAD:
             if (await repository.certificateExists(identifier)) {
                 return {
                     statusCode: 200  // OK
@@ -87,7 +94,7 @@ const certificateRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case 'post':
+        case POST:
             if (await repository.certificateExists(identifier)) {
                 return {
                     statusCode: 409  // Conflict
@@ -97,7 +104,7 @@ const certificateRequest = async function(method, identifier, document) {
             return {
                 statusCode: 201  // Created
             };
-        case 'get':
+        case GET:
             document = await repository.fetchCertificate(identifier);
             if (document) {
                 return {
@@ -123,7 +130,7 @@ const certificateRequest = async function(method, identifier, document) {
 
 const typeRequest = async function(method, identifier, document) {
     switch (method) {
-        case 'head':
+        case HEAD:
             if (await repository.typeExists(identifier)) {
                 return {
                     statusCode: 200  // OK
@@ -132,7 +139,7 @@ const typeRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case 'post':
+        case POST:
             if (await repository.typeExists(identifier)) {
                 return {
                     statusCode: 409  // Conflict
@@ -142,7 +149,7 @@ const typeRequest = async function(method, identifier, document) {
             return {
                 statusCode: 201  // Created
             };
-        case 'get':
+        case GET:
             document = await repository.fetchType(identifier);
             if (document) {
                 return {
@@ -168,7 +175,7 @@ const typeRequest = async function(method, identifier, document) {
 
 const draftRequest = async function(method, identifier, document) {
     switch (method) {
-        case 'head':
+        case HEAD:
             if (await repository.draftExists(identifier)) {
                 return {
                     statusCode: 200  // OK
@@ -177,17 +184,12 @@ const draftRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case 'put':
-            if (await repository.documentExists(identifier)) {
-                return {
-                    statusCode: 409  // Conflict
-                };
-            }
+        case PUT:
             await repository.saveDraft(identifier, document);
             return {
                 statusCode: 201  // Created
             };
-        case 'get':
+        case GET:
             document = await repository.fetchDraft(identifier);
             if (document) {
                 return {
@@ -203,7 +205,7 @@ const draftRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case 'delete':
+        case DELETE:
             if (await repository.draftExists(identifier)) {
                 await repository.deleteDraft(identifier);
                 return {
@@ -223,7 +225,7 @@ const draftRequest = async function(method, identifier, document) {
 
 const documentRequest = async function(method, identifier, document) {
     switch (method) {
-        case 'head':
+        case HEAD:
             if (await repository.documentExists(identifier)) {
                 return {
                     statusCode: 200  // OK
@@ -232,7 +234,7 @@ const documentRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case 'post':
+        case POST:
             if (await repository.documentExists(identifier)) {
                 return {
                     statusCode: 409  // Conflict
@@ -242,7 +244,7 @@ const documentRequest = async function(method, identifier, document) {
             return {
                 statusCode: 201  // Created
             };
-        case 'get':
+        case GET:
             document = await repository.fetchDocument(identifier);
             if (document) {
                 return {
@@ -268,12 +270,12 @@ const documentRequest = async function(method, identifier, document) {
 
 const queueRequest = async function(method, identifier, document) {
     switch (method) {
-        case 'put':
+        case PUT:
             await repository.queueMessage(identifier, document);
             return {
                 statusCode: 201  // Created
             };
-        case 'get':
+        case GET:
             document = await repository.dequeueMessage(identifier);
             if (document) {
                 return {
