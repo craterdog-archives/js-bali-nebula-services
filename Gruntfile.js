@@ -29,13 +29,18 @@ module.exports = function(grunt) {
         'test/config/'
       ],
       options: {
-        force: false
+        force: true
       }
     },
 
     exec: {
-      cleanRepository: {
+      clean: {
         command: 'scripts/cleanRepository',
+        stdout: false,
+        stderr: false
+      },
+      zip: {
+        command: 'scripts/createZip',
         stdout: false,
         stderr: false
       }
@@ -56,28 +61,22 @@ module.exports = function(grunt) {
 
     // grunt-webpack plugin configuration (concatenates and removes whitespace)
     webpack: {
-      clientConfig: {
-        target: 'web',
-        mode: 'development',
-        node: {
-          fs: "empty"  // required work-around for webpack bug
-        },
-        entry: './index.js',
-        output: {
-          path: path.resolve(__dirname, 'dist'),
-          filename: 'lib-web.js',
-          library: 'notary'
-        }
-      },
-      serverConfig: {
+      lambdaConfig: {
+        entry: ['./src/lambda/RepositoryAPI.js'],
         target: 'node',
         mode: 'development',
-        entry: './index.js',
         output: {
-          path: path.resolve(__dirname, 'dist'),
-          filename: 'lib-node.js',
-          library: 'notary'
+          path: `${process.cwd()}/dist`,
+          filename: 'BaliNebulaRepository.js',
+          libraryTarget: 'umd'
         }
+/*
+        entry: './src/lambda/RepositoryAPI.js',
+        output: {
+          path: path.resolve('dist'),
+          filename: 'BaliNebulaRepository.js'
+        }
+*/
       }
     }
 
@@ -89,8 +88,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerTask('build', 'Build the module.', ['clean:build', 'exec', 'eslint', 'mochaTest']);
-  grunt.registerTask('package', 'Package the libraries.', ['clean:build', 'exec', 'eslint', 'mochaTest', 'webpack']);
+  grunt.registerTask('build', 'Build the module.', ['clean:build', 'exec:clean', 'eslint', 'mochaTest']);
+  grunt.registerTask('package', 'Package the libraries.', ['clean:build', 'webpack', 'exec:zip']);
   grunt.registerTask('default', 'Default targets.', ['build']);
 
 };

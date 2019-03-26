@@ -564,6 +564,8 @@ const doesExist = async function(bucket, key) {
         try {
             s3.headObject({Bucket: bucket, Key: key}, function(error, data) {
                 if (error || data.DeleteMarker || !data.ContentLength) {
+                    if (error) console.log('error: ' + error);
+                    if (data) console.log('data keys: ' + Object.keys(data));
                     resolve(false);
                 } else {
                     resolve(true);

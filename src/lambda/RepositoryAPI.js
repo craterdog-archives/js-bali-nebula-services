@@ -24,9 +24,11 @@ const DELETE = 'DELETE';
 
 if (debug) console.log('Loading the "Nebula Repository API" lambda function');
  
-exports.handler = async function(request) {
+exports.handleRequest = async function(request, context) {
+    if (debug) console.log('Executing the "Nebula Repository API" lambda function: ' + request.path);
 
     // validate the security credentials
+/*
     try {
         const credentials = bali.parse(request.headers['Nebula-Credentials']);
         const citation = credentials.getValue('$document');
@@ -39,6 +41,7 @@ exports.handler = async function(request) {
             statusCode: 403  // Forbidden
         };
     }
+*/
 
     // extract the request parameters
     var method;
@@ -47,9 +50,12 @@ exports.handler = async function(request) {
     var document;
     try {
         method = request.httpMethod.toUpperCase();
+        console.log('method: ' + method);
         const tokens = request.path.split('/');
         type = tokens[0];
+        console.log('type: ' + type);
         identifier = tokens[1];
+        console.log('identifier: ' + identifier);
         if (request.body) document = bali.parse(request.body);
     } catch (exception) {
         return {

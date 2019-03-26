@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd dist/
+chmod 666 BaliNebulaRepository.js
+zip -r BaliNebulaRepository.zip BaliNebulaRepository.js
+chmod 666 BaliNebulaRepository.zip
+
