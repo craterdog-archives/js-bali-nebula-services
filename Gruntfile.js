@@ -62,7 +62,7 @@ module.exports = function(grunt) {
     // grunt-webpack plugin configuration (concatenates and removes whitespace)
     webpack: {
       lambdaConfig: {
-        entry: ['./src/lambda/RepositoryAPI.js'],
+        entry: ['./src/index.js'],
         target: 'node',
         mode: 'development',
         output: {
