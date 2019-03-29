@@ -35,12 +35,12 @@ module.exports = function(grunt) {
 
     exec: {
       clean: {
-        command: 'scripts/cleanRepository',
+        command: 'scripts/CleanRepository',
         stdout: false,
         stderr: false
       },
       publish: {
-        command: 'scripts/publishAgents',
+        command: 'scripts/PublishAgents',
         stdout: false,
         stderr: false
       }
