@@ -39,8 +39,8 @@ module.exports = function(grunt) {
         stdout: false,
         stderr: false
       },
-      zip: {
-        command: 'scripts/createZip',
+      publish: {
+        command: 'scripts/publishAgents',
         stdout: false,
         stderr: false
       }
@@ -89,7 +89,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-webpack');
 
   grunt.registerTask('build', 'Build the module.', ['clean:build', 'exec:clean', 'eslint', 'mochaTest']);
-  grunt.registerTask('package', 'Package the libraries.', ['clean:build', 'webpack', 'exec:zip']);
+  grunt.registerTask('package', 'Package the libraries.', ['clean:build', 'webpack', 'exec:publish']);
   grunt.registerTask('default', 'Default targets.', ['build']);
 
 };
