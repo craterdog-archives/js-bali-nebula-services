@@ -9,7 +9,7 @@
  ************************************************************************/
 'use strict';
 
-exports.cloudURL = 'https://bali-nebula.net';
+exports.cloudURL = 'https://bali-nebula.net/repository/';
 exports.certificateBucket = 'craterdog-bali-certificates-us-west-2';
 exports.draftBucket = 'craterdog-bali-drafts-us-west-2';
 exports.documentBucket = 'craterdog-bali-documents-us-west-2';

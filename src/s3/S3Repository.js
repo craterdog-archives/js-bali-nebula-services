@@ -545,7 +545,7 @@ exports.repository = function(debug) {
 const listObjects = async function(bucket, prefix) {
     return new Promise(function(resolve, reject) {
         try {
-            s3.listObjectsV2({Bucket: config.queueBucket, Prefix: prefix, MaxKeys: 64}, function(error, data) {
+            s3.listObjectsV2({Bucket: bucket, Prefix: prefix, MaxKeys: 64}, function(error, data) {
                 if (error) {
                     reject(error);
                 } else {
@@ -564,8 +564,6 @@ const doesExist = async function(bucket, key) {
         try {
             s3.headObject({Bucket: bucket, Key: key}, function(error, data) {
                 if (error || data.DeleteMarker || !data.ContentLength) {
-                    if (error) console.log('error: ' + error);
-                    if (data) console.log('data keys: ' + Object.keys(data));
                     resolve(false);
                 } else {
                     resolve(true);
