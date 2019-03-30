@@ -10,7 +10,7 @@ chmod 666 BaliNebulaRepository.zip
 
 echo "Pushing the latest version of the package out to S3..."
 aws --region us-east-1 s3api put-object \
-    --bucket craterdog-bali-nebula-us-east-1 \
+    --bucket craterdog-bali-environment-us-east-1 \
     --key lambdas/BaliNebulaRepository.zip \
     --body ./BaliNebulaRepository.zip
 
