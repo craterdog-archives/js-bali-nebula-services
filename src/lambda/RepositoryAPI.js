@@ -50,9 +50,9 @@ exports.handleRequest = async function(request, context) {
     var document;
     try {
         method = request.httpMethod.toUpperCase();
-        const tokens = request.path.split('/');  // "/repository/<type>/<identifier>"
-        type = tokens[2];
-        identifier = tokens[3];
+        const tokens = request.pathParameters.proxy.split('/');  // "<type>/<identifier>"
+        type = tokens[0];
+        identifier = tokens[1];
         if (request.body) document = bali.parse(request.body);
     } catch (exception) {
         return {
