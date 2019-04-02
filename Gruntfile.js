@@ -35,12 +35,12 @@ module.exports = function(grunt) {
 
     exec: {
       clean: {
-        command: 'scripts/CleanRepository',
+        command: 'scripts/clean-repository',
         stdout: false,
         stderr: false
       },
       publish: {
-        command: 'scripts/PublishAgents',
+        command: 'scripts/publish-agents',
         stdout: false,
         stderr: false
       }
@@ -67,16 +67,9 @@ module.exports = function(grunt) {
         mode: 'development',
         output: {
           path: `${process.cwd()}/dist`,
-          filename: 'BaliNebulaRepository.js',
+          filename: 'bali-nebula-repository.js',
           libraryTarget: 'umd'
         }
-/*
-        entry: './src/lambda/RepositoryAPI.js',
-        output: {
-          path: path.resolve('dist'),
-          filename: 'BaliNebulaRepository.js'
-        }
-*/
       }
     }
 

@@ -3,15 +3,15 @@
 cd dist/
 
 echo "Creating a zip file for distribution to AWS..."
-chmod 666 BaliNebulaRepository.js
-zip -r BaliNebulaRepository.zip BaliNebulaRepository.js
-chmod 666 BaliNebulaRepository.zip
+chmod 666 bali-nebula-repository.js
+zip -r bali-nebula-repository.zip bali-nebula-repository.js
+chmod 666 bali-nebula-repository.zip
 
 
 echo "Pushing the latest version of the package out to S3..."
 aws --region us-east-1 s3api put-object \
     --bucket craterdog-bali-environment-us-east-1 \
-    --key lambdas/BaliNebulaRepository.zip \
-    --body ./BaliNebulaRepository.zip
+    --key lambdas/bali-nebula-repository.zip \
+    --body ./bali-nebula-repository.zip
 
 echo "Done."
