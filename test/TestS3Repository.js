@@ -28,16 +28,6 @@ describe('Bali Nebula API™', function() {
 
     describe('Test S3 Repository', function() {
 
-        it('should initialize the API once and only once', async function() {
-            await repository.initializeAPI();
-            try {
-                await repository.initializeAPI();
-                assert.fail('The second attempt to initialize the API should have failed.');
-            } catch(error) {
-                // expected
-            };
-        });
-
         it('should perform a notary certificate lifecycle', async function() {
             const identifier = 'VRYA45CS3K1QL7AGY9TSAAHQK4Y2BJRXv3';
 

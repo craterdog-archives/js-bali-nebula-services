@@ -30,12 +30,10 @@ const EOL = '\n';  // POSIX compliant end of line
  * This function returns an object that implements the API for an AWS S3 based document
  * repository.
  * 
- * @param {Boolean} debug An optional flag that determines whether or not exceptions
  * will be logged to the error console.
  * @returns {Object} An object implementing the document repository interface.
  */
-exports.repository = function(debug) {
-    debug = debug || false;
+exports.repository = function() {
 
     // return a singleton object for the API
     return {
@@ -62,26 +60,6 @@ exports.repository = function(debug) {
         },
 
         /**
-         * This function initializes the document repository.  It must be called before any
-         * other API function and can only be called once.
-         */
-        initializeAPI: async function() {
-            try {
-                this.initializeAPI = undefined;  // can only be called once
-            } catch (cause) {
-                const exception = bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$initializeAPI',
-                    $exception: '$unexpected',
-                    $url: this.getURL(),
-                    $text: bali.text('An unexpected error occurred while attempting to initialize the API.')
-                }, cause);
-                if (debug) console.error(exception.toString());
-                throw exception;
-            }
-        },
-
-        /**
          * This function checks to see whether or not a certificate is associated with the
          * specified identifier.
          * 
@@ -90,22 +68,9 @@ exports.repository = function(debug) {
          * @returns {Boolean} Whether or not the certificate exists.
          */
         certificateExists: async function(certificateId) {
-            try {
-                const filename = certificateId + '.bali';
-                const exists = await doesExist(config.certificateBucket, filename);
-                return exists;
-            } catch (cause) {
-                const exception = bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$certificateExists',
-                    $exception: '$unexpected',
-                    $url: this.getURL(),
-                    $certificateId: certificateId ? bali.text(certificateId) : bali.NONE,
-                    $text: bali.text('An unexpected error occurred while attempting to see if a certificate exists.')
-                }, cause);
-                if (debug) console.error(exception.toString());
-                throw exception;
-            }
+            const filename = certificateId + '.bali';
+            const exists = await doesExist(config.certificateBucket, filename);
+            return exists;
         },
 
         /**
@@ -117,25 +82,14 @@ exports.repository = function(debug) {
          * <code>undefined</code> if it doesn't exist.
          */
         fetchCertificate: async function(certificateId) {
-            try {
-                var certificate;
-                const filename = certificateId + '.bali';
-                const exists = await doesExist(config.certificateBucket, filename);
-                if (exists) {
-                    certificate = await getObject(config.certificateBucket, filename);
-                    certificate = certificate.toString().slice(0, -1);  // remove POSIX compliant <EOL>
-                }
-                return certificate;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$fetchCertificate',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $certificateId: certificateId ? bali.text(certificateId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+            var certificate;
+            const filename = certificateId + '.bali';
+            const exists = await doesExist(config.certificateBucket, filename);
+            if (exists) {
+                certificate = await getObject(config.certificateBucket, filename);
+                certificate = certificate.toString().slice(0, -1);  // remove POSIX compliant <EOL>
             }
+            return certificate;
         },
 
         /**
@@ -146,32 +100,20 @@ exports.repository = function(debug) {
          * @param {String} certificate The canonical source string for the certificate.
          */
         createCertificate: async function(certificateId, certificate) {
-            try {
-                const filename = certificateId + '.bali';
-                const exists = await doesExist(config.certificateBucket, filename);
-                if (exists) {
-                    throw bali.exception({
-                        $module: '$S3Repository',
-                        $function: '$createCertificate',
-                        $exception: '$fileExists',
-                        $url: this.getURL(),
-                        $file: bali.text(filename),
-                        $text: bali.text('The file to be written already exists.')
-                    });
-                }
-                const document = certificate + EOL;  // add POSIX compliant <EOL>
-                await putObject(config.certificateBucket, filename, document);
-            } catch (exception) {
+            const filename = certificateId + '.bali';
+            const exists = await doesExist(config.certificateBucket, filename);
+            if (exists) {
                 throw bali.exception({
                     $module: '$S3Repository',
                     $function: '$createCertificate',
-                    $exception: '$directoryAccess',
+                    $exception: '$fileExists',
                     $url: this.getURL(),
-                    $certificateId: certificateId ? bali.text(certificateId) : bali.NONE,
-                    $certificate: certificate || bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+                    $file: bali.text(filename),
+                    $text: bali.text('The file to be written already exists.')
+                });
             }
+            const document = certificate + EOL;  // add POSIX compliant <EOL>
+            await putObject(config.certificateBucket, filename, document);
         },
 
         /**
@@ -183,20 +125,9 @@ exports.repository = function(debug) {
          * @returns {Boolean} Whether or not the draft document exists.
          */
         draftExists: async function(draftId) {
-            try {
-                const filename = draftId + '.bali';
-                const exists = await doesExist(config.draftBucket, filename);
-                return exists;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$draftExists',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $draftId: draftId ? bali.text(draftId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
-            }
+            const filename = draftId + '.bali';
+            const exists = await doesExist(config.draftBucket, filename);
+            return exists;
         },
 
         /**
@@ -208,25 +139,14 @@ exports.repository = function(debug) {
          * <code>undefined</code> if it doesn't exist.
          */
         fetchDraft: async function(draftId) {
-            try {
-                var draft;
-                const filename = draftId + '.bali';
-                const exists = await doesExist(config.draftBucket, filename);
-                if (exists) {
-                    draft = await getObject(config.draftBucket, filename);
-                    draft = draft.toString().slice(0, -1);  // remove POSIX compliant <EOL>
-                }
-                return draft;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$fetchDraft',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $draftId: draftId ? bali.text(draftId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+            var draft;
+            const filename = draftId + '.bali';
+            const exists = await doesExist(config.draftBucket, filename);
+            if (exists) {
+                draft = await getObject(config.draftBucket, filename);
+                draft = draft.toString().slice(0, -1);  // remove POSIX compliant <EOL>
             }
+            return draft;
         },
 
         /**
@@ -237,21 +157,9 @@ exports.repository = function(debug) {
          * @param {String} draft The canonical source string for the draft document.
          */
         saveDraft: async function(draftId, draft) {
-            try {
-                const filename = draftId + '.bali';
-                const document = draft + EOL;  // add POSIX compliant <EOL>
-                await putObject(config.draftBucket, filename, document);
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$saveDraft',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $draftId: draftId ? bali.text(draftId) : bali.NONE,
-                    $draft: draft || bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
-            }
+            const filename = draftId + '.bali';
+            const document = draft + EOL;  // add POSIX compliant <EOL>
+            await putObject(config.draftBucket, filename, document);
         },
 
         /**
@@ -261,21 +169,10 @@ exports.repository = function(debug) {
          * the draft document being deleted.
          */
         deleteDraft: async function(draftId) {
-            try {
-                const filename = draftId + '.bali';
-                const exists = await doesExist(config.draftBucket, filename);
-                if (exists) {
-                    await deleteObject(config.draftBucket, filename);
-                }
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$deleteDraft',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $draftId: draftId ? bali.text(draftId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+            const filename = draftId + '.bali';
+            const exists = await doesExist(config.draftBucket, filename);
+            if (exists) {
+                await deleteObject(config.draftBucket, filename);
             }
         },
 
@@ -288,20 +185,9 @@ exports.repository = function(debug) {
          * @returns {Boolean} Whether or not the document exists.
          */
         documentExists: async function(documentId) {
-            try {
-                const filename = documentId + '.bali';
-                const exists = await doesExist(config.documentBucket, filename);
-                return exists;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$documentExists',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $documentId: documentId ? bali.text(documentId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
-            }
+            const filename = documentId + '.bali';
+            const exists = await doesExist(config.documentBucket, filename);
+            return exists;
         },
 
         /**
@@ -313,25 +199,14 @@ exports.repository = function(debug) {
          * <code>undefined</code> if it doesn't exist.
          */
         fetchDocument: async function(documentId) {
-            try {
-                var document;
-                const filename = documentId + '.bali';
-                const exists = await doesExist(config.documentBucket, filename);
-                if (exists) {
-                    document = await getObject(config.documentBucket, filename);
-                    document = document.toString().slice(0, -1);  // remove POSIX compliant <EOL>
-                }
-                return document;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$fetchDocument',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $documentId: documentId ? bali.text(documentId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+            var document;
+            const filename = documentId + '.bali';
+            const exists = await doesExist(config.documentBucket, filename);
+            if (exists) {
+                document = await getObject(config.documentBucket, filename);
+                document = document.toString().slice(0, -1);  // remove POSIX compliant <EOL>
             }
+            return document;
         },
 
         /**
@@ -342,32 +217,20 @@ exports.repository = function(debug) {
          * @param {String} document The canonical source string for the document.
          */
         createDocument: async function(documentId, document) {
-            try {
-                const filename = documentId + '.bali';
-                const exists = await doesExist(config.documentBucket, filename);
-                if (exists) {
-                    throw bali.exception({
-                        $module: '$S3Repository',
-                        $function: '$createDocument',
-                        $exception: '$fileExists',
-                        $url: this.getURL(),
-                        $file: bali.text(filename),
-                        $text: bali.text('The file to be written already exists.')
-                    });
-                }
-                document = document + EOL;  // add POSIX compliant <EOL>
-                await putObject(config.documentBucket, filename, document);
-            } catch (exception) {
+            const filename = documentId + '.bali';
+            const exists = await doesExist(config.documentBucket, filename);
+            if (exists) {
                 throw bali.exception({
                     $module: '$S3Repository',
                     $function: '$createDocument',
-                    $exception: '$directoryAccess',
+                    $exception: '$fileExists',
                     $url: this.getURL(),
-                    $documentId: documentId ? bali.text(documentId) : bali.NONE,
-                    $document: document || bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+                    $file: bali.text(filename),
+                    $text: bali.text('The file to be written already exists.')
+                });
             }
+            document = document + EOL;  // add POSIX compliant <EOL>
+            await putObject(config.documentBucket, filename, document);
         },
 
         /**
@@ -379,20 +242,9 @@ exports.repository = function(debug) {
          * @returns {Boolean} Whether or not the type exists.
          */
         typeExists: async function(typeId) {
-            try {
-                const filename = typeId + '.bali';
-                const exists = await doesExist(config.typeBucket, filename);
-                return exists;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$typeExists',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $typeId: typeId ? bali.text(typeId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
-            }
+            const filename = typeId + '.bali';
+            const exists = await doesExist(config.typeBucket, filename);
+            return exists;
         },
 
         /**
@@ -404,25 +256,14 @@ exports.repository = function(debug) {
          * <code>undefined</code> if it doesn't exist.
          */
         fetchType: async function(typeId) {
-            try {
-                var type;
-                const filename = typeId + '.bali';
-                const exists = await doesExist(config.typeBucket, filename);
-                if (exists) {
-                    type = await getObject(config.typeBucket, filename);
-                    type = type.toString().slice(0, -1);  // remove POSIX compliant <EOL>
-                }
-                return type;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$fetchType',
-                    $exception: '$directoryAccess',
-                    $url: this.getURL(),
-                    $typeId: typeId ? bali.text(typeId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+            var type;
+            const filename = typeId + '.bali';
+            const exists = await doesExist(config.typeBucket, filename);
+            if (exists) {
+                type = await getObject(config.typeBucket, filename);
+                type = type.toString().slice(0, -1);  // remove POSIX compliant <EOL>
             }
+            return type;
         },
 
         /**
@@ -433,32 +274,20 @@ exports.repository = function(debug) {
          * @param {String} type The canonical source string for the type.
          */
         createType: async function(typeId, type) {
-            try {
-                const filename = typeId + '.bali';
-                const exists = await doesExist(config.typeBucket, filename);
-                if (exists) {
-                    throw bali.exception({
-                        $module: '$S3Repository',
-                        $function: '$createType',
-                        $exception: '$fileExists',
-                        $url: this.getURL(),
-                        $file: bali.text(filename),
-                        $text: bali.text('The file to be written already exists.')
-                    });
-                }
-                const document = type + EOL;  // add POSIX compliant <EOL>
-                await putObject(config.typeBucket, filename, document);
-            } catch (exception) {
+            const filename = typeId + '.bali';
+            const exists = await doesExist(config.typeBucket, filename);
+            if (exists) {
                 throw bali.exception({
                     $module: '$S3Repository',
                     $function: '$createType',
-                    $exception: '$directoryAccess',
+                    $exception: '$fileExists',
                     $url: this.getURL(),
-                    $typeId: typeId ? bali.text(typeId) : bali.NONE,
-                    $type: type || bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+                    $file: bali.text(filename),
+                    $text: bali.text('The file to be written already exists.')
+                });
             }
+            const document = type + EOL;  // add POSIX compliant <EOL>
+            await putObject(config.typeBucket, filename, document);
         },
 
         /**
@@ -469,30 +298,19 @@ exports.repository = function(debug) {
          */
         queueMessage: async function(queueId, message) {
             const messageId = bali.tag().getValue();
-            try {
-                const filename = queueId + '/' + messageId + '.bali';
-                const exists = await doesExist(config.queueBucket, filename);
-                if (exists) {
-                    throw bali.exception({
-                        $module: '$S3Repository',
-                        $function: '$queueMessage',
-                        $exception: '$messageExists',
-                        $message: bali.text(filename),
-                        $text: bali.text('The message to be written already exists.')
-                    });
-                }
-                const document = message + EOL;  // add POSIX compliant <EOL>
-                await putObject(config.queueBucket, filename, document);
-            } catch (exception) {
+            const filename = queueId + '/' + messageId + '.bali';
+            const exists = await doesExist(config.queueBucket, filename);
+            if (exists) {
                 throw bali.exception({
                     $module: '$S3Repository',
                     $function: '$queueMessage',
-                    $exception: '$queueAccess',
-                    $queueId: queueId ? bali.text(queueId) : bali.NONE,
-                    $messageId: messageId ? bali.text(messageId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
+                    $exception: '$messageExists',
+                    $message: bali.text(filename),
+                    $text: bali.text('The message to be written already exists.')
+                });
             }
+            const document = message + EOL;  // add POSIX compliant <EOL>
+            await putObject(config.queueBucket, filename, document);
         },
 
         /**
@@ -502,38 +320,28 @@ exports.repository = function(debug) {
          * @returns {String} The canonical source string for the message.
          */
         dequeueMessage: async function(queueId) {
-            try {
-                var message;
-                while (true) {
-                    const messages = (await listObjects(config.queueBucket, queueId));
-                    if (messages && messages.length) {
-                        // select a message a random since a distributed queue cannot guarantee FIFO
-                        const count = messages.length;
-                        const index = bali.random.index(count) - 1;  // convert to zero based indexing
-                        const filename = messages[index].Key;
-                        message = await getObject(config.queueBucket, filename);
-                        message = message.toString().slice(0, -1);  // remove POSIX compliant <EOL>
-                        try {
-                            await deleteObject(config.queueBucket, filename);
-                            break; // we got there first
-                        } catch (exception) {
-                            // another process got there first
-                            message = undefined;
-                        }
-                    } else {
-                        break;  // no more messages
+            var message;
+            while (true) {
+                const messages = (await listObjects(config.queueBucket, queueId));
+                if (messages && messages.length) {
+                    // select a message a random since a distributed queue cannot guarantee FIFO
+                    const count = messages.length;
+                    const index = bali.random.index(count) - 1;  // convert to zero based indexing
+                    const filename = messages[index].Key;
+                    message = await getObject(config.queueBucket, filename);
+                    message = message.toString().slice(0, -1);  // remove POSIX compliant <EOL>
+                    try {
+                        await deleteObject(config.queueBucket, filename);
+                        break; // we got there first
+                    } catch (exception) {
+                        // another process got there first
+                        message = undefined;
                     }
+                } else {
+                    break;  // no more messages
                 }
-                return message;
-            } catch (exception) {
-                throw bali.exception({
-                    $module: '$S3Repository',
-                    $function: '$dequeueMessage',
-                    $exception: '$queueAccess',
-                    $queueId: queueId ? bali.text(queueId) : bali.NONE,
-                    $text: bali.text('The S3 repository could not be accessed.')
-                }, exception);
             }
+            return message;
         }
 
     };

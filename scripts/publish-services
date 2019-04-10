@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p dist
 cd dist/
 
 echo "Creating a zip file for distribution to AWS..."

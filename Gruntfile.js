@@ -40,9 +40,9 @@ module.exports = function(grunt) {
         stderr: false
       },
       publish: {
-        command: 'scripts/publish-agents',
+        command: 'scripts/publish-services',
         stdout: false,
-        stderr: false
+        stderr: true
       }
     },
 

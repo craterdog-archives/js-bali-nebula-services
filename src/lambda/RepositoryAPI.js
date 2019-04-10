@@ -10,9 +10,9 @@
 'use strict';
 
 const debug = true;
-const repository = require('../s3/S3Repository').repository(debug);
+const repository = require('../s3/S3Repository').repository();
 const bali = require('bali-component-framework');
-const notary = require('bali-digital-notary').publicAPI(debug);
+const notary = require('bali-digital-notary').publicAPI();
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
@@ -26,15 +26,11 @@ if (debug) console.log('Loading the "Nebula Repository API" lambda function');
 exports.handleRequest = async function(request, context) {
     if (debug) console.log('Executing the "Nebula Repository API" lambda function for ' + request.httpMethod + ': ' + request.path);
 
-    // initialize the APIs as needed
-    if (repository.initializeAPI) await repository.initializeAPI();
-    if (notary.initializeAPI) await notary.initializeAPI();
-
     // validate the security credentials
-/*
+/* TODO: Find a way to push out the certificate ahead so there isn't a "catch-22".
     try {
         const credentials = bali.parse(request.headers['Nebula-Credentials']);
-        const citation = credentials.getValue('$document');
+        const citation = credentials.getValue('$component');
         const certificateId = citation.getValue('$tag').getValue() + citation.getValue('$version');
         const certificate = await repository.fetchCertificate(certificateId);
         const isValid = notary.documentIsValid(credentials, certificate);
