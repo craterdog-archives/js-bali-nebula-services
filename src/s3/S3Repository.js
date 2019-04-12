@@ -60,6 +60,60 @@ exports.repository = function() {
         },
 
         /**
+         * This function checks to see whether or not an account is associated with the
+         * specified identifier.
+         * 
+         * @param {String} accountId The unique identifier for the account being checked.
+         * @returns {Boolean} Whether or not the account exists.
+         */
+        accountExists: async function(accountId) {
+            const filename = accountId + '.bali';
+            const exists = await doesExist(config.accountBucket, filename);
+            return exists;
+        },
+
+        /**
+         * This function attempts to retrieve the specified account from the repository.
+         * 
+         * @param {String} accountId The unique identifier for the account being fetched.
+         * @returns {String} The canonical source string for the account, or
+         * <code>undefined</code> if it doesn't exist.
+         */
+        fetchAccount: async function(accountId) {
+            var account;
+            const filename = accountId + '.bali';
+            const exists = await doesExist(config.accountBucket, filename);
+            if (exists) {
+                account = await getObject(config.accountBucket, filename);
+                account = account.toString().slice(0, -1);  // remove POSIX compliant <EOL>
+            }
+            return account;
+        },
+
+        /**
+         * This function creates a new account in the repository.
+         * 
+         * @param {String} accountId The unique identifier for the account being created.
+         * @param {String} account The canonical source string for the account.
+         */
+        createAccount: async function(accountId, account) {
+            const filename = accountId + '.bali';
+            const exists = await doesExist(config.accountBucket, filename);
+            if (exists) {
+                throw bali.exception({
+                    $module: '$S3Repository',
+                    $function: '$createAccount',
+                    $exception: '$fileExists',
+                    $url: this.getURL(),
+                    $file: bali.text(filename),
+                    $text: bali.text('The file to be written already exists.')
+                });
+            }
+            const document = account + EOL;  // add POSIX compliant <EOL>
+            await putObject(config.accountBucket, filename, document);
+        },
+
+        /**
          * This function checks to see whether or not a certificate is associated with the
          * specified identifier.
          * 

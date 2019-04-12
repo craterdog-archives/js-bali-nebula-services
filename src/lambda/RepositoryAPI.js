@@ -63,6 +63,8 @@ exports.handleRequest = async function(request, context) {
     // execute the request
     try {
         switch (type) {
+            case 'account':
+                return await accountRequest(method, identifier, document);
             case 'certificate':
                 return await certificateRequest(method, identifier, document);
             case 'type':
@@ -84,6 +86,58 @@ exports.handleRequest = async function(request, context) {
         return {
             statusCode: 503  // Service Unavailable
         };
+    }
+};
+
+
+const accountRequest = async function(method, identifier, document) {
+    switch (method) {
+        case HEAD:
+            if (await repository.accountExists(identifier)) {
+                if (debug) console.log('The following account exists: ' + identifier);
+                return {
+                    statusCode: 200  // OK
+                };
+            }
+            if (debug) console.log('The following account does not exists: ' + identifier);
+            return {
+                statusCode: 404  // Not Found
+            };
+        case POST:
+            if (await repository.accountExists(identifier)) {
+                if (debug) console.log('The following account already exists: ' + identifier);
+                return {
+                    statusCode: 409  // Conflict
+                };
+            }
+            await repository.createAccount(identifier, document);
+            if (debug) console.log('The following account was created: ' + identifier);
+            return {
+                statusCode: 201  // Created
+            };
+        case GET:
+            document = await repository.fetchAccount(identifier);
+            if (document) {
+                if (debug) console.log('Fetched the following account: ' + document);
+                return {
+                    statusCode: 200,
+                    headers: {
+                        'Content-Length': document.length,
+                        'Content-Type': 'application/bali',
+                        'Cache-Control': 'immutable'
+                    },
+                    body: document
+                };
+            }
+            if (debug) console.log('The following account does not exists: ' + identifier);
+            return {
+                statusCode: 404  // Not Found
+            };
+        default:
+            if (debug) console.log('The following account method is not allowed: ' + method);
+            return {
+                statusCode: 405  // Method Not Allowed
+            };
     }
 };
 
