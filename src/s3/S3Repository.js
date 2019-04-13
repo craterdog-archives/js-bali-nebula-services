@@ -45,7 +45,7 @@ exports.repository = function() {
          */
         toString: function() {
             return bali.catalog({
-                $module: '/bali/utilities/S3Repository',
+                $module: '/bali/repositories/S3Repository',
                 $url: this.getURL()
             });
         },
@@ -101,7 +101,7 @@ exports.repository = function() {
             const exists = await doesExist(config.accountBucket, filename);
             if (exists) {
                 throw bali.exception({
-                    $module: '/bali/utilities/S3Repository',
+                    $module: '/bali/repositories/S3Repository',
                     $procedure: '$createAccount',
                     $exception: '$fileExists',
                     $url: this.getURL(),
@@ -158,7 +158,7 @@ exports.repository = function() {
             const exists = await doesExist(config.certificateBucket, filename);
             if (exists) {
                 throw bali.exception({
-                    $module: '/bali/utilities/S3Repository',
+                    $module: '/bali/repositories/S3Repository',
                     $procedure: '$createCertificate',
                     $exception: '$fileExists',
                     $url: this.getURL(),
@@ -275,7 +275,7 @@ exports.repository = function() {
             const exists = await doesExist(config.documentBucket, filename);
             if (exists) {
                 throw bali.exception({
-                    $module: '/bali/utilities/S3Repository',
+                    $module: '/bali/repositories/S3Repository',
                     $procedure: '$createDocument',
                     $exception: '$fileExists',
                     $url: this.getURL(),
@@ -332,7 +332,7 @@ exports.repository = function() {
             const exists = await doesExist(config.typeBucket, filename);
             if (exists) {
                 throw bali.exception({
-                    $module: '/bali/utilities/S3Repository',
+                    $module: '/bali/repositories/S3Repository',
                     $procedure: '$createType',
                     $exception: '$fileExists',
                     $url: this.getURL(),
@@ -356,7 +356,7 @@ exports.repository = function() {
             const exists = await doesExist(config.queueBucket, filename);
             if (exists) {
                 throw bali.exception({
-                    $module: '/bali/utilities/S3Repository',
+                    $module: '/bali/repositories/S3Repository',
                     $procedure: '$queueMessage',
                     $exception: '$messageExists',
                     $message: bali.text(filename),
