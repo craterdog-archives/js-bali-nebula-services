@@ -56,7 +56,7 @@ exports.repository = function() {
          * @returns {Reference} A reference to this document repository.
          */
         getURL: function() {
-            return bali.reference(config.cloudURL);
+            return bali.reference(config.url);
         },
 
         /**
