@@ -12,7 +12,8 @@
 const debug = true;
 const repository = require('../s3/S3Repository').repository();
 const bali = require('bali-component-framework');
-const notary = require('bali-digital-notary').publicAPI();
+const securityModule = require('bali-digital-notary').ssm();
+const notary = require('bali-digital-notary').api(securityModule);
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
