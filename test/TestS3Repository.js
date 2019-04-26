@@ -28,66 +28,29 @@ describe('Bali Nebula API™', function() {
 
     describe('Test S3 Repository', function() {
 
-        it('should perform a notary certificate lifecycle', async function() {
-            const identifier = 'VRYA45CS3K1QL7AGY9TSAAHQK4Y2BJRXv3';
+        it('should perform a citation name lifecycle', async function() {
+            const name = 'bali/examples/name/v1.2.3';
 
-            // store a new certificate in the repository
-            await repository.createCertificate(identifier, source);
+            // make sure the new name does not yet exist in the repository
+            exists = await repository.citationExists(name);
+            expect(exists).is.false;
 
-            // make sure the new certificate exists in the repository
-            exists = await repository.certificateExists(identifier);
+            // create a new name in the repository
+            await repository.createCitation(name, source);
+
+            // make sure the new name exists in the repository
+            exists = await repository.citationExists(name);
             expect(exists).is.true;
 
-            // fetch the new certificate from the repository
-            const certificate = await repository.fetchCertificate(identifier);
-            expect(certificate).to.equal(source);
-
-            // make sure the new certificate still exists in the repository
-            exists = await repository.certificateExists(identifier);
-            expect(exists).is.true;
-
-            // attempt to store the same certificate in the repository
-            try {
-                await repository.createCertificate(identifier, source);
-                assert.fail('The attempt to store the same certificate should have failed.');
-            } catch (error) {
-                // expected
-            };
-
-        });
-
-        it('should perform a component type lifecycle', async function() {
-            const identifier = '8M5H4ZA99FB6XAK2BZ13JGL7TGZZ69N2v1';
-
-            // store a new type in the repository
-            await repository.createType(identifier, source);
-
-            // make sure the new type exists in the repository
-            exists = await repository.typeExists(identifier);
-            expect(exists).is.true;
-
-            // fetch the new type from the repository
-            const type = await repository.fetchType(identifier);
-            expect(type).to.equal(source);
-
-            // make sure the new type still exists in the repository
-            exists = await repository.typeExists(identifier);
-            expect(exists).is.true;
-
-            // attempt to store the same type in the repository
-            try {
-                await repository.createType(identifier, source);
-                assert.fail('The attempt to store the same type should have failed.');
-            } catch (error) {
-                // expected
-            };
-
+            // fetch the new citation from the repository
+            const citation = await repository.fetchCitation(name);
+            expect(citation).to.equal(source);
         });
 
         it('should perform a draft document lifecycle', async function() {
             const identifier = 'BXC15F9H0V4AJVTHJHN1B6VA8PZP4S51v1.2.3';
 
-            // store a new draft in the repository
+            // create a new draft in the repository
             await repository.saveDraft(identifier, source);
 
             // make sure the new draft exists in the repository
@@ -117,7 +80,7 @@ describe('Bali Nebula API™', function() {
         it('should perform a committed document lifecycle', async function() {
             const identifier = '454J79TXY3799ZL8VNG2G4SBMVDFVPBVv3.4';
 
-            // store a new document in the repository
+            // create a new document in the repository
             await repository.createDocument(identifier, source);
 
             // make sure the same draft does not exist in the repository
@@ -136,10 +99,10 @@ describe('Bali Nebula API™', function() {
             exists = await repository.documentExists(identifier);
             expect(exists).is.true;
 
-            // attempt to store the same document in the repository
+            // attempt to create the same document in the repository
             try {
                 await repository.createDocument(identifier, source);
-                assert.fail('The attempt to store the same document should have failed.');
+                assert.fail('The attempt to create the same document should have failed.');
             } catch (error) {
                 // expected
             };

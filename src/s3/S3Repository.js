@@ -44,10 +44,11 @@ exports.repository = function() {
          * @returns {String} A string providing attributes about this repository.
          */
         toString: function() {
-            return bali.catalog({
+            const catalog = bali.catalog({
                 $module: '/bali/repositories/S3Repository',
                 $url: this.getURL()
             });
+            return catalog.toString();
         },
 
         /**
@@ -60,114 +61,59 @@ exports.repository = function() {
         },
 
         /**
-         * This function checks to see whether or not an account is associated with the
-         * specified identifier.
+         * This function checks to see whether or not a document citation is associated
+         * with the specified name.
          * 
-         * @param {String} accountId The unique identifier for the account being checked.
-         * @returns {Boolean} Whether or not the account exists.
+         * @param {String} name The unique name for the document citation being checked.
+         * @returns {Boolean} Whether or not the document citation exists.
          */
-        accountExists: async function(accountId) {
-            const filename = accountId + '.bali';
-            const exists = await doesExist(config.accountBucket, filename);
+        citationExists: async function(name) {
+            const filename = name + '.bali';
+            const exists = await doesExist(config.citationBucket, filename);
             return exists;
         },
 
         /**
-         * This function attempts to retrieve the specified account from the repository.
+         * This function attempts to retrieve a document citation from the repository for
+         * the specified name.
          * 
-         * @param {String} accountId The unique identifier for the account being fetched.
-         * @returns {String} The canonical source string for the account, or
+         * @param {String} name The unique name for the document citation being fetched.
+         * @returns {String} The canonical source string for the document citation, or
          * <code>undefined</code> if it doesn't exist.
          */
-        fetchAccount: async function(accountId) {
-            var account;
-            const filename = accountId + '.bali';
-            const exists = await doesExist(config.accountBucket, filename);
+        fetchCitation: async function(name) {
+            var citation;
+            const filename = name + '.bali';
+            const exists = await doesExist(config.citationBucket, filename);
             if (exists) {
-                account = await getObject(config.accountBucket, filename);
-                account = account.toString().slice(0, -1);  // remove POSIX compliant <EOL>
+                citation = await getObject(config.citationBucket, filename);
+                citation = citation.toString().slice(0, -1);  // remove POSIX compliant <EOL>
             }
-            return account;
+            return citation;
         },
 
         /**
-         * This function creates a new account in the repository.
+         * This function associates a new name with the specified document citation in
+         * the repository.
          * 
-         * @param {String} accountId The unique identifier for the account being created.
-         * @param {String} account The canonical source string for the account.
+         * @param {String} name The unique name for the specified document citation.
+         * @param {String} citation The canonical source string for the document citation.
          */
-        createAccount: async function(accountId, account) {
-            const filename = accountId + '.bali';
-            const exists = await doesExist(config.accountBucket, filename);
+        createCitation: async function(name, citation) {
+            const filename = name + '.bali';
+            const exists = await doesExist(config.documentBucket, filename);
             if (exists) {
                 throw bali.exception({
                     $module: '/bali/repositories/S3Repository',
-                    $procedure: '$createAccount',
+                    $procedure: '$createCitation',
                     $exception: '$fileExists',
                     $url: this.getURL(),
                     $file: bali.text(filename),
                     $text: bali.text('The file to be written already exists.')
                 });
             }
-            const document = account + EOL;  // add POSIX compliant <EOL>
-            await putObject(config.accountBucket, filename, document);
-        },
-
-        /**
-         * This function checks to see whether or not a certificate is associated with the
-         * specified identifier.
-         * 
-         * @param {String} certificateId The unique identifier (including version number) for
-         * the certificate being checked.
-         * @returns {Boolean} Whether or not the certificate exists.
-         */
-        certificateExists: async function(certificateId) {
-            const filename = certificateId + '.bali';
-            const exists = await doesExist(config.certificateBucket, filename);
-            return exists;
-        },
-
-        /**
-         * This function attempts to retrieve the specified certificate from the repository.
-         * 
-         * @param {String} certificateId The unique identifier (including version number) for
-         * the certificate being fetched.
-         * @returns {String} The canonical source string for the certificate, or
-         * <code>undefined</code> if it doesn't exist.
-         */
-        fetchCertificate: async function(certificateId) {
-            var certificate;
-            const filename = certificateId + '.bali';
-            const exists = await doesExist(config.certificateBucket, filename);
-            if (exists) {
-                certificate = await getObject(config.certificateBucket, filename);
-                certificate = certificate.toString().slice(0, -1);  // remove POSIX compliant <EOL>
-            }
-            return certificate;
-        },
-
-        /**
-         * This function creates a new certificate in the repository.
-         * 
-         * @param {String} certificateId The unique identifier (including version number) for
-         * the certificate being created.
-         * @param {String} certificate The canonical source string for the certificate.
-         */
-        createCertificate: async function(certificateId, certificate) {
-            const filename = certificateId + '.bali';
-            const exists = await doesExist(config.certificateBucket, filename);
-            if (exists) {
-                throw bali.exception({
-                    $module: '/bali/repositories/S3Repository',
-                    $procedure: '$createCertificate',
-                    $exception: '$fileExists',
-                    $url: this.getURL(),
-                    $file: bali.text(filename),
-                    $text: bali.text('The file to be written already exists.')
-                });
-            }
-            const document = certificate + EOL;  // add POSIX compliant <EOL>
-            await putObject(config.certificateBucket, filename, document);
+            citation = citation + EOL;  // add POSIX compliant <EOL>
+            await putObject(config.citationBucket, filename, citation);
         },
 
         /**
@@ -204,10 +150,10 @@ exports.repository = function() {
         },
 
         /**
-         * This function updates an existing draft document in the repository.
+         * This function saves a draft document in the repository.
          * 
          * @param {String} draftId The unique identifier (including version number) for
-         * the draft document being updated.
+         * the draft document being saved.
          * @param {String} draft The canonical source string for the draft document.
          */
         saveDraft: async function(draftId, draft) {
@@ -285,63 +231,6 @@ exports.repository = function() {
             }
             document = document + EOL;  // add POSIX compliant <EOL>
             await putObject(config.documentBucket, filename, document);
-        },
-
-        /**
-         * This function checks to see whether or not a type is associated with the
-         * specified identifier.
-         * 
-         * @param {String} typeId The unique identifier (including version number) for
-         * the type being checked.
-         * @returns {Boolean} Whether or not the type exists.
-         */
-        typeExists: async function(typeId) {
-            const filename = typeId + '.bali';
-            const exists = await doesExist(config.typeBucket, filename);
-            return exists;
-        },
-
-        /**
-         * This function attempts to retrieve the specified type from the repository.
-         * 
-         * @param {String} typeId The unique identifier (including version number) for
-         * the type being fetched.
-         * @returns {String} The canonical source string for the type, or
-         * <code>undefined</code> if it doesn't exist.
-         */
-        fetchType: async function(typeId) {
-            var type;
-            const filename = typeId + '.bali';
-            const exists = await doesExist(config.typeBucket, filename);
-            if (exists) {
-                type = await getObject(config.typeBucket, filename);
-                type = type.toString().slice(0, -1);  // remove POSIX compliant <EOL>
-            }
-            return type;
-        },
-
-        /**
-         * This function creates a new type in the repository.
-         * 
-         * @param {String} typeId The unique identifier (including version number) for
-         * the type being created.
-         * @param {String} type The canonical source string for the type.
-         */
-        createType: async function(typeId, type) {
-            const filename = typeId + '.bali';
-            const exists = await doesExist(config.typeBucket, filename);
-            if (exists) {
-                throw bali.exception({
-                    $module: '/bali/repositories/S3Repository',
-                    $procedure: '$createType',
-                    $exception: '$fileExists',
-                    $url: this.getURL(),
-                    $file: bali.text(filename),
-                    $text: bali.text('The file to be written already exists.')
-                });
-            }
-            const document = type + EOL;  // add POSIX compliant <EOL>
-            await putObject(config.typeBucket, filename, document);
         },
 
         /**
