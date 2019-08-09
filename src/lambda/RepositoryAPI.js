@@ -12,8 +12,8 @@
 const debug = true;
 const repository = require('../s3/S3Repository').repository();
 const bali = require('bali-component-framework');
-const securityModule = require('bali-digital-notary').ssm();
-const notary = require('bali-digital-notary').api(securityModule);
+const securityModule = require('bali-digital-notary').ssm(undefined, debug);
+const notary = require('bali-digital-notary').api(securityModule, undefined, undefined, debug);
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
@@ -66,10 +66,8 @@ exports.handleRequest = async function(request, context) {
         switch (type) {
             case 'account':
                 return await accountRequest(method, identifier, document);
-            case 'certificate':
-                return await certificateRequest(method, identifier, document);
-            case 'type':
-                return await typeRequest(method, identifier, document);
+            case 'citation':
+                return await citationRequest(method, identifier, document);
             case 'draft':
                 return await draftRequest(method, identifier, document);
             case 'document':
@@ -143,35 +141,35 @@ const accountRequest = async function(method, identifier, document) {
 };
 
 
-const certificateRequest = async function(method, identifier, document) {
+const citationRequest = async function(method, identifier, document) {
     switch (method) {
         case HEAD:
-            if (await repository.certificateExists(identifier)) {
-                if (debug) console.log('The following certificate exists: ' + identifier);
+            if (await repository.citationExists(identifier)) {
+                if (debug) console.log('The following citation exists: ' + identifier);
                 return {
                     statusCode: 200  // OK
                 };
             }
-            if (debug) console.log('The following certificate does not exists: ' + identifier);
+            if (debug) console.log('The following citation does not exists: ' + identifier);
             return {
                 statusCode: 404  // Not Found
             };
         case POST:
-            if (await repository.certificateExists(identifier)) {
-                if (debug) console.log('The following certificate already exists: ' + identifier);
+            if (await repository.citationExists(identifier)) {
+                if (debug) console.log('The following citation already exists: ' + identifier);
                 return {
                     statusCode: 409  // Conflict
                 };
             }
             await repository.createCertificate(identifier, document);
-            if (debug) console.log('The following certificate was created: ' + identifier);
+            if (debug) console.log('The following citation was created: ' + identifier);
             return {
                 statusCode: 201  // Created
             };
         case GET:
             document = await repository.fetchCertificate(identifier);
             if (document) {
-                if (debug) console.log('Fetched the following certificate: ' + document);
+                if (debug) console.log('Fetched the following citation: ' + document);
                 return {
                     statusCode: 200,
                     headers: {
@@ -182,64 +180,12 @@ const certificateRequest = async function(method, identifier, document) {
                     body: document
                 };
             }
-            if (debug) console.log('The following certificate does not exists: ' + identifier);
+            if (debug) console.log('The following citation does not exists: ' + identifier);
             return {
                 statusCode: 404  // Not Found
             };
         default:
-            if (debug) console.log('The following certificate method is not allowed: ' + method);
-            return {
-                statusCode: 405  // Method Not Allowed
-            };
-    }
-};
-
-
-const typeRequest = async function(method, identifier, document) {
-    switch (method) {
-        case HEAD:
-            if (await repository.typeExists(identifier)) {
-                if (debug) console.log('The following type exists: ' + identifier);
-                return {
-                    statusCode: 200  // OK
-                };
-            }
-            if (debug) console.log('The following type does not exists: ' + identifier);
-            return {
-                statusCode: 404  // Not Found
-            };
-        case POST:
-            if (await repository.typeExists(identifier)) {
-                if (debug) console.log('The following type already exists: ' + identifier);
-                return {
-                    statusCode: 409  // Conflict
-                };
-            }
-            await repository.createType(identifier, document);
-            if (debug) console.log('The following type was created: ' + identifier);
-            return {
-                statusCode: 201  // Created
-            };
-        case GET:
-            document = await repository.fetchType(identifier);
-            if (document) {
-                if (debug) console.log('Fetched the following type: ' + document);
-                return {
-                    statusCode: 200,
-                    headers: {
-                        'Content-Length': document.length,
-                        'Content-Type': 'application/bali',
-                        'Cache-Control': 'immutable'
-                    },
-                    body: document
-                };
-            }
-            if (debug) console.log('The following type does not exists: ' + identifier);
-            return {
-                statusCode: 404  // Not Found
-            };
-        default:
-            if (debug) console.log('The following type method is not allowed: ' + method);
+            if (debug) console.log('The following citation method is not allowed: ' + method);
             return {
                 statusCode: 405  // Method Not Allowed
             };

@@ -9,15 +9,11 @@
  ************************************************************************/
 'use strict';
 
-///////////////////////////////////////////////////////////////////////////////////////
-// This module should be used for LOCAL TESTING ONLY.  It is NOT SECURE and provides //
-// no guarantees on protecting access to the documents.  YOU HAVE BEEN WARNED!!!     //
-///////////////////////////////////////////////////////////////////////////////////////
-
 
 /*
  * This module defines a singleton that implements an AWS S3 bucket based document
- * repository. It treats documents as UTF-8 encoded strings.
+ * repository. It is designed to be used by a lambda based service that is running in
+ * the AWS cloud. It treats documents as UTF-8 encoded strings.
  */
 const config = require('./Configuration.js');
 const aws = new require('aws-sdk/clients/s3');
@@ -30,10 +26,11 @@ const EOL = '\n';  // POSIX compliant end of line
  * This function returns an object that implements the API for an AWS S3 based document
  * repository.
  * 
+ * @param {Boolean} debug An optional flag that determines whether or not exceptions
  * will be logged to the error console.
  * @returns {Object} An object implementing the document repository interface.
  */
-exports.repository = function() {
+exports.repository = function(debug) {
 
     // return a singleton object for the API
     return {
@@ -103,7 +100,7 @@ exports.repository = function() {
             const filename = name + '.bali';
             const exists = await doesExist(config.documentBucket, filename);
             if (exists) {
-                throw bali.exception({
+                const exception = bali.exception({
                     $module: '/bali/repositories/S3Repository',
                     $procedure: '$createCitation',
                     $exception: '$fileExists',
@@ -111,6 +108,8 @@ exports.repository = function() {
                     $file: bali.text(filename),
                     $text: bali.text('The file to be written already exists.')
                 });
+                if (debug) console.error(exception.toString());
+                throw exception;
             }
             citation = citation + EOL;  // add POSIX compliant <EOL>
             await putObject(config.citationBucket, filename, citation);
@@ -220,7 +219,7 @@ exports.repository = function() {
             const filename = documentId + '.bali';
             const exists = await doesExist(config.documentBucket, filename);
             if (exists) {
-                throw bali.exception({
+                const exception = bali.exception({
                     $module: '/bali/repositories/S3Repository',
                     $procedure: '$createDocument',
                     $exception: '$fileExists',
@@ -228,6 +227,8 @@ exports.repository = function() {
                     $file: bali.text(filename),
                     $text: bali.text('The file to be written already exists.')
                 });
+                if (debug) console.error(exception.toString());
+                throw exception;
             }
             document = document + EOL;  // add POSIX compliant <EOL>
             await putObject(config.documentBucket, filename, document);
@@ -244,13 +245,15 @@ exports.repository = function() {
             const filename = queueId + '/' + messageId + '.bali';
             const exists = await doesExist(config.queueBucket, filename);
             if (exists) {
-                throw bali.exception({
+                const exception = bali.exception({
                     $module: '/bali/repositories/S3Repository',
                     $procedure: '$queueMessage',
                     $exception: '$messageExists',
                     $message: bali.text(filename),
                     $text: bali.text('The message to be written already exists.')
                 });
+                if (debug) console.error(exception.toString());
+                throw exception;
             }
             const document = message + EOL;  // add POSIX compliant <EOL>
             await putObject(config.queueBucket, filename, document);
