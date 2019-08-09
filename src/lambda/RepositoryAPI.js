@@ -12,8 +12,8 @@
 const debug = true;
 const repository = require('../s3/S3Repository').repository();
 const bali = require('bali-component-framework');
-const securityModule = require('bali-digital-notary').ssm(undefined, debug);
-const notary = require('bali-digital-notary').api(securityModule, undefined, undefined, debug);
+//const securityModule = require('bali-digital-notary').ssm(undefined, debug);
+//const notary = require('bali-digital-notary').api(securityModule, undefined, undefined, debug);
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
@@ -28,15 +28,26 @@ exports.handleRequest = async function(request, context) {
     if (debug) console.log('Executing the "Nebula Repository API" lambda function for ' + request.httpMethod + ': ' + request.path);
 
     // validate the security credentials
-/* TODO: Find a way to push out the certificate ahead so there isn't a "catch-22".
+/* Commented out until a new AccountAPI is created that pushes out the account certificate first.
     try {
-        const credentials = bali.parse(request.headers['Nebula-Credentials']);
+        const header = request.headers['Nebula-Credentials'];
+        const credentials = bali.parse(header);
         const citation = credentials.getValue('$component');
         const certificateId = citation.getValue('$tag').getValue() + citation.getValue('$version');
         const certificate = await repository.fetchCertificate(certificateId);
         const isValid = notary.documentIsValid(credentials, certificate);
         if (!isValid) throw Error('Invalid credentials were passed with the request.');
-    } catch (exception) {
+    } catch (cause) {
+        if (debug) {
+            const exception = bali.exception({
+                $module: '/bali/services/RepositoryAPI',
+                $procedure: '$handleRequest',
+                $exception: '$invalidCredentials',
+                $credentials: bali.text(header),
+                $text: bali.text('The credentials passed in the HTTP header are not valid.')
+            }, cause);
+            console.error(exception.toString());
+        }
         return {
             statusCode: 403  // Forbidden
         };
@@ -54,8 +65,20 @@ exports.handleRequest = async function(request, context) {
         type = tokens[0];
         identifier = tokens[1];
         if (request.body) document = bali.parse(request.body);
-    } catch (exception) {
-        if (debug) console.log('Received an invalid request: ' + exception);
+    } catch (cause) {
+        if (debug) {
+            const exception = bali.exception({
+                $module: '/bali/services/RepositoryAPI',
+                $procedure: '$handleRequest',
+                $exception: '$invalidRequest',
+                $method: bali.text(method),
+                $type: bali.text(type),
+                $identifier: bali.text(identifier),
+                $body: bali.text(request.body),
+                $text: bali.text('The HTTP request was not valid.')
+            }, cause);
+            console.error(exception.toString());
+        }
         return {
             statusCode: 400  // Bad Request
         };
@@ -64,8 +87,6 @@ exports.handleRequest = async function(request, context) {
     // execute the request
     try {
         switch (type) {
-            case 'account':
-                return await accountRequest(method, identifier, document);
             case 'citation':
                 return await citationRequest(method, identifier, document);
             case 'draft':
@@ -75,68 +96,38 @@ exports.handleRequest = async function(request, context) {
             case 'queue':
                 return await queueRequest(method, identifier, document);
             default:
-                if (debug) console.log('Received an invalid type: ' + type);
+                if (debug) {
+                    const exception = bali.exception({
+                        $module: '/bali/services/RepositoryAPI',
+                        $procedure: '$handleRequest',
+                        $exception: '$processingFailed',
+                        $method: bali.text(method),
+                        $type: bali.text(type),
+                        $text: bali.text('The HTTP request contained an invalid type.')
+                    });
+                    console.error(exception.toString());
+                }
                 return {
                     statusCode: 400  // Bad Request
                 };
         }
-    } catch (exception) {
-        if (debug) console.log('An error occurred while processing the request: ' + exception);
+    } catch (cause) {
+        if (debug) {
+            const exception = bali.exception({
+                $module: '/bali/services/RepositoryAPI',
+                $procedure: '$handleRequest',
+                $exception: '$processingFailed',
+                $method: bali.text(method),
+                $type: bali.text(type),
+                $identifier: bali.text(identifier),
+                $body: bali.text(request.body),
+                $text: bali.text('The processing of the HTTP request failed.')
+            }, cause);
+            console.error(exception.toString());
+        }
         return {
             statusCode: 503  // Service Unavailable
         };
-    }
-};
-
-
-const accountRequest = async function(method, identifier, document) {
-    switch (method) {
-        case HEAD:
-            if (await repository.accountExists(identifier)) {
-                if (debug) console.log('The following account exists: ' + identifier);
-                return {
-                    statusCode: 200  // OK
-                };
-            }
-            if (debug) console.log('The following account does not exists: ' + identifier);
-            return {
-                statusCode: 404  // Not Found
-            };
-        case POST:
-            if (await repository.accountExists(identifier)) {
-                if (debug) console.log('The following account already exists: ' + identifier);
-                return {
-                    statusCode: 409  // Conflict
-                };
-            }
-            await repository.createAccount(identifier, document);
-            if (debug) console.log('The following account was created: ' + identifier);
-            return {
-                statusCode: 201  // Created
-            };
-        case GET:
-            document = await repository.fetchAccount(identifier);
-            if (document) {
-                if (debug) console.log('Fetched the following account: ' + document);
-                return {
-                    statusCode: 200,
-                    headers: {
-                        'Content-Length': document.length,
-                        'Content-Type': 'application/bali',
-                        'Cache-Control': 'immutable'
-                    },
-                    body: document
-                };
-            }
-            if (debug) console.log('The following account does not exists: ' + identifier);
-            return {
-                statusCode: 404  // Not Found
-            };
-        default:
-            if (debug) console.log('The following account method is not allowed: ' + method);
-            return {
-                statusCode: 405  // Method Not Allowed
-            };
     }
 };
 
