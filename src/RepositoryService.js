@@ -12,8 +12,8 @@
 const debug = true;
 const repository = require('../s3/S3Repository').repository();
 const bali = require('bali-component-framework');
-//const securityModule = require('bali-digital-notary').ssm(undefined, debug);
-//const notary = require('bali-digital-notary').api(securityModule, undefined, undefined, debug);
+const securityModule = require('bali-digital-notary').ssm(undefined, debug);
+const notary = require('bali-digital-notary').api(securityModule, undefined, undefined, debug);
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
@@ -22,25 +22,25 @@ const GET = 'GET';
 const PUT = 'PUT';
 const DELETE = 'DELETE';
 
-if (debug) console.log('Loading the "Nebula Repository API" lambda function');
+if (debug) console.log('Loading the "Nebula Repository Service" lambda function');
  
-exports.handleRequest = async function(request, context) {
-    if (debug) console.log('Executing the "Nebula Repository API" lambda function for ' + request.httpMethod + ': ' + request.path);
+exports.handler = async function(request, context) {
+    if (debug) console.log('Executing the "Nebula Repository Service" lambda function for ' + request.httpMethod + ': ' + request.path);
 
     // validate the security credentials
-/* Commented out until a new AccountAPI is created that pushes out the account certificate first.
     try {
         const header = request.headers['Nebula-Credentials'];
         const credentials = bali.parse(header);
         const citation = credentials.getValue('$component');
         const certificateId = citation.getValue('$tag').getValue() + citation.getValue('$version');
-        const certificate = await repository.fetchCertificate(certificateId);
+        const source = await repository.fetchDocument(certificateId);
+        const certificate = bali.parse(source);
         const isValid = notary.documentIsValid(credentials, certificate);
         if (!isValid) throw Error('Invalid credentials were passed with the request.');
     } catch (cause) {
         if (debug) {
             const exception = bali.exception({
-                $module: '/bali/services/RepositoryAPI',
+                $module: '/bali/services/Repository',
                 $procedure: '$handleRequest',
                 $exception: '$invalidCredentials',
                 $credentials: bali.text(header),
@@ -52,7 +52,6 @@ exports.handleRequest = async function(request, context) {
             statusCode: 403  // Forbidden
         };
     }
-*/
 
     // extract the request parameters
     var method;
@@ -64,11 +63,11 @@ exports.handleRequest = async function(request, context) {
         const tokens = request.pathParameters.proxy.split('/');  // "<type>/<identifier>"
         type = tokens[0];
         identifier = tokens[1];
-        if (request.body) document = bali.parse(request.body);
+        document = request.body || request.queryStringParameters;
     } catch (cause) {
         if (debug) {
             const exception = bali.exception({
-                $module: '/bali/services/RepositoryAPI',
+                $module: '/bali/services/Repository',
                 $procedure: '$handleRequest',
                 $exception: '$invalidRequest',
                 $method: bali.text(method),
@@ -98,7 +97,7 @@ exports.handleRequest = async function(request, context) {
             default:
                 if (debug) {
                     const exception = bali.exception({
-                        $module: '/bali/services/RepositoryAPI',
+                        $module: '/bali/services/Repository',
                         $procedure: '$handleRequest',
                         $exception: '$processingFailed',
                         $method: bali.text(method),
@@ -114,7 +113,7 @@ exports.handleRequest = async function(request, context) {
     } catch (cause) {
         if (debug) {
             const exception = bali.exception({
-                $module: '/bali/services/RepositoryAPI',
+                $module: '/bali/services/Repository',
                 $procedure: '$handleRequest',
                 $exception: '$processingFailed',
                 $method: bali.text(method),
@@ -152,13 +151,13 @@ const citationRequest = async function(method, identifier, document) {
                     statusCode: 409  // Conflict
                 };
             }
-            await repository.createCertificate(identifier, document);
+            await repository.createCitation(identifier, document);
             if (debug) console.log('The following citation was created: ' + identifier);
             return {
                 statusCode: 201  // Created
             };
         case GET:
-            document = await repository.fetchCertificate(identifier);
+            document = await repository.fetchCitation(identifier);
             if (document) {
                 if (debug) console.log('Fetched the following citation: ' + document);
                 return {
