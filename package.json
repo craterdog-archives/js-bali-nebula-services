@@ -30,8 +30,11 @@
     "webpack": "^4.35.3"
   },
   "dependencies": {
-    "aws-sdk": "^2.504.0",
+    "aws-sdk": "^2.512.0",
     "bali-component-framework": "^1.11.3",
-    "bali-digital-notary": "^1.8.6"
+    "bali-digital-notary": "^1.9.0",
+    "bali-document-repository": "^1.1.0",
+    "bali-procedure-compiler": "^1.1.0",
+    "bali-virtual-machine": "file:../js-bali-virtual-machine"
   }
 }
