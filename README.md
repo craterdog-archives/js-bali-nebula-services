@@ -1,6 +1,6 @@
 ![Logo](https://raw.githubusercontent.com/craterdog-bali/bali-project-documentation/master/images/CraterDogLogo.png)
 
-### Bali Nebula
+### Bali Nebula™
 This project provides the JavaScript scripts needed to deploy the [_Bali Nebula™_](https://github.com/craterdog-bali/bali-project-documentation/wiki) to the AWS environment. It is currently a placeholder skeleton project and not yet functional. Check back in mid 2019 for an initial version.
 
 
