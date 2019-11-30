@@ -1,11 +1,20 @@
-![Logo](docs/images/CraterDogLogo.png)
+## The Bali Nebula™ Services (v2)
+![Logo](CraterDogLogo.png)
 
-### Bali Nebula™
-This project provides the JavaScript scripts needed to deploy the _Bali Nebula™_ to the AWS environment. It is currently a placeholder skeleton project and not yet functional. Check back in mid 2019 for an initial version.
+### Quick Links
+For more information on this project click on the following links:
+ * [project documentation](https://github.com/craterdog-bali/js-bali-nebula-services/wiki)
+ * [release notes](https://github.com/craterdog-bali/js-bali-nebula-services/wiki/release-notes)
 
+### Overview
+This project implements the services provided by the Bali Nebula™. These services are deployed
+in the [AWS Cloud](https://aws.amazon.com/) as [Lambda Functions](https://docs.aws.amazon.com/lambda/).
+To access these services from NodeJS applications see the
+[Bali Nebula™ API](https://github.com/craterdog-bali/js-bali-nebula-api/wiki) project.
 
-![Pyramid](docs/images/BaliPyramid.png)
-
-_**WARNING**_
-_This project is still in its early stages and the classes and interfaces to the classes are likely to change._
-
+### Contributing
+Project contributors are always welcome. Create a
+[fork](https://github.com/craterdog-bali/js-bali-nebula-services) of the project and add cool
+new things to the project. When you are ready to contribute the changes create a subsequent
+["pull request"](https://help.github.com/articles/about-pull-requests/). Any questions and
+comments can be sent to [craterdog@gmail.com](mailto:craterdog@gmail.com).

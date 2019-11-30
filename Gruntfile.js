@@ -1,7 +1,6 @@
 'use strict';
 
 const path = require('path');
-const childProcess = require('child_process');
 
 // wrapper function for grunt configuration
 module.exports = function(grunt) {
@@ -51,7 +50,7 @@ module.exports = function(grunt) {
       test: {
         options: {
           reporter: 'spec',
-          timeout: 10000 
+          timeout: 30000 
         },
         src: [
           'test/**/*.js'
@@ -62,7 +61,7 @@ module.exports = function(grunt) {
     // grunt-webpack plugin configuration (concatenates and removes whitespace)
     webpack: {
       lambdaConfig: {
-        entry: ['./src/index.js'],
+        entry: ['./src/RepositoryService.js'],
         target: 'node',
         mode: 'development',
         output: {
