@@ -41,8 +41,19 @@ exports.handler = async function(request, context) {
     var account;
     var attributes;
     try {
-        account = validateCredentials(request);
+        if (debug > 0) console.log('Request: ' + request.httpMethod + ' ' + request.path);
+        attributes = extractAttributes(request);
+        if (!attributes) {
+            if (debug > 0) console.log('Response Status: 400 (Bad Request)');
+            return {
+                statusCode: 400  // Bad Request
+            };
+        }
+        if (debug > 2) console.log('Request Attributes: ' + attributes);
+
+        account = validateCredentials(attributes);
         if (!account) {
+            if (debug > 0) console.log('Response: 401 (Not Authenticated)');
             return {
                 statusCode: 401,  // Unauthorized (misnamed, should be Unauthenticated)
                 headers: {
@@ -51,15 +62,8 @@ exports.handler = async function(request, context) {
             };
         }
 
-        attributes = extractAttributes(request);
-        if (!attributes) {
-            return {
-                statusCode: 400  // Bad Request
-            };
-        }
-        if (debug > 2) console.log('Executing the "Bali Nebula™ Repository Service" lambda function for ' + request.httpMethod + ': ' + request.path);
-
         if (await notAuthorized(account, attributes)) {
+            if (debug > 0) console.log('Response Status: 403 (Not Authorized)');
             return {
                 statusCode: 403  // Forbidden
             };
@@ -68,20 +72,16 @@ exports.handler = async function(request, context) {
         return await handleRequest(attributes);
 
     } catch (cause) {
-        if (debug > 0) {
-            const exception = bali.exception({
-                $module: '/bali/services/Repository',
-                $procedure: '$handler',
-                $exception: '$processingFailed',
-                $account: account,
-                $method: attributes.method,
-                $type: attributes.type,
-                $identifier: attributes.identifier,
-                $body: bali.text(request.body),
-                $text: 'The processing of the HTTP request failed.'
-            }, cause);
-            console.error(exception.toString());
-        }
+        const exception = bali.exception({
+            $module: '/bali/services/Repository',
+            $procedure: '$handler',
+            $exception: '$processingFailed',
+            $account: account,
+            $attributes: attributes,
+            $text: 'The processing of the HTTP request failed.'
+        }, cause);
+        if (debug > 2) console.error(exception.toString());
+        if (debug > 0) console.error('Response Status: 503 (Service Unavailable)');
         return {
             statusCode: 503  // Service Unavailable
         };
@@ -91,48 +91,45 @@ exports.handler = async function(request, context) {
 
 // PRIVATE FUNCTIONS
 
-const validateCredentials = async function(request) {
-    var account;
+const extractAttributes = function(request) {
     try {
         var credentials = request.headers['Nebula-Credentials'];
         credentials = bali.component(decodeURI(credentials).slice(2, -2));  // strip off double quote delimiters
-        const citation = credentials.getValue('$content');
-        const certificateId = citation.getValue('$tag').getValue() + '/' + citation.getValue('$version');
-        const document = (await repository.fetchDocument(certificateId)) || bali.component(request.body);  // may be self-signed
-        const certificate = document.getValue('$content');
-        if (await notary.validDocument(credentials, certificate)) {
-            account = certificate.getValue('$account');
-        }
-    } catch (cause) {
-        if (debug > 2) console.log('The credentials passed in the HTTP header are not valid: ' + credentials);
-        return account;  // the credentials are invalid
-    }
-};
-
-
-const extractAttributes = function(request) {
-    try {
         const method = request.httpMethod.toUpperCase();
         var path = request.path.slice(1);  // remove the leading '/'
         path = path.slice(path.slice(0).indexOf('/') + 1);  // remove leading '/repository/'
         const type = path.slice(0, path.indexOf('/'));
         const identifier = path.slice(path.indexOf('/') + 1);
         const document = request.body ? bali.component(request.body) : undefined;
-        return {
-            method: method,
-            type: type,
-            identifier: identifier,
-            document: document
-        };
+        return bali.catalog({
+            $credentials: credentials,
+            $method: method,
+            $type: type,
+            $identifier: identifier,
+            $document: document
+        });
     } catch (cause) {
         if (debug > 2) console.log('The HTTP request was not valid: ' + request);
-        return {
-            statusCode: 400  // Bad Request
-        };
     }
 };
 
     
+const validateCredentials = async function(attributes) {
+    try {
+        const citation = attributes.getValue('$credentials').getValue('$content');
+        const certificateId = citation.getValue('$tag').getValue() + '/' + citation.getValue('$version');
+        const document = (await repository.fetchDocument(certificateId)) || bali.component(request.body);  // may be self-signed
+        const certificate = document.getValue('$content');
+        if (await notary.validDocument(credentials, certificate)) {
+            const account = certificate.getValue('$account');
+            return account;
+        }
+    } catch (cause) {
+        if (debug > 2) console.log('The credentials passed in the HTTP header are not valid: ' + credentials);
+    }
+};
+
+
 const notAuthorized = async function(attributes) {
     // TODO: implement ACLs
     return false;
@@ -140,10 +137,10 @@ const notAuthorized = async function(attributes) {
 
     
 const handleRequest = async function(attributes) {
-    const method = attributes.method;
-    const type = attributes.type;
-    const identifier = attributes.identifier;
-    const document = attributes.document;
+    const method = attributes.getValue('$method').getValue();
+    const type = attributes.getValue('$type').getValue();
+    const identifier = attributes.getValue('$identifier').getValue();
+    const document = attributes.getValue('$document');
     switch (type) {
         case 'citations':
             return await citationRequest(method, identifier, document);
@@ -157,6 +154,7 @@ const handleRequest = async function(attributes) {
             return await queueRequest(method, identifier, document);
         default:
             if (debug > 2) console.log('The HTTP request contained an invalid type: ' + type);
+            if (debug > 0) console.log('Response Status: 400 (Bad Request)');
             return {
                 statusCode: 400  // Bad Request
             };
@@ -170,23 +168,27 @@ const citationRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.citationExists(identifier)) {
                 if (debug > 2) console.log('The following citation exists: ' + identifier);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200  // OK
                 };
             }
             if (debug > 2) console.log('The following citation does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         case POST:
             if (await repository.citationExists(identifier)) {
                 if (debug > 2) console.log('The following citation already exists: ' + identifier);
+                if (debug > 0) console.log('Response Status: 409 (Conflict)');
                 return {
                     statusCode: 409  // Conflict
                 };
             }
             await repository.createCitation(identifier, document);
             if (debug > 2) console.log('The following citation was created: ' + identifier);
+            if (debug > 0) console.log('Response Status: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
@@ -194,6 +196,7 @@ const citationRequest = async function(method, identifier, document) {
             document = await repository.fetchCitation(identifier);
             if (document) {
                 if (debug > 2) console.log('Fetched the following citation: ' + document);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200,
                     headers: {
@@ -205,11 +208,13 @@ const citationRequest = async function(method, identifier, document) {
                 };
             }
             if (debug > 2) console.log('The following citation does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         default:
             if (debug > 2) console.log('The following citation method is not allowed: ' + method);
+            if (debug > 0) console.log('Response Status: 405 (Method Not Allowed)');
             return {
                 statusCode: 405  // Method Not Allowed
             };
@@ -222,11 +227,13 @@ const draftRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.draftExists(identifier)) {
                 if (debug > 2) console.log('The following draft exists: ' + identifier);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200  // OK
                 };
             }
             if (debug > 2) console.log('The following draft does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
@@ -234,13 +241,22 @@ const draftRequest = async function(method, identifier, document) {
             const updated = await repository.draftExists(identifier);
             await repository.saveDraft(identifier, document);
             if (debug > 2) console.log('The following draft was saved: ' + identifier);
-            return {
-                statusCode: updated ? 204 : 201  // Updated or Created
-            };
+            if (updated) {
+                if (debug > 0) console.log('Response Status: 204 (Resource Updated)');
+                return {
+                    statusCode: 204  // Updated
+                };
+            } else {
+                if (debug > 0) console.log('Response Status: 201 (Resource Created)');
+                return {
+                    statusCode: 201  // Created
+                };
+            }
         case GET:
             document = await repository.fetchDraft(identifier);
             if (document) {
                 if (debug > 2) console.log('Fetched the following draft: ' + document);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200,
                     headers: {
@@ -252,21 +268,25 @@ const draftRequest = async function(method, identifier, document) {
                 };
             }
             if (debug > 2) console.log('The following draft does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         case DELETE:
             if (await repository.draftExists(identifier)) {
                 await repository.deleteDraft(identifier);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200  // OK
                 };
             }
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         default:
             if (debug > 2) console.log('The following draft method is not allowed: ' + method);
+            if (debug > 0) console.log('Response Status: 405 (Method Not Allowed)');
             return {
                 statusCode: 405  // Method Not Allowed
             };
@@ -279,23 +299,27 @@ const documentRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.documentExists(identifier)) {
                 if (debug > 2) console.log('The following document exists: ' + identifier);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200  // OK
                 };
             }
             if (debug > 2) console.log('The following document does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         case POST:
             if (await repository.documentExists(identifier)) {
                 if (debug > 2) console.log('The following document already exists: ' + identifier);
+                if (debug > 0) console.log('Response Status: 409 (Conflict)');
                 return {
                     statusCode: 409  // Conflict
                 };
             }
             await repository.createDocument(identifier, document);
             if (debug > 2) console.log('The following document was created: ' + identifier);
+            if (debug > 0) console.log('Response Status: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
@@ -303,6 +327,7 @@ const documentRequest = async function(method, identifier, document) {
             document = await repository.fetchDocument(identifier);
             if (document) {
                 if (debug > 2) console.log('Fetched the following document: ' + document);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200,
                     headers: {
@@ -314,11 +339,13 @@ const documentRequest = async function(method, identifier, document) {
                 };
             }
             if (debug > 2) console.log('The following document does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         default:
             if (debug > 2) console.log('The following document method is not allowed: ' + method);
+            if (debug > 0) console.log('Response Status: 405 (Method Not Allowed)');
             return {
                 statusCode: 405  // Method Not Allowed
             };
@@ -331,23 +358,27 @@ const typeRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.typeExists(identifier)) {
                 if (debug > 2) console.log('The following type exists: ' + identifier);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200  // OK
                 };
             }
             if (debug > 2) console.log('The following type does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         case POST:
             if (await repository.typeExists(identifier)) {
                 if (debug > 2) console.log('The following type already exists: ' + identifier);
+                if (debug > 0) console.log('Response Status: 409 (Conflict)');
                 return {
                     statusCode: 409  // Conflict
                 };
             }
             await repository.createType(identifier, document);
             if (debug > 2) console.log('The following type was created: ' + identifier);
+            if (debug > 0) console.log('Response Status: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
@@ -355,6 +386,7 @@ const typeRequest = async function(method, identifier, document) {
             document = await repository.fetchType(identifier);
             if (document) {
                 if (debug > 2) console.log('Fetched the following type: ' + document);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200,
                     headers: {
@@ -366,11 +398,13 @@ const typeRequest = async function(method, identifier, document) {
                 };
             }
             if (debug > 2) console.log('The following type does not exists: ' + identifier);
+            if (debug > 0) console.log('Response Status: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         default:
             if (debug > 2) console.log('The following type method is not allowed: ' + method);
+            if (debug > 0) console.log('Response Status: 405 (Method Not Allowed)');
             return {
                 statusCode: 405  // Method Not Allowed
             };
@@ -383,6 +417,7 @@ const queueRequest = async function(method, identifier, document) {
         case PUT:
             await repository.queueMessage(identifier, document);
             if (debug > 2) console.log('Queued up the following message: ' + document);
+            if (debug > 0) console.log('Response Status: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
@@ -390,6 +425,7 @@ const queueRequest = async function(method, identifier, document) {
             document = await repository.dequeueMessage(identifier);
             if (document) {
                 if (debug > 2) console.log('Fetched the following message: ' + document);
+                if (debug > 0) console.log('Response Status: 200 (Success)');
                 return {
                     statusCode: 200,
                     headers: {
@@ -401,11 +437,13 @@ const queueRequest = async function(method, identifier, document) {
                 };
             }
             if (debug > 2) console.log('The following queue is empty: ' + identifier);
+            if (debug > 0) console.log('Response Status: 204 (No Content)');
             return {
-                statusCode: 404  // Not Found
+                statusCode: 204  // No Content
             };
         default:
             if (debug > 2) console.log('The following queue method is not allowed: ' + method);
+            if (debug > 0) console.log('Response Status: 405 (Method Not Allowed)');
             return {
                 statusCode: 405  // Method Not Allowed
             };

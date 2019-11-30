@@ -133,7 +133,7 @@ const RepositoryClient = function(service, debug) {
             body: draft.toString()
         };
         const response = await service.handler(request);
-        if (response.statusCode !== 201) throw Error('Unable to save the draft: ' + response.statusCode);
+        if (response.statusCode !== 201 && response.statusCode !== 204) throw Error('Unable to save the draft: ' + response.statusCode);
     };
 
     this.deleteDraft = async function(draftId) {
@@ -354,10 +354,17 @@ describe('Bali Nebula™ Repository Service', function() {
             const result = await repository.fetchDraft(draftId);
             expect(draft.isEqualTo(result)).is.true;
 
-            // delete the new draft from the repository
+            // update the existing draft in the repository
+            await repository.saveDraft(draftId, draft);
+
+            // make sure the updated draft exists in the repository
+            var exists = await repository.draftExists(draftId);
+            expect(exists).is.true;
+
+            // delete the draft from the repository
             await repository.deleteDraft(draftId);
 
-            // make sure the new draft no longer exists in the repository
+            // make sure the draft no longer exists in the repository
             exists = await repository.draftExists(draftId);
             expect(exists).is.false;
 

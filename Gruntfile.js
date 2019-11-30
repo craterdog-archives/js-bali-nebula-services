@@ -60,7 +60,7 @@ module.exports = function(grunt) {
 
     // grunt-webpack plugin configuration (concatenates and removes whitespace)
     webpack: {
-      lambdaConfig: {
+      repositoryService: {
         entry: ['./src/RepositoryService.js'],
         target: 'node',
         mode: 'development',
@@ -81,7 +81,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-webpack');
 
   grunt.registerTask('build', 'Build the module.', ['clean:build', 'exec:clean', 'eslint', 'mochaTest']);
-  grunt.registerTask('package', 'Package the libraries.', ['clean:build', 'webpack', 'exec:publish']);
+  grunt.registerTask('publish', 'Publish the services.', ['clean:build', 'webpack', 'exec:publish']);
   grunt.registerTask('default', 'Default targets.', ['build']);
 
 };
