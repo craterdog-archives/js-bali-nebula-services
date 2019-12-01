@@ -146,7 +146,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        if (response.statusCode !== 200 && response.statusCode !== 404) throw Error('Unable to delete the draft: ' + response.statusCode);
+        if (response.statusCode !== 200) throw Error('Unable to delete the draft: ' + response.statusCode);
     };
 
 
@@ -237,7 +237,7 @@ const RepositoryClient = function(service, debug) {
             headers: {
                 'Nebula-Credentials': await generateCredentials()
             },
-            httpMethod: 'PUT',
+            httpMethod: 'POST',
             path: '/repository/queues/' + queueId,
             body: message.toString()
         };
@@ -250,7 +250,7 @@ const RepositoryClient = function(service, debug) {
             headers: {
                 'Nebula-Credentials': await generateCredentials()
             },
-            httpMethod: 'GET',
+            httpMethod: 'DELETE',
             path: '/repository/queues/' + queueId,
             body: undefined
         };

@@ -273,16 +273,10 @@ const draftRequest = async function(method, identifier, document) {
                 statusCode: 404  // Not Found
             };
         case DELETE:
-            if (await repository.draftExists(identifier)) {
-                await repository.deleteDraft(identifier);
-                if (debug > 0) console.log('Response: 200 (Success)');
-                return {
-                    statusCode: 200  // OK
-                };
-            }
-            if (debug > 0) console.log('Response: 404 (Not Found)');
+            await repository.deleteDraft(identifier);
+            if (debug > 0) console.log('Response: 200 (Success)');
             return {
-                statusCode: 404  // Not Found
+                statusCode: 200  // OK
             };
         default:
             if (debug > 2) console.log('The following draft method is not allowed: ' + method);
@@ -414,14 +408,14 @@ const typeRequest = async function(method, identifier, document) {
 
 const queueRequest = async function(method, identifier, document) {
     switch (method) {
-        case PUT:
+        case POST:
             await repository.queueMessage(identifier, document);
             if (debug > 2) console.log('Queued up the following message: ' + document);
             if (debug > 0) console.log('Response: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
-        case GET:
+        case DELETE:
             document = await repository.dequeueMessage(identifier);
             if (document) {
                 if (debug > 2) console.log('Fetched the following message: ' + document);
@@ -439,7 +433,10 @@ const queueRequest = async function(method, identifier, document) {
             if (debug > 2) console.log('The following queue is empty: ' + identifier);
             if (debug > 0) console.log('Response: 204 (No Content)');
             return {
-                statusCode: 204  // No Content
+                statusCode: 204,  // No Content
+                    headers: {
+                        'Cache-Control': 'no-store'
+                    }
             };
         default:
             if (debug > 2) console.log('The following queue method is not allowed: ' + method);
