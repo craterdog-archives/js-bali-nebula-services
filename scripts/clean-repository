@@ -1,4 +1,0 @@
-#!/bin/bash
-
-aws s3api delete-object --bucket craterdog-bali-citations-us-west-2 --key bali/examples/name/v1.2.3.bali
-aws s3api delete-object --bucket craterdog-bali-documents-us-west-2 --key 454J79TXY3799ZL8VNG2G4SBMVDFVPBVv3.4.bali

@@ -34,7 +34,7 @@ module.exports = function(grunt) {
 
     exec: {
       clean: {
-        command: 'scripts/clean-repository',
+        command: 'scripts/empty-repository',
         stdout: false,
         stderr: false
       },

@@ -11,20 +11,17 @@
 
 const debug = 1;  // logging level in range [0..3]
 const configuration = {
-    url: 'https://bali-nebula.net/repository/',
-    citationBucket: 'craterdog-bali-citations-us-west-2',
-    draftBucket: 'craterdog-bali-drafts-us-west-2',
-    documentBucket: 'craterdog-bali-documents-us-west-2',
-    typeBucket: 'craterdog-bali-types-us-west-2',
-    queueBucket: 'craterdog-bali-queues-us-west-2'
+    uri: 'https://bali-nebula.net/repository/',
+    citations: 'craterdog-bali-citations-us-west-2',
+    drafts: 'craterdog-bali-drafts-us-west-2',
+    documents: 'craterdog-bali-documents-us-west-2',
+    types: 'craterdog-bali-types-us-west-2',
+    queues: 'craterdog-bali-queues-us-west-2'
 };
 
-const directory = undefined;
 const bali = require('bali-component-framework').api(debug);
-const account = bali.tag('K8JD027YN87VA98FGZR5S4RZDFSFA3NX');  // repository service account
-const securityModule = require('bali-digital-notary').ssm(directory, debug);
-const notary = require('bali-digital-notary').notary(securityModule, account, directory, debug);
-const repository = require('bali-document-repository').s3(configuration, debug);
+const notary = require('bali-digital-notary').service(debug);
+const repository = require('bali-document-repository').service(configuration, debug);
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
@@ -116,9 +113,11 @@ const extractAttributes = function(request) {
     
 const validateCredentials = async function(attributes) {
     try {
-        const citation = attributes.getValue('$credentials').getValue('$content');
-        const certificateId = citation.getValue('$tag').getValue() + '/' + citation.getValue('$version');
-        const document = (await repository.fetchDocument(certificateId)) || bali.component(request.body);  // may be self-signed
+        const credentials = attributes.getValue('$credentials');
+        const citation = credentials.getValue('$content');
+        const tag = citation.getValue('$tag');
+        const version = citation.getValue('$version');
+        const document = (await repository.fetchDocument(tag, version)) || bali.component(request.body);  // may be self-signed
         const certificate = document.getValue('$content');
         if (await notary.validDocument(credentials, certificate)) {
             const account = certificate.getValue('$account');
@@ -163,37 +162,37 @@ const handleRequest = async function(attributes) {
 
 
 const citationRequest = async function(method, identifier, document) {
-    identifier = '/' + identifier;  // names must begin with a slash
+    const name = bali.component('/' + identifier);
     switch (method) {
         case HEAD:
-            if (await repository.citationExists(identifier)) {
-                if (debug > 2) console.log('The following citation exists: ' + identifier);
+            if (await repository.citationExists(name)) {
+                if (debug > 2) console.log('The following citation exists: ' + name);
                 if (debug > 0) console.log('Response: 200 (Success)');
                 return {
                     statusCode: 200  // OK
                 };
             }
-            if (debug > 2) console.log('The following citation does not exists: ' + identifier);
+            if (debug > 2) console.log('The following citation does not exists: ' + name);
             if (debug > 0) console.log('Response: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
             };
         case POST:
-            if (await repository.citationExists(identifier)) {
-                if (debug > 2) console.log('The following citation already exists: ' + identifier);
+            if (await repository.citationExists(name)) {
+                if (debug > 2) console.log('The following citation already exists: ' + name);
                 if (debug > 0) console.log('Response: 409 (Conflict)');
                 return {
                     statusCode: 409  // Conflict
                 };
             }
-            await repository.createCitation(identifier, document);
-            if (debug > 2) console.log('The following citation was created: ' + identifier);
+            await repository.createCitation(name, document);
+            if (debug > 2) console.log('The following citation was created: ' + name);
             if (debug > 0) console.log('Response: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
         case GET:
-            document = await repository.fetchCitation(identifier);
+            document = await repository.fetchCitation(name);
             if (document) {
                 if (debug > 2) console.log('Fetched the following citation: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
@@ -207,7 +206,7 @@ const citationRequest = async function(method, identifier, document) {
                     body: document.toString()
                 };
             }
-            if (debug > 2) console.log('The following citation does not exists: ' + identifier);
+            if (debug > 2) console.log('The following citation does not exists: ' + name);
             if (debug > 0) console.log('Response: 404 (Not Found)');
             return {
                 statusCode: 404  // Not Found
@@ -223,9 +222,12 @@ const citationRequest = async function(method, identifier, document) {
 
 
 const draftRequest = async function(method, identifier, document) {
+    const tokens = identifier.split('/');
+    const tag = bali.component('#' + tokens[0]);
+    const version = bali.component(tokens[1]);
     switch (method) {
         case HEAD:
-            if (await repository.draftExists(identifier)) {
+            if (await repository.draftExists(tag, version)) {
                 if (debug > 2) console.log('The following draft exists: ' + identifier);
                 if (debug > 0) console.log('Response: 200 (Success)');
                 return {
@@ -238,8 +240,8 @@ const draftRequest = async function(method, identifier, document) {
                 statusCode: 404  // Not Found
             };
         case PUT:
-            const updated = await repository.draftExists(identifier);
-            await repository.saveDraft(identifier, document);
+            const updated = await repository.draftExists(tag, version);
+            await repository.saveDraft(tag, version, document);
             if (debug > 2) console.log('The following draft was saved: ' + identifier);
             if (updated) {
                 if (debug > 0) console.log('Response: 204 (Resource Updated)');
@@ -253,7 +255,7 @@ const draftRequest = async function(method, identifier, document) {
                 };
             }
         case GET:
-            document = await repository.fetchDraft(identifier);
+            document = await repository.fetchDraft(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following draft: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
@@ -273,7 +275,7 @@ const draftRequest = async function(method, identifier, document) {
                 statusCode: 404  // Not Found
             };
         case DELETE:
-            await repository.deleteDraft(identifier);
+            await repository.deleteDraft(tag, version);
             if (debug > 0) console.log('Response: 200 (Success)');
             return {
                 statusCode: 200  // OK
@@ -289,9 +291,12 @@ const draftRequest = async function(method, identifier, document) {
 
 
 const documentRequest = async function(method, identifier, document) {
+    const tokens = identifier.split('/');
+    const tag = bali.component('#' + tokens[0]);
+    const version = bali.component(tokens[1]);
     switch (method) {
         case HEAD:
-            if (await repository.documentExists(identifier)) {
+            if (await repository.documentExists(tag, version)) {
                 if (debug > 2) console.log('The following document exists: ' + identifier);
                 if (debug > 0) console.log('Response: 200 (Success)');
                 return {
@@ -304,21 +309,21 @@ const documentRequest = async function(method, identifier, document) {
                 statusCode: 404  // Not Found
             };
         case POST:
-            if (await repository.documentExists(identifier)) {
+            if (await repository.documentExists(tag, version)) {
                 if (debug > 2) console.log('The following document already exists: ' + identifier);
                 if (debug > 0) console.log('Response: 409 (Conflict)');
                 return {
                     statusCode: 409  // Conflict
                 };
             }
-            await repository.createDocument(identifier, document);
+            await repository.createDocument(tag, version, document);
             if (debug > 2) console.log('The following document was created: ' + identifier);
             if (debug > 0) console.log('Response: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
         case GET:
-            document = await repository.fetchDocument(identifier);
+            document = await repository.fetchDocument(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following document: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
@@ -348,9 +353,12 @@ const documentRequest = async function(method, identifier, document) {
 
 
 const typeRequest = async function(method, identifier, document) {
+    const tokens = identifier.split('/');
+    const tag = bali.component('#' + tokens[0]);
+    const version = bali.component(tokens[1]);
     switch (method) {
         case HEAD:
-            if (await repository.typeExists(identifier)) {
+            if (await repository.typeExists(tag, version)) {
                 if (debug > 2) console.log('The following type exists: ' + identifier);
                 if (debug > 0) console.log('Response: 200 (Success)');
                 return {
@@ -363,21 +371,21 @@ const typeRequest = async function(method, identifier, document) {
                 statusCode: 404  // Not Found
             };
         case POST:
-            if (await repository.typeExists(identifier)) {
+            if (await repository.typeExists(tag, version)) {
                 if (debug > 2) console.log('The following type already exists: ' + identifier);
                 if (debug > 0) console.log('Response: 409 (Conflict)');
                 return {
                     statusCode: 409  // Conflict
                 };
             }
-            await repository.createType(identifier, document);
+            await repository.createType(tag, version, document);
             if (debug > 2) console.log('The following type was created: ' + identifier);
             if (debug > 0) console.log('Response: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
         case GET:
-            document = await repository.fetchType(identifier);
+            document = await repository.fetchType(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following type: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
@@ -407,18 +415,19 @@ const typeRequest = async function(method, identifier, document) {
 
 
 const queueRequest = async function(method, identifier, document) {
+    const queue = bali.component('#' + identifier);
     switch (method) {
-        case POST:
-            await repository.queueMessage(identifier, document);
-            if (debug > 2) console.log('Queued up the following message: ' + document);
+        case PUT:
+            await repository.queueMessage(queue, document);
+            if (debug > 2) console.log('Added the following message to the queue: ' + document);
             if (debug > 0) console.log('Response: 201 (Resource Created)');
             return {
                 statusCode: 201  // Created
             };
         case DELETE:
-            document = await repository.dequeueMessage(identifier);
+            document = await repository.dequeueMessage(queue);
             if (document) {
-                if (debug > 2) console.log('Fetched the following message: ' + document);
+                if (debug > 2) console.log('Fetched the following message from the queue: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
                 return {
                     statusCode: 200,
