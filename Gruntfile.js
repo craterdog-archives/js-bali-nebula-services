@@ -34,7 +34,7 @@ module.exports = function(grunt) {
 
     exec: {
       clean: {
-        command: 'scripts/empty-repository',
+        command: 'scripts/empty-buckets',
         stdout: false,
         stderr: false
       },
@@ -69,6 +69,16 @@ module.exports = function(grunt) {
           filename: 'bali-nebula-repository.js',
           libraryTarget: 'umd'
         }
+      },
+      htmlService: {
+        entry: ['./src/HTMLService.js'],
+        target: 'node',
+        mode: 'development',
+        output: {
+          path: `${process.cwd()}/dist`,
+          filename: 'bali-nebula-html.js',
+          libraryTarget: 'umd'
+        }
       }
     }
 
@@ -80,8 +90,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-webpack');
 
-  grunt.registerTask('build', 'Build the module.', ['clean:build', 'exec:clean', 'eslint', 'mochaTest']);
-  grunt.registerTask('publish', 'Publish the services.', ['clean:build', 'webpack', 'exec:publish']);
+  grunt.registerTask('build', 'Build the module.', ['clean:build', 'eslint', 'mochaTest']);
+  grunt.registerTask('publish', 'Publish the services.', ['clean:build', 'exec:clean', 'webpack', 'exec:publish']);
   grunt.registerTask('default', 'Default targets.', ['build']);
 
 };

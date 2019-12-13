@@ -9,33 +9,31 @@
  ************************************************************************/
 'use strict';
 
-const debug = 1;  // logging level in range [0..3]
+const debug = 3;  // logging level in range [0..3]
 const configuration = {
     uri: 'https://bali-nebula.net/repository/',
     citations: 'craterdog-bali-citations-us-west-2',
     drafts: 'craterdog-bali-drafts-us-west-2',
     documents: 'craterdog-bali-documents-us-west-2',
     types: 'craterdog-bali-types-us-west-2',
-    queues: 'craterdog-bali-queues-us-west-2'
+    queues: 'craterdog-bali-queues-us-west-2'  // not used
 };
 
+const aws = new require('aws-sdk/clients/s3');
+const s3 = new aws({apiVersion: '2006-03-01'});
 const bali = require('bali-component-framework').api(debug);
-const notary = require('bali-digital-notary').service(debug);
 const repository = require('bali-document-repository').service(configuration, debug);
+const style = 'https://bali-nebula.net/web/style/BDN.css';
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
-const POST = 'POST';
 const GET = 'GET';
-const PUT = 'PUT';
-const DELETE = 'DELETE';
 
 
 // PUBLIC FUNCTIONS
 
-if (debug > 2) console.log('Loading the "Bali Nebula™ Repository Service" lambda function');
+if (debug > 2) console.log('Loading the "Bali Nebula™ HTML Service" lambda function');
 exports.handler = async function(request, context) {
-    var account;
     var attributes;
     try {
         if (debug > 0) console.log('Request: ' + request.httpMethod + ' ' + request.path);
@@ -48,32 +46,13 @@ exports.handler = async function(request, context) {
         }
         if (debug > 2) console.log('Request Attributes: ' + attributes);
 
-        account = validateCredentials(attributes);
-        if (!account) {
-            if (debug > 0) console.log('Response: 401 (Not Authenticated)');
-            return {
-                statusCode: 401,  // Unauthorized (misnamed, should be Unauthenticated)
-                headers: {
-                    'WWW-Authenticate': 'Nebula-Credentials'
-                }
-            };
-        }
-
-        if (await notAuthorized(account, attributes)) {
-            if (debug > 0) console.log('Response: 403 (Not Authorized)');
-            return {
-                statusCode: 403  // Forbidden
-            };
-        }
-
         return await handleRequest(attributes);
 
     } catch (cause) {
         const exception = bali.exception({
-            $module: '/bali/services/Repository',
+            $module: '/bali/services/HTML',
             $procedure: '$handler',
             $exception: '$processingFailed',
-            $account: account,
             $attributes: attributes,
             $text: 'The processing of the HTTP request failed.'
         }, cause);
@@ -90,20 +69,15 @@ exports.handler = async function(request, context) {
 
 const extractAttributes = function(request) {
     try {
-        var credentials = request.headers['Nebula-Credentials'];
-        credentials = bali.component(decodeURI(credentials).slice(2, -2));  // strip off double quote delimiters
         const method = request.httpMethod.toUpperCase();
         var path = request.path.slice(1);  // remove the leading '/'
-        path = path.slice(path.slice(0).indexOf('/') + 1);  // remove leading '/repository/'
+        path = path.slice(path.slice(0).indexOf('/') + 1);  // remove leading '/web/'
         const type = path.slice(0, path.indexOf('/'));
         const identifier = path.slice(path.indexOf('/') + 1);
-        const document = request.body ? bali.component(request.body) : undefined;
         return bali.catalog({
-            $credentials: credentials,
             $method: method,
             $type: type,
-            $identifier: identifier,
-            $document: document
+            $identifier: identifier
         });
     } catch (cause) {
         if (debug > 2) console.log('The HTTP request was not valid: ' + request);
@@ -111,46 +85,23 @@ const extractAttributes = function(request) {
 };
 
     
-const validateCredentials = async function(attributes) {
-    try {
-        const credentials = attributes.getValue('$credentials');
-        const citation = credentials.getValue('$content');
-        const tag = citation.getValue('$tag');
-        const version = citation.getValue('$version');
-        const document = (await repository.fetchDocument(tag, version)) || bali.component(request.body);  // may be self-signed
-        const certificate = document.getValue('$content');
-        if (await notary.validDocument(credentials, certificate)) {
-            const account = certificate.getValue('$account');
-            return account;
-        }
-    } catch (cause) {
-        if (debug > 2) console.log('The credentials passed in the HTTP header are not valid: ' + credentials);
-    }
-};
-
-
-const notAuthorized = async function(attributes) {
-    // TODO: implement ACLs
-    return false;
-};
-
-    
 const handleRequest = async function(attributes) {
     const method = attributes.getValue('$method').getValue();
     const type = attributes.getValue('$type').getValue();
     const identifier = attributes.getValue('$identifier').getValue();
-    const document = attributes.getValue('$document');
     switch (type) {
         case 'citations':
-            return await citationRequest(method, identifier, document);
+            return await citationRequest(method, identifier);
         case 'drafts':
-            return await draftRequest(method, identifier, document);
+            return await draftRequest(method, identifier);
         case 'documents':
-            return await documentRequest(method, identifier, document);
+            return await documentRequest(method, identifier);
         case 'types':
-            return await typeRequest(method, identifier, document);
-        case 'queues':
-            return await queueRequest(method, identifier, document);
+            return await typeRequest(method, identifier);
+        case 'images':
+            return await imageRequest(method, identifier);
+        case 'style':
+            return await styleRequest(method, identifier);
         default:
             if (debug > 2) console.log('The HTTP request contained an invalid type: ' + type);
             if (debug > 0) console.log('Response: 400 (Bad Request)');
@@ -161,7 +112,7 @@ const handleRequest = async function(attributes) {
 };
 
 
-const citationRequest = async function(method, identifier, document) {
+const citationRequest = async function(method, identifier) {
     const name = bali.component('/' + identifier);
     switch (method) {
         case HEAD:
@@ -177,26 +128,12 @@ const citationRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case POST:
-            if (await repository.citationExists(name)) {
-                if (debug > 2) console.log('The following citation already exists: ' + name);
-                if (debug > 0) console.log('Response: 409 (Conflict)');
-                return {
-                    statusCode: 409  // Conflict
-                };
-            }
-            await repository.createCitation(name, document);
-            if (debug > 2) console.log('The following citation was created: ' + name);
-            if (debug > 0) console.log('Response: 201 (Resource Created)');
-            return {
-                statusCode: 201  // Created
-            };
         case GET:
             document = await repository.fetchCitation(name);
             if (document) {
                 if (debug > 2) console.log('Fetched the following citation: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
-                const body = document.toString();
+                const body = document.toHTML(style);
                 return {
                     statusCode: 200,
                     headers: {
@@ -222,7 +159,7 @@ const citationRequest = async function(method, identifier, document) {
 };
 
 
-const draftRequest = async function(method, identifier, document) {
+const draftRequest = async function(method, identifier) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -240,27 +177,12 @@ const draftRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case PUT:
-            const updated = await repository.draftExists(tag, version);
-            await repository.saveDraft(tag, version, document);
-            if (debug > 2) console.log('The following draft was saved: ' + identifier);
-            if (updated) {
-                if (debug > 0) console.log('Response: 204 (Resource Updated)');
-                return {
-                    statusCode: 204  // Updated
-                };
-            } else {
-                if (debug > 0) console.log('Response: 201 (Resource Created)');
-                return {
-                    statusCode: 201  // Created
-                };
-            }
         case GET:
             document = await repository.fetchDraft(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following draft: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
-                const body = document.toString();
+                const body = document.toHTML(style);
                 return {
                     statusCode: 200,
                     headers: {
@@ -276,12 +198,6 @@ const draftRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case DELETE:
-            await repository.deleteDraft(tag, version);
-            if (debug > 0) console.log('Response: 200 (Success)');
-            return {
-                statusCode: 200  // OK
-            };
         default:
             if (debug > 2) console.log('The following draft method is not allowed: ' + method);
             if (debug > 0) console.log('Response: 405 (Method Not Allowed)');
@@ -292,7 +208,7 @@ const draftRequest = async function(method, identifier, document) {
 };
 
 
-const documentRequest = async function(method, identifier, document) {
+const documentRequest = async function(method, identifier) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -310,26 +226,12 @@ const documentRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case POST:
-            if (await repository.documentExists(tag, version)) {
-                if (debug > 2) console.log('The following document already exists: ' + identifier);
-                if (debug > 0) console.log('Response: 409 (Conflict)');
-                return {
-                    statusCode: 409  // Conflict
-                };
-            }
-            await repository.createDocument(tag, version, document);
-            if (debug > 2) console.log('The following document was created: ' + identifier);
-            if (debug > 0) console.log('Response: 201 (Resource Created)');
-            return {
-                statusCode: 201  // Created
-            };
         case GET:
             document = await repository.fetchDocument(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following document: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
-                const body = document.toString();
+                const body = document.toHTML(style);
                 return {
                     statusCode: 200,
                     headers: {
@@ -355,7 +257,7 @@ const documentRequest = async function(method, identifier, document) {
 };
 
 
-const typeRequest = async function(method, identifier, document) {
+const typeRequest = async function(method, identifier) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -373,26 +275,12 @@ const typeRequest = async function(method, identifier, document) {
             return {
                 statusCode: 404  // Not Found
             };
-        case POST:
-            if (await repository.typeExists(tag, version)) {
-                if (debug > 2) console.log('The following type already exists: ' + identifier);
-                if (debug > 0) console.log('Response: 409 (Conflict)');
-                return {
-                    statusCode: 409  // Conflict
-                };
-            }
-            await repository.createType(tag, version, document);
-            if (debug > 2) console.log('The following type was created: ' + identifier);
-            if (debug > 0) console.log('Response: 201 (Resource Created)');
-            return {
-                statusCode: 201  // Created
-            };
         case GET:
             document = await repository.fetchType(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following type: ' + document);
                 if (debug > 0) console.log('Response: 200 (Success)');
-                const body = document.toString();
+                const body = document.toHTML(style);
                 return {
                     statusCode: 200,
                     headers: {
@@ -418,42 +306,46 @@ const typeRequest = async function(method, identifier, document) {
 };
 
 
-const queueRequest = async function(method, identifier, document) {
-    const queue = bali.component('#' + identifier);
+const imageRequest = async function(method, resource) {
+    const bucket = 'craterdog-bali-web-us-west-2';
+    resource = 'images/' + resource;
     switch (method) {
-        case PUT:
-            await repository.queueMessage(queue, document);
-            if (debug > 2) console.log('Added the following message to the queue: ' + document);
-            if (debug > 0) console.log('Response: 201 (Resource Created)');
-            return {
-                statusCode: 201  // Created
-            };
-        case DELETE:
-            document = await repository.dequeueMessage(queue);
-            if (document) {
-                if (debug > 2) console.log('Fetched the following message from the queue: ' + document);
+        case HEAD:
+            if (await doesExist(bucket, resource)) {
+                if (debug > 2) console.log('The following resource exists: ' + resource);
                 if (debug > 0) console.log('Response: 200 (Success)');
-                const body = document.toString();
+                return {
+                    statusCode: 200  // OK
+                };
+            }
+            if (debug > 2) console.log('The following resource does not exists: ' + resource);
+            if (debug > 0) console.log('Response: 404 (Not Found)');
+            return {
+                statusCode: 404  // Not Found
+            };
+        case GET:
+            const document = await getObject(bucket, resource);
+            if (document) {
+                if (debug > 2) console.log('Fetched the following resource: ' + document);
+                if (debug > 0) console.log('Response: 200 (Success)');
+                const body = document;
                 return {
                     statusCode: 200,
                     headers: {
                         'Content-Length': body.length,
-                        'Content-Type': 'application/bali',
-                        'Cache-Control': 'no-store'
+                        'Content-Type': 'image/png',
+                        'Cache-Control': 'immutable'
                     },
                     body: body
                 };
             }
-            if (debug > 2) console.log('The following queue is empty: ' + identifier);
-            if (debug > 0) console.log('Response: 204 (No Content)');
+            if (debug > 2) console.log('The following resource does not exists: ' + resource);
+            if (debug > 0) console.log('Response: 404 (Not Found)');
             return {
-                statusCode: 204,  // No Content
-                    headers: {
-                        'Cache-Control': 'no-store'
-                    }
+                statusCode: 404  // Not Found
             };
         default:
-            if (debug > 2) console.log('The following queue method is not allowed: ' + method);
+            if (debug > 2) console.log('The following resource method is not allowed: ' + method);
             if (debug > 0) console.log('Response: 405 (Method Not Allowed)');
             return {
                 statusCode: 405  // Method Not Allowed
@@ -461,3 +353,84 @@ const queueRequest = async function(method, identifier, document) {
     }
 };
 
+
+const styleRequest = async function(method, resource) {
+    const bucket = 'craterdog-bali-web-us-west-2';
+    resource = 'style/' + resource;
+    switch (method) {
+        case HEAD:
+            if (await doesExist(bucket, resource)) {
+                if (debug > 2) console.log('The following resource exists: ' + resource);
+                if (debug > 0) console.log('Response: 200 (Success)');
+                return {
+                    statusCode: 200  // OK
+                };
+            }
+            if (debug > 2) console.log('The following resource does not exists: ' + resource);
+            if (debug > 0) console.log('Response: 404 (Not Found)');
+            return {
+                statusCode: 404  // Not Found
+            };
+        case GET:
+            const document = await getObject(bucket, resource);
+            if (document) {
+                if (debug > 2) console.log('Fetched the following resource: ' + document);
+                if (debug > 0) console.log('Response: 200 (Success)');
+                const body = document;
+                return {
+                    statusCode: 200,
+                    headers: {
+                        'Content-Length': body.length,
+                        'Content-Type': 'text/css',
+                        'Cache-Control': 'immutable'
+                    },
+                    body: body
+                };
+            }
+            if (debug > 2) console.log('The following resource does not exists: ' + resource);
+            if (debug > 0) console.log('Response: 404 (Not Found)');
+            return {
+                statusCode: 404  // Not Found
+            };
+        default:
+            if (debug > 2) console.log('The following resource method is not allowed: ' + method);
+            if (debug > 0) console.log('Response: 405 (Method Not Allowed)');
+            return {
+                statusCode: 405  // Method Not Allowed
+            };
+    }
+};
+
+
+const doesExist = function(bucket, key) {
+    return new Promise(function(resolve, reject) {
+        try {
+            s3.headObject({Bucket: bucket, Key: key}, function(error, data) {
+                if (error || data.DeleteMarker || !data.ContentLength) {
+                    resolve(false);
+                } else {
+                    resolve(true);
+                }
+            });
+        } catch (cause) {
+            reject(cause);
+        }
+    });
+};
+
+
+const getObject = function(bucket, key) {
+    return new Promise(function(resolve, reject) {
+        try {
+            s3.getObject({Bucket: bucket, Key: key}, function(error, data) {
+                if (error || data.DeleteMarker || !data.ContentLength) {
+                    resolve(undefined);
+                } else {
+                    resolve(data.Body.toString());
+                }
+            });
+        } catch (cause) {
+            reject(cause);
+        }
+    });
+};
