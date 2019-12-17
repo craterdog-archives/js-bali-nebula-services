@@ -8,20 +8,10 @@ chmod 666 bali-nebula-repository.js
 zip -r bali-nebula-repository.zip bali-nebula-repository.js
 chmod 666 bali-nebula-repository.zip
 
-echo "Creating a zip file of the HTML service for distribution to AWS..."
-chmod 666 bali-nebula-html.js
-zip -r bali-nebula-html.zip bali-nebula-html.js
-chmod 666 bali-nebula-html.zip
-
 echo "Pushing the latest versions of the packages out to S3..."
 aws --region us-east-1 s3api put-object \
     --bucket craterdog-bali-environment-us-east-1 \
     --key lambdas/bali-nebula-repository.zip \
     --body ./bali-nebula-repository.zip
-
-aws --region us-east-1 s3api put-object \
-    --bucket craterdog-bali-environment-us-east-1 \
-    --key lambdas/bali-nebula-html.zip \
-    --body ./bali-nebula-html.zip
 
 echo "Done."

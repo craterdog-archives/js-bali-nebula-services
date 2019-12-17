@@ -9,9 +9,10 @@
  ************************************************************************/
 'use strict';
 
-const debug = 1;  // logging level in range [0..3]
+const debug = 2;  // logging level in range [0..3]
 const configuration = {
     uri: 'https://bali-nebula.net/repository/',
+    statics: 'craterdog-bali-statics-us-west-2',
     citations: 'craterdog-bali-citations-us-west-2',
     drafts: 'craterdog-bali-drafts-us-west-2',
     documents: 'craterdog-bali-documents-us-west-2',
@@ -21,7 +22,7 @@ const configuration = {
 
 const bali = require('bali-component-framework').api(debug);
 const notary = require('bali-digital-notary').service(debug);
-const repository = require('bali-document-repository').service(configuration, debug);
+const repository = require('bali-document-repository').service(notary, configuration, debug);
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
@@ -77,8 +78,8 @@ exports.handler = async function(request, context) {
             $attributes: attributes,
             $text: 'The processing of the HTTP request failed.'
         }, cause);
-        if (debug > 2) console.error(exception.toString());
-        if (debug > 0) console.error('Response: 503 (Service Unavailable)');
+        if (debug > 1) console.log(exception.toString());
+        if (debug > 0) console.log('Response: 503 (Service Unavailable)');
         return {
             statusCode: 503  // Service Unavailable
         };
@@ -98,13 +99,15 @@ const extractAttributes = function(request) {
         const type = path.slice(0, path.indexOf('/'));
         const identifier = path.slice(path.indexOf('/') + 1);
         const document = request.body ? bali.component(request.body) : undefined;
-        return bali.catalog({
+        const attributes = bali.catalog({
             $credentials: credentials,
             $method: method,
             $type: type,
             $identifier: identifier,
             $document: document
         });
+        if (debug > 2) console.log('The request attributes: ' + attributes);
+        return attributes;
     } catch (cause) {
         if (debug > 2) console.log('The HTTP request was not valid: ' + request);
     }
@@ -114,11 +117,10 @@ const extractAttributes = function(request) {
 const validateCredentials = async function(attributes) {
     try {
         const credentials = attributes.getValue('$credentials');
-        const citation = credentials.getValue('$content');
+        const citation = credentials.getValue('$certificate');
         const tag = citation.getValue('$tag');
         const version = citation.getValue('$version');
-        const document = (await repository.fetchDocument(tag, version)) || bali.component(request.body);  // may be self-signed
-        const certificate = document.getValue('$content');
+        const certificate = (await repository.fetchDocument(tag, version)) || attributes.getValue('$document');  // may be self-signed
         if (await notary.validDocument(credentials, certificate)) {
             const account = certificate.getValue('$account');
             return account;
@@ -141,6 +143,8 @@ const handleRequest = async function(attributes) {
     const identifier = attributes.getValue('$identifier').getValue();
     const document = attributes.getValue('$document');
     switch (type) {
+        case 'statics':
+            return await staticRequest(method, identifier, document);
         case 'citations':
             return await citationRequest(method, identifier, document);
         case 'drafts':
@@ -156,6 +160,73 @@ const handleRequest = async function(attributes) {
             if (debug > 0) console.log('Response: 400 (Bad Request)');
             return {
                 statusCode: 400  // Bad Request
+            };
+    }
+};
+
+
+const staticRequest = async function(method, identifier, document) {
+    const name = bali.component('/' + identifier);
+    switch (method) {
+        case HEAD:
+            if (await repository.staticExists(name)) {
+                if (debug > 2) console.log('The following static resource exists: ' + name);
+                if (debug > 0) console.log('Response: 200 (Success)');
+                return {
+                    statusCode: 200  // OK
+                };
+            }
+            if (debug > 2) console.log('The following static resource does not exists: ' + name);
+            if (debug > 0) console.log('Response: 404 (Not Found)');
+            return {
+                statusCode: 404  // Not Found
+            };
+        case GET:
+            var resource = await repository.fetchStatic(name);
+            if (resource) {
+                var type;
+                const string = name.toString();
+                switch (string.slice(string.lastIndexOf('.'))) {
+                    case '.css':
+                        type = 'text/css';
+                        break;
+                    case '.gif':
+                        type = 'image/gif';
+                        resource = Buffer.from(resource, 'utf8');
+                        break;
+                    case '.jpg':
+                    case '.jpeg':
+                        type = 'image/jpeg';
+                        resource = Buffer.from(resource, 'utf8');
+                        break;
+                    case '.png':
+                        type = 'image/png';
+                        resource = Buffer.from(resource, 'utf8');
+                        break;
+                    default:
+                        type = 'text/html';
+                }
+                if (debug > 0) console.log('Response: 200 (Success)');
+                return {
+                    statusCode: 200,
+                    headers: {
+                        'Content-Length': resource.length,
+                        'Content-Type': type,
+                        'Cache-Control': 'immutable'
+                    },
+                    body: resource
+                };
+            }
+            if (debug > 2) console.log('The following static resource does not exists: ' + name);
+            if (debug > 0) console.log('Response: 404 (Not Found)');
+            return {
+                statusCode: 404  // Not Found
+            };
+        default:
+            if (debug > 2) console.log('The following static resource method is not allowed: ' + method);
+            if (debug > 0) console.log('Response: 405 (Method Not Allowed)');
+            return {
+                statusCode: 405  // Method Not Allowed
             };
     }
 };

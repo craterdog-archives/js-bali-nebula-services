@@ -42,20 +42,40 @@ const getPath = function(tag, version) {
 };
 
 const generateCredentials = async function() {
-    const citation = await notary.getCitation();
-    const document = citation.duplicate();
-    document.setParameter('$type', '/bali/notary/Citation/v1');
-    document.setParameter('$tag', bali.tag());
-    document.setParameter('$version', bali.version());
-    document.setParameter('$permissions', '/bali/permissions/private/v1');
-    document.setParameter('$previous', bali.pattern.NONE);
-    var credentials = await notary.notarizeDocument(document);
+    var credentials = await notary.generateCredentials();
     credentials = encodeURI('"' + EOL + credentials + EOL + '"');
     return credentials;
 };
 
 const RepositoryClient = function(service, debug) {
     if (debug === null || debug === undefined) debug = 0;  // default is off
+
+    this.staticExists = async function(name) {
+        const request = {
+            headers: {
+                'Nebula-Credentials': await generateCredentials()
+            },
+            httpMethod: 'HEAD',
+            path: '/repository/statics' + name,
+            body: undefined
+        };
+        const response = await service.handler(request);
+        return response.statusCode === 200;
+    };
+
+    this.fetchStatic = async function(name) {
+        const request = {
+            headers: {
+                'Nebula-Credentials': await generateCredentials()
+            },
+            httpMethod: 'GET',
+            path: '/repository/statics' + name,
+            body: undefined
+        };
+        const response = await service.handler(request);
+        const resource = response.body;
+        return resource;
+    };
 
     this.citationExists = async function(name) {
         const request = {
@@ -278,6 +298,7 @@ describe('Bali Nebula™ Repository Service', function() {
         $tax: '1.07($currency: $USD)',
         $total: '13.57($currency: $USD)'
     }, {
+        $type: '/bali/examples/Transaction/v1',
         $tag: bali.tag(),
         $version: bali.version(),
         $permissions: '/bali/permissions/public/v1',
@@ -298,6 +319,7 @@ describe('Bali Nebula™ Repository Service', function() {
         $constants: {},
         $procedures: {}
     }, {
+        $type: '/bali/examples/Code/v1',
         $tag: bali.tag(),
         $version: bali.version(),
         $permissions: '/bali/permissions/public/v1',
@@ -317,6 +339,30 @@ describe('Bali Nebula™ Repository Service', function() {
             certificate = await notary.notarizeDocument(certificate);
             citation = await notary.activateKey(certificate);
             await repository.createDocument(tag, version, certificate);
+        });
+
+        it('should retrieve a static style sheet', async function() {
+            const resource = bali.component('/styles/BDN.css');
+
+            // make sure the static style sheet exists in the repository
+            const exists = await repository.staticExists(resource);
+            expect(exists).is.true;
+
+            // fetch the static style sheet from the repository
+            const result = await repository.fetchStatic(resource);
+            expect(result).to.exist;
+        });
+
+        it('should retrieve a static image', async function() {
+            const resource = bali.component('/images/PoweredByLogo.png');
+
+            // make sure the static style sheet exists in the repository
+            const exists = await repository.staticExists(resource);
+            expect(exists).is.true;
+
+            // fetch the static image from the repository
+            const result = await repository.fetchStatic(resource);
+            expect(result).to.exist;
         });
 
         it('should perform a citation name lifecycle', async function() {
@@ -465,14 +511,15 @@ describe('Bali Nebula™ Repository Service', function() {
             expect(message.isEqualTo(result)).is.true;
 
             // make sure the message queue is empty
-                none = await repository.dequeueMessage(queue);
-                expect(none).to.not.exist;
-    
+            none = await repository.dequeueMessage(queue);
+            expect(none).to.not.exist;
+
         });
-    
+
         it('should reset the notary', async function() {
             await notary.forgetKey();
         });
 
     });
+
 });
