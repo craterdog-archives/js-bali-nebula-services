@@ -69,16 +69,6 @@ module.exports = function(grunt) {
           filename: 'bali-nebula-repository.js',
           libraryTarget: 'umd'
         }
-      },
-      htmlService: {
-        entry: ['./src/HTMLService.js'],
-        target: 'node',
-        mode: 'development',
-        output: {
-          path: `${process.cwd()}/dist`,
-          filename: 'bali-nebula-html.js',
-          libraryTarget: 'umd'
-        }
       }
     }
 
