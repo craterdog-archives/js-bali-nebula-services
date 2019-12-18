@@ -168,7 +168,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        if (response.statusCode !== 200) throw Error('Unable to delete the draft: ' + response.statusCode);
+        return response.statusCode === 200;
     };
 
 
