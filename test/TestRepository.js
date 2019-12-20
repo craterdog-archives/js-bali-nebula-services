@@ -74,7 +74,7 @@ const RepositoryClient = function(service, debug) {
         };
         const response = await service.handler(request);
         const resource = response.body;
-        return resource;
+        return resource;  // returns a Buffer (may contain utf8 encoded string)
     };
 
     this.citationExists = async function(name) {
@@ -100,7 +100,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const citation = response.body;
+        const citation = response.body.toString('utf8');
         if (citation) return bali.component(citation);
     };
 
@@ -141,7 +141,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const draft = response.body;
+        const draft = response.body.toString('utf8');
         if (draft) return bali.component(draft);
     };
 
@@ -195,7 +195,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const document = response.body;
+        const document = response.body.toString('utf8');
         if (document) return bali.component(document);
     };
 
@@ -236,7 +236,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const type = response.body;
+        const type = response.body.toString('utf8');
         if (type) return bali.component(type);
     };
 

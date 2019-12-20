@@ -45,7 +45,7 @@ exports.handler = async function(request, context) {
             return handleResponse(400, 'Bad Request');
         }
         if (debug > 2) console.log('Request Attributes: ' + attributes);
-
+/*
         account = await validateCredentials(attributes);
         if (!account) {
             const response = handleResponse(401, 'Not Authenticated');
@@ -56,7 +56,7 @@ exports.handler = async function(request, context) {
         if (await notAuthorized(account, attributes)) {
             return handleResponse(403, 'Not Authorized');
         }
-
+*/
         return await handleRequest(attributes);
 
     } catch (cause) {
@@ -155,17 +155,6 @@ const handleRequest = async function(attributes) {
 const handleResponse = function(statusCode, statusString, contentType, content, cacheControl) {
     contentType = contentType || 'application/bali';
     cacheControl = cacheControl || 'no-store';
-    var isBase64Encoded = false;
-    switch (contentType) {
-        case 'image/gif':
-        case 'image/jpeg':
-        case 'image/png':
-            content = content.toString('base64');
-            isBase64Encoded = true;
-            break;
-        default:
-            break;
-    }
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
     return {
         headers: {
@@ -174,7 +163,6 @@ const handleResponse = function(statusCode, statusString, contentType, content, 
             'Cache-Control': cacheControl
         },
         statusCode: statusCode,
-        isBase64Encoded: isBase64Encoded,
         body: content
     };
 };
@@ -193,7 +181,7 @@ const staticRequest = async function(method, identifier, document) {
         case GET:
             var resource = await repository.fetchStatic(name);
             if (resource) {
-                var type, isEncoded;
+                var type;
                 const string = name.toString();
                 switch (string.slice(string.lastIndexOf('.'))) {
                     case '.css':
@@ -201,19 +189,13 @@ const staticRequest = async function(method, identifier, document) {
                         break;
                     case '.gif':
                         type = 'image/gif';
-                        resource = resource.toString('base64');
-                        isEncoded = true;
                         break;
                     case '.jpg':
                     case '.jpeg':
                         type = 'image/jpeg';
-                        resource = resource.toString('base64');
-                        isEncoded = true;
                         break;
                     case '.png':
                         type = 'image/png';
-                        resource = resource.toString('base64');
-                        isEncoded = true;
                         break;
                     default:
                         type = 'text/html';
