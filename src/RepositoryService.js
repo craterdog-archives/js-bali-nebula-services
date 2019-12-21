@@ -156,11 +156,12 @@ const encodeResponse = function(statusCode, statusString, contentType, content, 
     contentType = contentType || 'application/bali';
     cacheControl = cacheControl || 'no-store';
     var isBase64Encoded = false;
+    // API Gateway only supports content type that are strings
     if (contentType.startsWith('image')) {
-        content = content.toString('base64');  // API Gateway only supports strings
+        content = content.toString('base64');
         isBase64Encoded = true;
-    } else if (contentType === 'text/css') {
-        content = content.toString('utf8');  // API Gateway only supports strings
+    } else if (contentType.startsWith('text')) {
+        content = content.toString('utf8');
     }
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
     return {
