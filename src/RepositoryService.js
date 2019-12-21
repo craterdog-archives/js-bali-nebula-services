@@ -42,19 +42,19 @@ exports.handler = async function(request, context) {
         if (debug > 0) console.log('Request ' + request.httpMethod + ': ' + request.path);
         attributes = extractAttributes(request);
         if (!attributes) {
-            return handleResponse(400, 'Bad Request');
+            return encodeResponse(400, 'Bad Request');
         }
         if (debug > 2) console.log('Request Attributes: ' + attributes);
 /*
         account = await validateCredentials(attributes);
         if (!account) {
-            const response = handleResponse(401, 'Not Authenticated');
+            const response = encodeResponse(401, 'Not Authenticated');
             response.headers['WWW-Authenticate'] = 'Nebula-Credentials';
             return response;
         }
 
         if (await notAuthorized(account, attributes)) {
-            return handleResponse(403, 'Not Authorized');
+            return encodeResponse(403, 'Not Authorized');
         }
 */
         return await handleRequest(attributes);
@@ -72,7 +72,7 @@ exports.handler = async function(request, context) {
             console.log(exception.toString());
             console.log('Response: 503 (Service Unavailable)');
         }
-        return handleResponse(503, 'Service Unavailable');
+        return encodeResponse(503, 'Service Unavailable');
     }
 };
 
@@ -147,22 +147,31 @@ const handleRequest = async function(attributes) {
             return await queueRequest(method, identifier, document);
         default:
             if (debug > 2) console.log('The HTTP request contained an invalid type: ' + type);
-            return handleResponse(400, 'Bad Request');
+            return encodeResponse(400, 'Bad Request');
     }
 };
 
 
-const handleResponse = function(statusCode, statusString, contentType, content, cacheControl) {
+const encodeResponse = function(statusCode, statusString, contentType, content, cacheControl) {
     contentType = contentType || 'application/bali';
     cacheControl = cacheControl || 'no-store';
+    var isBase64Encoded = false;
+    if (contentType.startsWith('image')) {
+        content = content.toString('base64');  // API Gateway only supports strings
+        isBase64Encoded = true;
+    } else if (contentType === 'text/css') {
+        content = content.toString('utf8');  // API Gateway only supports strings
+    }
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
     return {
         headers: {
             'Content-Length': content ? content.length : 0,
             'Content-Type': contentType,
-            'Cache-Control': cacheControl
+            'Cache-Control': cacheControl,
+            'Access-Control-Allow-Origin': 'bali-nebula.net'
         },
         statusCode: statusCode,
+        isBase64Encoded: isBase64Encoded,
         body: content
     };
 };
@@ -174,10 +183,10 @@ const staticRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.staticExists(name)) {
                 if (debug > 2) console.log('The following static resource exists: ' + name);
-                return handleResponse(200, 'Resource Exists');
+                return encodeResponse(200, 'Resource Exists');
             }
             if (debug > 2) console.log('The following static resource does not exist: ' + name);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case GET:
             var resource = await repository.fetchStatic(name);
             if (resource) {
@@ -200,13 +209,13 @@ const staticRequest = async function(method, identifier, document) {
                     default:
                         type = 'text/html';
                 }
-                return handleResponse(200, 'Resource Retrieved', type, resource, 'immutable');
+                return encodeResponse(200, 'Resource Retrieved', type, resource, 'immutable');
             }
             if (debug > 2) console.log('The following static resource does not exist: ' + name);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         default:
             if (debug > 2) console.log('The following static resource method is not allowed: ' + method);
-            return handleResponse(405, 'Method Not Allowed');
+            return encodeResponse(405, 'Method Not Allowed');
     }
 };
 
@@ -217,30 +226,30 @@ const citationRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.citationExists(name)) {
                 if (debug > 2) console.log('The following citation exists: ' + name);
-                return handleResponse(200, 'Resource Exists');
+                return encodeResponse(200, 'Resource Exists');
             }
             if (debug > 2) console.log('The following citation does not exist: ' + name);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case GET:
             document = await repository.fetchCitation(name);
             if (document) {
                 if (debug > 2) console.log('Fetched the following citation: ' + document);
                 const body = document.toString();
-                return handleResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
+                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
             }
             if (debug > 2) console.log('The following citation does not exist: ' + name);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case POST:
             if (await repository.citationExists(name)) {
                 if (debug > 2) console.log('The following citation already exists: ' + name);
-                return handleResponse(409, 'Resource Conflict');
+                return encodeResponse(409, 'Resource Conflict');
             }
             await repository.createCitation(name, document);
             if (debug > 2) console.log('The following citation was created: ' + name);
-            return handleResponse(201, 'Resource Created');
+            return encodeResponse(201, 'Resource Created');
         default:
             if (debug > 2) console.log('The following citation method is not allowed: ' + method);
-            return handleResponse(405, 'Method Not Allowed');
+            return encodeResponse(405, 'Method Not Allowed');
     }
 };
 
@@ -253,38 +262,38 @@ const draftRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.draftExists(tag, version)) {
                 if (debug > 2) console.log('The following draft exists: ' + identifier);
-                return handleResponse(200, 'Resource Exists');
+                return encodeResponse(200, 'Resource Exists');
             }
             if (debug > 2) console.log('The following draft does not exist: ' + identifier);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case GET:
             document = await repository.fetchDraft(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following draft: ' + document);
                 const body = document.toString();
-                return handleResponse(200, 'Resource Retrieved', 'application/bali', body, 'no-store');
+                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'no-store');
             }
             if (debug > 2) console.log('The following draft does not exist: ' + identifier);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case PUT:
             const updated = await repository.draftExists(tag, version);
             await repository.saveDraft(tag, version, document);
             if (debug > 2) console.log('The following draft was saved: ' + identifier);
             if (updated) {
-                return handleResponse(204, 'Resource Updated');
+                return encodeResponse(204, 'Resource Updated');
             } else {
-                return handleResponse(201, 'Resource Created');
+                return encodeResponse(201, 'Resource Created');
             }
         case DELETE:
             if (await repository.deleteDraft(tag, version)) {
                 if (debug > 2) console.log('The following draft was deleted: ' + identifier);
-                return handleResponse(200, 'Resource Deleted');
+                return encodeResponse(200, 'Resource Deleted');
             }
             if (debug > 2) console.log('The following draft did not exist: ' + identifier);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         default:
             if (debug > 2) console.log('The following draft method is not allowed: ' + method);
-            return handleResponse(405, 'Method Not Allowed');
+            return encodeResponse(405, 'Method Not Allowed');
     }
 };
 
@@ -297,30 +306,30 @@ const documentRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.documentExists(tag, version)) {
                 if (debug > 2) console.log('The following document exists: ' + identifier);
-                return handleResponse(200, 'Resource Exists');
+                return encodeResponse(200, 'Resource Exists');
             }
             if (debug > 2) console.log('The following document does not exist: ' + identifier);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case GET:
             document = await repository.fetchDocument(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following document: ' + document);
                 const body = document.toString();
-                return handleResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
+                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
             }
             if (debug > 2) console.log('The following document does not exist: ' + identifier);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case POST:
             if (await repository.documentExists(tag, version)) {
                 if (debug > 2) console.log('The following document already exists: ' + identifier);
-                return handleResponse(409, 'Resource Conflict');
+                return encodeResponse(409, 'Resource Conflict');
             }
             await repository.createDocument(tag, version, document);
             if (debug > 2) console.log('The following document was created: ' + identifier);
-            return handleResponse(201, 'Resource Created');
+            return encodeResponse(201, 'Resource Created');
         default:
             if (debug > 2) console.log('The following document method is not allowed: ' + method);
-            return handleResponse(405, 'Method Not Allowed');
+            return encodeResponse(405, 'Method Not Allowed');
     }
 };
 
@@ -333,30 +342,30 @@ const typeRequest = async function(method, identifier, document) {
         case HEAD:
             if (await repository.typeExists(tag, version)) {
                 if (debug > 2) console.log('The following type exists: ' + identifier);
-                return handleResponse(200, 'Resource Exists');
+                return encodeResponse(200, 'Resource Exists');
             }
             if (debug > 2) console.log('The following type does not exist: ' + identifier);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case GET:
             document = await repository.fetchType(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following type: ' + document);
                 const body = document.toString();
-                return handleResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
+                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
             }
             if (debug > 2) console.log('The following type does not exist: ' + identifier);
-            return handleResponse(404, 'Resource Not Found');
+            return encodeResponse(404, 'Resource Not Found');
         case POST:
             if (await repository.typeExists(tag, version)) {
                 if (debug > 2) console.log('The following type already exists: ' + identifier);
-                return handleResponse(409, 'Resource Conflict');
+                return encodeResponse(409, 'Resource Conflict');
             }
             await repository.createType(tag, version, document);
             if (debug > 2) console.log('The following type was created: ' + identifier);
-            return handleResponse(201, 'Resource Created');
+            return encodeResponse(201, 'Resource Created');
         default:
             if (debug > 2) console.log('The following type method is not allowed: ' + method);
-            return handleResponse(405, 'Method Not Allowed');
+            return encodeResponse(405, 'Method Not Allowed');
     }
 };
 
@@ -367,19 +376,19 @@ const queueRequest = async function(method, identifier, document) {
         case PUT:
             await repository.queueMessage(queue, document);
             if (debug > 2) console.log('Added the following message to the queue: ' + document);
-            return handleResponse(201, 'Resource Created');
+            return encodeResponse(201, 'Resource Created');
         case DELETE:
             document = await repository.dequeueMessage(queue);
             if (document) {
                 if (debug > 2) console.log('Fetched the following message from the queue: ' + document);
                 const body = document.toString();
-                return handleResponse(200, 'Resource Deleted', 'application/bali', body, 'no-store');
+                return encodeResponse(200, 'Resource Deleted', 'application/bali', body, 'no-store');
             }
             if (debug > 2) console.log('The following queue is empty: ' + identifier);
-            return handleResponse(204, 'No Content');
+            return encodeResponse(204, 'No Content');
         default:
             if (debug > 2) console.log('The following queue method is not allowed: ' + method);
-            return handleResponse(405, 'Method Not Allowed');
+            return encodeResponse(405, 'Method Not Allowed');
     }
 };
 

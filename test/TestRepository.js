@@ -73,7 +73,12 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const resource = response.body;
+        var resource;
+        if (response.headers['Content-Type'].startsWith('image')) {
+            resource = Buffer.from(response.body, 'base64');  // decode the image
+        } else {
+            resource = response.body;
+        }
         return resource;  // returns a Buffer (may contain utf8 encoded string)
     };
 
