@@ -12,7 +12,6 @@
 const debug = 1;  // logging level in range [0..3]
 const configuration = {
     uri: 'https://bali-nebula.net/repository/',
-    statics: 'craterdog-bali-statics-us-west-2',
     citations: 'craterdog-bali-citations-us-west-2',
     drafts: 'craterdog-bali-drafts-us-west-2',
     documents: 'craterdog-bali-documents-us-west-2',
@@ -133,8 +132,6 @@ const handleRequest = async function(attributes) {
     const identifier = attributes.getValue('$identifier').getValue();
     const document = attributes.getValue('$document');
     switch (type) {
-        case 'statics':
-            return await staticRequest(method, identifier, document);
         case 'citations':
             return await citationRequest(method, identifier, document);
         case 'drafts':
@@ -155,14 +152,6 @@ const handleRequest = async function(attributes) {
 const encodeResponse = function(statusCode, statusString, contentType, content, cacheControl) {
     contentType = contentType || 'application/bali';
     cacheControl = cacheControl || 'no-store';
-    var isBase64Encoded = false;
-    // API Gateway only supports content type that are strings
-    if (contentType.startsWith('image')) {
-        content = content.toString('base64');
-        isBase64Encoded = true;
-    } else if (contentType.startsWith('text')) {
-        content = content.toString('utf8');
-    }
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
     return {
         headers: {
@@ -172,52 +161,8 @@ const encodeResponse = function(statusCode, statusString, contentType, content, 
             'Access-Control-Allow-Origin': 'bali-nebula.net'
         },
         statusCode: statusCode,
-        isBase64Encoded: isBase64Encoded,
         body: content
     };
-};
-
-
-const staticRequest = async function(method, identifier, document) {
-    const name = bali.component('/' + identifier);
-    switch (method) {
-        case HEAD:
-            if (await repository.staticExists(name)) {
-                if (debug > 2) console.log('The following static resource exists: ' + name);
-                return encodeResponse(200, 'Resource Exists');
-            }
-            if (debug > 2) console.log('The following static resource does not exist: ' + name);
-            return encodeResponse(404, 'Resource Not Found');
-        case GET:
-            var resource = await repository.fetchStatic(name);
-            if (resource) {
-                var type;
-                const string = name.toString();
-                switch (string.slice(string.lastIndexOf('.'))) {
-                    case '.css':
-                        type = 'text/css';
-                        break;
-                    case '.gif':
-                        type = 'image/gif';
-                        break;
-                    case '.jpg':
-                    case '.jpeg':
-                        type = 'image/jpeg';
-                        break;
-                    case '.png':
-                        type = 'image/png';
-                        break;
-                    default:
-                        type = 'text/html';
-                }
-                return encodeResponse(200, 'Resource Retrieved', type, resource, 'immutable');
-            }
-            if (debug > 2) console.log('The following static resource does not exist: ' + name);
-            return encodeResponse(404, 'Resource Not Found');
-        default:
-            if (debug > 2) console.log('The following static resource method is not allowed: ' + method);
-            return encodeResponse(405, 'Method Not Allowed');
-    }
 };
 
 

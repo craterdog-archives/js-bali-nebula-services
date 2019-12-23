@@ -50,38 +50,6 @@ const generateCredentials = async function() {
 const RepositoryClient = function(service, debug) {
     if (debug === null || debug === undefined) debug = 0;  // default is off
 
-    this.staticExists = async function(name) {
-        const request = {
-            headers: {
-                'Nebula-Credentials': await generateCredentials()
-            },
-            httpMethod: 'HEAD',
-            path: '/repository/statics' + name,
-            body: undefined
-        };
-        const response = await service.handler(request);
-        return response.statusCode === 200;
-    };
-
-    this.fetchStatic = async function(name) {
-        const request = {
-            headers: {
-                'Nebula-Credentials': await generateCredentials()
-            },
-            httpMethod: 'GET',
-            path: '/repository/statics' + name,
-            body: undefined
-        };
-        const response = await service.handler(request);
-        var resource;
-        if (response.headers['Content-Type'].startsWith('image')) {
-            resource = Buffer.from(response.body, 'base64');  // decode the image
-        } else {
-            resource = response.body;
-        }
-        return resource;  // returns a Buffer (may contain utf8 encoded string)
-    };
-
     this.citationExists = async function(name) {
         const request = {
             headers: {
@@ -344,30 +312,6 @@ describe('Bali Nebula™ Repository Service', function() {
             certificate = await notary.notarizeDocument(certificate);
             citation = await notary.activateKey(certificate);
             await repository.createDocument(tag, version, certificate);
-        });
-
-        it('should retrieve a static style sheet', async function() {
-            const resource = bali.component('/styles/BDN.css');
-
-            // make sure the static style sheet exists in the repository
-            const exists = await repository.staticExists(resource);
-            expect(exists).is.true;
-
-            // fetch the static style sheet from the repository
-            const result = await repository.fetchStatic(resource);
-            expect(result).to.exist;
-        });
-
-        it('should retrieve a static image', async function() {
-            const resource = bali.component('/images/PoweredByLogo.png');
-
-            // make sure the static style sheet exists in the repository
-            const exists = await repository.staticExists(resource);
-            expect(exists).is.true;
-
-            // fetch the static image from the repository
-            const result = await repository.fetchStatic(resource);
-            expect(result).to.exist;
         });
 
         it('should perform a citation name lifecycle', async function() {
