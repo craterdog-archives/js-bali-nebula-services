@@ -53,7 +53,8 @@ const RepositoryClient = function(service, debug) {
     this.citationExists = async function(name) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'HEAD',
             path: '/repository/citations' + name,
@@ -66,7 +67,8 @@ const RepositoryClient = function(service, debug) {
     this.fetchCitation = async function(name) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/citations' + name,
@@ -80,7 +82,9 @@ const RepositoryClient = function(service, debug) {
     this.createCitation = async function(name, citation) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Content-Type': 'application/bali',
+                'Accept': 'application/bali'
             },
             httpMethod: 'POST',
             path: '/repository/citations' + name,
@@ -94,7 +98,8 @@ const RepositoryClient = function(service, debug) {
     this.draftExists = async function(tag, version) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'HEAD',
             path: '/repository/drafts/' + getPath(tag, version),
@@ -107,7 +112,8 @@ const RepositoryClient = function(service, debug) {
     this.fetchDraft = async function(tag, version) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/drafts/' + getPath(tag, version),
@@ -121,7 +127,9 @@ const RepositoryClient = function(service, debug) {
     this.saveDraft = async function(tag, version, draft) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Content-Type': 'application/bali',
+                'Accept': 'application/bali'
             },
             httpMethod: 'PUT',
             path: '/repository/drafts/' + getPath(tag, version),
@@ -134,7 +142,8 @@ const RepositoryClient = function(service, debug) {
     this.deleteDraft = async function(tag, version) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'DELETE',
             path: '/repository/drafts/' + getPath(tag, version),
@@ -148,7 +157,8 @@ const RepositoryClient = function(service, debug) {
     this.documentExists = async function(tag, version) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'HEAD',
             path: '/repository/documents/' + getPath(tag, version),
@@ -161,7 +171,8 @@ const RepositoryClient = function(service, debug) {
     this.fetchDocument = async function(tag, version) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/documents/' + getPath(tag, version),
@@ -175,7 +186,9 @@ const RepositoryClient = function(service, debug) {
     this.createDocument = async function(tag, version, document) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Content-Type': 'application/bali',
+                'Accept': 'application/bali'
             },
             httpMethod: 'POST',
             path: '/repository/documents/' + getPath(tag, version),
@@ -189,7 +202,8 @@ const RepositoryClient = function(service, debug) {
     this.typeExists = async function(tag, version) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'HEAD',
             path: '/repository/types/' + getPath(tag, version),
@@ -202,7 +216,8 @@ const RepositoryClient = function(service, debug) {
     this.fetchType = async function(tag, version) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/types/' + getPath(tag, version),
@@ -216,7 +231,9 @@ const RepositoryClient = function(service, debug) {
     this.createType = async function(tag, version, type) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Content-Type': 'application/bali',
+                'Accept': 'application/bali'
             },
             httpMethod: 'POST',
             path: '/repository/types/' + getPath(tag, version),
@@ -230,7 +247,9 @@ const RepositoryClient = function(service, debug) {
     this.queueMessage = async function(queue, message) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Content-Type': 'application/bali',
+                'Accept': 'application/bali'
             },
             httpMethod: 'PUT',
             path: '/repository/queues/' + getPath(queue),
@@ -243,7 +262,8 @@ const RepositoryClient = function(service, debug) {
     this.dequeueMessage = async function(queue) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials()
+                'Nebula-Credentials': await generateCredentials(),
+                'Accept': 'application/bali'
             },
             httpMethod: 'DELETE',
             path: '/repository/queues/' + getPath(queue),

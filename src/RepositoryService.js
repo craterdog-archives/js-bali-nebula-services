@@ -22,6 +22,7 @@ const configuration = {
 const bali = require('bali-component-framework').api(debug);
 const notary = require('bali-digital-notary').service(debug);
 const repository = require('bali-document-repository').service(notary, configuration, debug);
+const style = 'https://bali-nebula.net/static/styles/BDN.css';
 
 // SUPPORTED HTTP METHODS
 const HEAD = 'HEAD';
@@ -81,6 +82,7 @@ exports.handler = async function(request, context) {
 const extractAttributes = function(request) {
     try {
         var credentials = request.headers['Nebula-Credentials'];
+        var contentType = request.headers['Accept'];
         if (credentials) credentials = bali.component(decodeURI(credentials).slice(2, -2));  // strip off double quote delimiters
         const method = request.httpMethod.toUpperCase();
         var path = request.path.slice(1);  // remove the leading '/'
@@ -93,6 +95,7 @@ const extractAttributes = function(request) {
             $method: method,
             $type: type,
             $identifier: identifier,
+            $contentType: contentType,
             $document: document
         });
         if (debug > 2) console.log('The request attributes: ' + attributes);
@@ -130,18 +133,19 @@ const handleRequest = async function(attributes) {
     const method = attributes.getValue('$method').getValue();
     const type = attributes.getValue('$type').getValue();
     const identifier = attributes.getValue('$identifier').getValue();
+    const contentType = attributes.getValue('$contentType').getValue();
     const document = attributes.getValue('$document');
     switch (type) {
         case 'citations':
-            return await citationRequest(method, identifier, document);
+            return await citationRequest(method, identifier, contentType, document);
         case 'drafts':
-            return await draftRequest(method, identifier, document);
+            return await draftRequest(method, identifier, contentType, document);
         case 'documents':
-            return await documentRequest(method, identifier, document);
+            return await documentRequest(method, identifier, contentType, document);
         case 'types':
-            return await typeRequest(method, identifier, document);
+            return await typeRequest(method, identifier, contentType, document);
         case 'queues':
-            return await queueRequest(method, identifier, document);
+            return await queueRequest(method, identifier, contentType, document);
         default:
             if (debug > 2) console.log('The HTTP request contained an invalid type: ' + type);
             return encodeResponse(400, 'Bad Request');
@@ -149,24 +153,24 @@ const handleRequest = async function(attributes) {
 };
 
 
-const encodeResponse = function(statusCode, statusString, contentType, content, cacheControl) {
+const encodeResponse = function(statusCode, statusString, contentType, body, cacheControl) {
     contentType = contentType || 'application/bali';
     cacheControl = cacheControl || 'no-store';
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
     return {
         headers: {
-            'Content-Length': content ? content.length : 0,
             'Content-Type': contentType,
+            'Content-Length': body ? body.length : 0,
             'Cache-Control': cacheControl,
             'Access-Control-Allow-Origin': 'bali-nebula.net'
         },
         statusCode: statusCode,
-        body: content
+        body: body
     };
 };
 
 
-const citationRequest = async function(method, identifier, document) {
+const citationRequest = async function(method, identifier, contentType, document) {
     const name = bali.component('/' + identifier);
     switch (method) {
         case HEAD:
@@ -180,8 +184,16 @@ const citationRequest = async function(method, identifier, document) {
             document = await repository.fetchCitation(name);
             if (document) {
                 if (debug > 2) console.log('Fetched the following citation: ' + document);
-                const body = document.toString();
-                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
+                var body;
+                switch (contentType) {
+                    case 'application/bali':
+                        body = document.toBDN();
+                        break;
+                    default:
+                        contentType = 'text/html';
+                        body = document.toHTML(style);
+                }
+                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'immutable');
             }
             if (debug > 2) console.log('The following citation does not exist: ' + name);
             return encodeResponse(404, 'Resource Not Found');
@@ -200,7 +212,7 @@ const citationRequest = async function(method, identifier, document) {
 };
 
 
-const draftRequest = async function(method, identifier, document) {
+const draftRequest = async function(method, identifier, contentType, document) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -216,8 +228,16 @@ const draftRequest = async function(method, identifier, document) {
             document = await repository.fetchDraft(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following draft: ' + document);
-                const body = document.toString();
-                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'no-store');
+                var body;
+                switch (contentType) {
+                    case 'application/bali':
+                        body = document.toBDN();
+                        break;
+                    default:
+                        contentType = 'text/html';
+                        body = document.toHTML(style);
+                }
+                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'no-store');
             }
             if (debug > 2) console.log('The following draft does not exist: ' + identifier);
             return encodeResponse(404, 'Resource Not Found');
@@ -244,7 +264,7 @@ const draftRequest = async function(method, identifier, document) {
 };
 
 
-const documentRequest = async function(method, identifier, document) {
+const documentRequest = async function(method, identifier, contentType, document) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -260,8 +280,16 @@ const documentRequest = async function(method, identifier, document) {
             document = await repository.fetchDocument(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following document: ' + document);
-                const body = document.toString();
-                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
+                var body;
+                switch (contentType) {
+                    case 'application/bali':
+                        body = document.toBDN();
+                        break;
+                    default:
+                        contentType = 'text/html';
+                        body = document.toHTML(style);
+                }
+                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'immutable');
             }
             if (debug > 2) console.log('The following document does not exist: ' + identifier);
             return encodeResponse(404, 'Resource Not Found');
@@ -280,7 +308,7 @@ const documentRequest = async function(method, identifier, document) {
 };
 
 
-const typeRequest = async function(method, identifier, document) {
+const typeRequest = async function(method, identifier, contentType, document) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -296,8 +324,16 @@ const typeRequest = async function(method, identifier, document) {
             document = await repository.fetchType(tag, version);
             if (document) {
                 if (debug > 2) console.log('Fetched the following type: ' + document);
-                const body = document.toString();
-                return encodeResponse(200, 'Resource Retrieved', 'application/bali', body, 'immutable');
+                var body;
+                switch (contentType) {
+                    case 'application/bali':
+                        body = document.toBDN();
+                        break;
+                    default:
+                        contentType = 'text/html';
+                        body = document.toHTML(style);
+                }
+                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'immutable');
             }
             if (debug > 2) console.log('The following type does not exist: ' + identifier);
             return encodeResponse(404, 'Resource Not Found');
@@ -316,7 +352,7 @@ const typeRequest = async function(method, identifier, document) {
 };
 
 
-const queueRequest = async function(method, identifier, document) {
+const queueRequest = async function(method, identifier, contentType, document) {
     const queue = bali.component('#' + identifier);
     switch (method) {
         case PUT:
@@ -327,8 +363,16 @@ const queueRequest = async function(method, identifier, document) {
             document = await repository.dequeueMessage(queue);
             if (document) {
                 if (debug > 2) console.log('Fetched the following message from the queue: ' + document);
-                const body = document.toString();
-                return encodeResponse(200, 'Resource Deleted', 'application/bali', body, 'no-store');
+                var body;
+                switch (contentType) {
+                    case 'application/bali':
+                        body = document.toBDN();
+                        break;
+                    default:
+                        contentType = 'text/html';
+                        body = document.toHTML(style);
+                }
+                return encodeResponse(200, 'Resource Deleted', contentType, body, 'no-store');
             }
             if (debug > 2) console.log('The following queue is empty: ' + identifier);
             return encodeResponse(204, 'No Content');
