@@ -35,8 +35,7 @@ const DELETE = 'DELETE';
 // PUBLIC FUNCTIONS
 
 if (debug > 2) console.log('Loading the "Bali Nebula™ Repository Service" lambda function');
-exports.handler = async function(request, context) {
-    var account;
+exports.handler = async function(request) {
     var attributes;
     try {
         if (debug > 0) console.log('Request ' + request.httpMethod + ': ' + request.path);
@@ -44,19 +43,18 @@ exports.handler = async function(request, context) {
         if (!attributes) {
             return encodeResponse(400, 'Bad Request');
         }
-        if (debug > 2) console.log('Request Attributes: ' + attributes);
-/*
-        account = await validateCredentials(attributes);
-        if (!account) {
+        if (debug > 2) console.log('Request Attributes: ' + bali.catalog(attributes));
+
+        if (await invalidCredentials(attributes)) {
             const response = encodeResponse(401, 'Not Authenticated');
             response.headers['WWW-Authenticate'] = 'Nebula-Credentials';
             return response;
         }
 
-        if (await notAuthorized(account, attributes)) {
+        if (await notAuthorized(attributes)) {
             return encodeResponse(403, 'Not Authorized');
         }
-*/
+
         return await handleRequest(attributes);
 
     } catch (cause) {
@@ -65,7 +63,6 @@ exports.handler = async function(request, context) {
                 $module: '/bali/services/Repository',
                 $procedure: '$handler',
                 $exception: '$processingFailed',
-                $account: account,
                 $attributes: attributes,
                 $text: 'The processing of the HTTP request failed.'
             }, cause);
@@ -81,23 +78,26 @@ exports.handler = async function(request, context) {
 
 const extractAttributes = function(request) {
     try {
-        var credentials = request.headers['Nebula-Credentials'];
-        var contentType = request.headers['Accept'];
-        if (credentials) credentials = bali.component(decodeURI(credentials).slice(2, -2));  // strip off double quote delimiters
+        var responseType = request.headers['Accept'] || request.headers['accept'];
+        var credentials = request.headers['Nebula-Credentials'] || request.headers['nebula-credentials'];
+        if (credentials) {
+            credentials = decodeURI(credentials).slice(2, -2);  // strip off double quote delimiters
+            credentials = bali.component(credentials);
+        }
         const method = request.httpMethod.toUpperCase();
         var path = request.path.slice(1);  // remove the leading '/'
-        path = path.slice(path.slice(0).indexOf('/') + 1);  // remove leading '/repository/'
-        const type = path.slice(0, path.indexOf('/'));
-        const identifier = path.slice(path.indexOf('/') + 1);
+        path = path.slice(path.indexOf('/') + 1);  // remove leading 'repository/'
+        const type = path.slice(0, path.indexOf('/'));  // extract type from <type>/<identifier>
+        const identifier = path.slice(path.indexOf('/') + 1);  // extract identifier from <type>/<identifier>
         const document = request.body ? bali.component(request.body) : undefined;
-        const attributes = bali.catalog({
-            $credentials: credentials,
-            $method: method,
-            $type: type,
-            $identifier: identifier,
-            $contentType: contentType,
-            $document: document
-        });
+        const attributes = {
+            responseType: responseType,
+            credentials: credentials,
+            method: method,
+            type: type,
+            identifier: identifier,
+            document: document
+        };
         if (debug > 2) console.log('The request attributes: ' + attributes);
         return attributes;
     } catch (cause) {
@@ -106,16 +106,42 @@ const extractAttributes = function(request) {
 };
 
     
-const validateCredentials = async function(attributes) {
+const invalidCredentials = async function(attributes) {
     try {
-        const credentials = attributes.getValue('$credentials');
-        const citation = credentials.getValue('$certificate');
-        const tag = citation.getValue('$tag');
-        const version = citation.getValue('$version');
-        const certificate = (await repository.fetchDocument(tag, version)) || attributes.getValue('$document');  // may be self-signed
-        if (await notary.validDocument(credentials, certificate)) {
-            const account = certificate.getValue('$account');
-            return account;
+        const credentials = attributes.credentials;
+        if (credentials) {
+            const citation = credentials.getValue('$certificate');
+            const tag = citation.getValue('$tag');
+            const version = citation.getValue('$version');
+            var certificate = await repository.fetchDocument(tag, version);
+            if (!certificate) {
+                certificate = attributes.document;  // likely a self-signed certificate
+            }
+            if (certificate && await notary.validDocument(credentials, certificate)) {
+                attributes.account = certificate.getValue('$account');
+                return false;  // not invalid
+            }
+            return true;  // is invalid
+        } else {
+            if ([HEAD, GET].includes(attributes.method)) {
+                var document;
+                switch (attributes.type) {
+                    case 'citations':
+                        const citation = await repository.fetchCitation(name);
+                        break;
+                    case 'drafts':
+                        document = await repository.fetchDraft(tag, version);
+                        break;
+                    case 'documents':
+                        document = await repository.fetchDocument(tag, version);
+                        break;
+                    case 'types':
+                        document = await repository.fetchType(tag, version);
+                        break;
+                }
+                attributes.document = document;
+            }
+            return true;  // not valid
         }
     } catch (cause) {
         if (debug > 2) console.log('The credentials passed in the HTTP header are not valid: ' + credentials);
@@ -130,22 +156,22 @@ const notAuthorized = async function(attributes) {
 
     
 const handleRequest = async function(attributes) {
-    const method = attributes.getValue('$method').getValue();
-    const type = attributes.getValue('$type').getValue();
-    const identifier = attributes.getValue('$identifier').getValue();
-    const contentType = attributes.getValue('$contentType').getValue();
-    const document = attributes.getValue('$document');
+    const method = attributes.method;
+    const type = attributes.type;
+    const identifier = attributes.identifier;
+    const responseType = attributes.responseType;
+    const document = attributes.document;
     switch (type) {
         case 'citations':
-            return await citationRequest(method, identifier, contentType, document);
+            return await citationRequest(method, identifier, responseType, document);
         case 'drafts':
-            return await draftRequest(method, identifier, contentType, document);
+            return await draftRequest(method, identifier, responseType, document);
         case 'documents':
-            return await documentRequest(method, identifier, contentType, document);
+            return await documentRequest(method, identifier, responseType, document);
         case 'types':
-            return await typeRequest(method, identifier, contentType, document);
+            return await typeRequest(method, identifier, responseType, document);
         case 'queues':
-            return await queueRequest(method, identifier, contentType, document);
+            return await queueRequest(method, identifier, responseType, document);
         default:
             if (debug > 2) console.log('The HTTP request contained an invalid type: ' + type);
             return encodeResponse(400, 'Bad Request');
@@ -153,13 +179,12 @@ const handleRequest = async function(attributes) {
 };
 
 
-const encodeResponse = function(statusCode, statusString, contentType, body, cacheControl) {
-    contentType = contentType || 'application/bali';
+const encodeResponse = function(statusCode, statusString, responseType, body, cacheControl) {
     cacheControl = cacheControl || 'no-store';
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
     return {
         headers: {
-            'Content-Type': contentType,
+            'Content-Type': responseType,
             'Content-Length': body ? body.length : 0,
             'Cache-Control': cacheControl,
             'Access-Control-Allow-Origin': 'bali-nebula.net'
@@ -170,7 +195,7 @@ const encodeResponse = function(statusCode, statusString, contentType, body, cac
 };
 
 
-const citationRequest = async function(method, identifier, contentType, document) {
+const citationRequest = async function(method, identifier, responseType, document) {
     const name = bali.component('/' + identifier);
     switch (method) {
         case HEAD:
@@ -185,15 +210,15 @@ const citationRequest = async function(method, identifier, contentType, document
             if (document) {
                 if (debug > 2) console.log('Fetched the following citation: ' + document);
                 var body;
-                switch (contentType) {
+                switch (responseType) {
                     case 'application/bali':
                         body = document.toBDN();
                         break;
                     default:
-                        contentType = 'text/html';
+                        responseType = 'text/html';
                         body = document.toHTML(style);
                 }
-                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'immutable');
+                return encodeResponse(200, 'Resource Retrieved', responseType, body, 'immutable');
             }
             if (debug > 2) console.log('The following citation does not exist: ' + name);
             return encodeResponse(404, 'Resource Not Found');
@@ -212,7 +237,7 @@ const citationRequest = async function(method, identifier, contentType, document
 };
 
 
-const draftRequest = async function(method, identifier, contentType, document) {
+const draftRequest = async function(method, identifier, responseType, document) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -229,21 +254,21 @@ const draftRequest = async function(method, identifier, contentType, document) {
             if (document) {
                 if (debug > 2) console.log('Fetched the following draft: ' + document);
                 var body;
-                switch (contentType) {
+                switch (responseType) {
                     case 'application/bali':
                         body = document.toBDN();
                         break;
                     default:
-                        contentType = 'text/html';
+                        responseType = 'text/html';
                         body = document.toHTML(style);
                 }
-                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'no-store');
+                return encodeResponse(200, 'Resource Retrieved', responseType, body, 'no-store');
             }
             if (debug > 2) console.log('The following draft does not exist: ' + identifier);
             return encodeResponse(404, 'Resource Not Found');
         case PUT:
             const updated = await repository.draftExists(tag, version);
-            await repository.saveDraft(tag, version, document);
+            await repository.saveDraft(document);
             if (debug > 2) console.log('The following draft was saved: ' + identifier);
             if (updated) {
                 return encodeResponse(204, 'Resource Updated');
@@ -264,7 +289,7 @@ const draftRequest = async function(method, identifier, contentType, document) {
 };
 
 
-const documentRequest = async function(method, identifier, contentType, document) {
+const documentRequest = async function(method, identifier, responseType, document) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -281,15 +306,15 @@ const documentRequest = async function(method, identifier, contentType, document
             if (document) {
                 if (debug > 2) console.log('Fetched the following document: ' + document);
                 var body;
-                switch (contentType) {
+                switch (responseType) {
                     case 'application/bali':
                         body = document.toBDN();
                         break;
                     default:
-                        contentType = 'text/html';
+                        responseType = 'text/html';
                         body = document.toHTML(style);
                 }
-                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'immutable');
+                return encodeResponse(200, 'Resource Retrieved', responseType, body, 'immutable');
             }
             if (debug > 2) console.log('The following document does not exist: ' + identifier);
             return encodeResponse(404, 'Resource Not Found');
@@ -298,7 +323,7 @@ const documentRequest = async function(method, identifier, contentType, document
                 if (debug > 2) console.log('The following document already exists: ' + identifier);
                 return encodeResponse(409, 'Resource Conflict');
             }
-            await repository.createDocument(tag, version, document);
+            await repository.createDocument(document);
             if (debug > 2) console.log('The following document was created: ' + identifier);
             return encodeResponse(201, 'Resource Created');
         default:
@@ -308,7 +333,7 @@ const documentRequest = async function(method, identifier, contentType, document
 };
 
 
-const typeRequest = async function(method, identifier, contentType, document) {
+const typeRequest = async function(method, identifier, responseType, document) {
     const tokens = identifier.split('/');
     const tag = bali.component('#' + tokens[0]);
     const version = bali.component(tokens[1]);
@@ -325,15 +350,15 @@ const typeRequest = async function(method, identifier, contentType, document) {
             if (document) {
                 if (debug > 2) console.log('Fetched the following type: ' + document);
                 var body;
-                switch (contentType) {
+                switch (responseType) {
                     case 'application/bali':
                         body = document.toBDN();
                         break;
                     default:
-                        contentType = 'text/html';
+                        responseType = 'text/html';
                         body = document.toHTML(style);
                 }
-                return encodeResponse(200, 'Resource Retrieved', contentType, body, 'immutable');
+                return encodeResponse(200, 'Resource Retrieved', responseType, body, 'immutable');
             }
             if (debug > 2) console.log('The following type does not exist: ' + identifier);
             return encodeResponse(404, 'Resource Not Found');
@@ -342,7 +367,7 @@ const typeRequest = async function(method, identifier, contentType, document) {
                 if (debug > 2) console.log('The following type already exists: ' + identifier);
                 return encodeResponse(409, 'Resource Conflict');
             }
-            await repository.createType(tag, version, document);
+            await repository.createType(document);
             if (debug > 2) console.log('The following type was created: ' + identifier);
             return encodeResponse(201, 'Resource Created');
         default:
@@ -352,7 +377,7 @@ const typeRequest = async function(method, identifier, contentType, document) {
 };
 
 
-const queueRequest = async function(method, identifier, contentType, document) {
+const queueRequest = async function(method, identifier, responseType, document) {
     const queue = bali.component('#' + identifier);
     switch (method) {
         case PUT:
@@ -364,15 +389,15 @@ const queueRequest = async function(method, identifier, contentType, document) {
             if (document) {
                 if (debug > 2) console.log('Fetched the following message from the queue: ' + document);
                 var body;
-                switch (contentType) {
+                switch (responseType) {
                     case 'application/bali':
                         body = document.toBDN();
                         break;
                     default:
-                        contentType = 'text/html';
+                        responseType = 'text/html';
                         body = document.toHTML(style);
                 }
-                return encodeResponse(200, 'Resource Deleted', contentType, body, 'no-store');
+                return encodeResponse(200, 'Resource Deleted', responseType, body, 'no-store');
             }
             if (debug > 2) console.log('The following queue is empty: ' + identifier);
             return encodeResponse(204, 'No Content');

@@ -124,7 +124,7 @@ const RepositoryClient = function(service, debug) {
         if (draft) return bali.component(draft);
     };
 
-    this.saveDraft = async function(tag, version, draft) {
+    this.saveDraft = async function(draft) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
@@ -132,7 +132,7 @@ const RepositoryClient = function(service, debug) {
                 'Accept': 'application/bali'
             },
             httpMethod: 'PUT',
-            path: '/repository/drafts/' + getPath(tag, version),
+            path: '/repository/drafts/' + extractId(draft),
             body: draft.toString()
         };
         const response = await service.handler(request);
@@ -183,7 +183,7 @@ const RepositoryClient = function(service, debug) {
         if (document) return bali.component(document);
     };
 
-    this.createDocument = async function(tag, version, document) {
+    this.createDocument = async function(document) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
@@ -191,7 +191,7 @@ const RepositoryClient = function(service, debug) {
                 'Accept': 'application/bali'
             },
             httpMethod: 'POST',
-            path: '/repository/documents/' + getPath(tag, version),
+            path: '/repository/documents/' + extractId(document),
             body: document.toString()
         };
         const response = await service.handler(request);
@@ -228,7 +228,7 @@ const RepositoryClient = function(service, debug) {
         if (type) return bali.component(type);
     };
 
-    this.createType = async function(tag, version, type) {
+    this.createType = async function(type) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
@@ -236,7 +236,7 @@ const RepositoryClient = function(service, debug) {
                 'Accept': 'application/bali'
             },
             httpMethod: 'POST',
-            path: '/repository/types/' + getPath(tag, version),
+            path: '/repository/types/' + extractId(type),
             body: type.toString()
         };
         const response = await service.handler(request);
@@ -331,7 +331,7 @@ describe('Bali Nebula™ Repository Service', function() {
             version = certificate.getParameter('$version');
             certificate = await notary.notarizeDocument(certificate);
             citation = await notary.activateKey(certificate);
-            await repository.createDocument(tag, version, certificate);
+            await repository.createDocument(certificate);
         });
 
         it('should perform a citation name lifecycle', async function() {
@@ -359,7 +359,7 @@ describe('Bali Nebula™ Repository Service', function() {
             const draft = await notary.notarizeDocument(transaction);
 
             // create a new draft in the repository
-            await repository.saveDraft(tag, version, draft);
+            await repository.saveDraft(draft);
 
             // make sure the new draft exists in the repository
             var exists = await repository.draftExists(tag, version);
@@ -374,7 +374,7 @@ describe('Bali Nebula™ Repository Service', function() {
             expect(draft.isEqualTo(result)).is.true;
 
             // update the existing draft in the repository
-            await repository.saveDraft(tag, version, draft);
+            await repository.saveDraft(draft);
 
             // make sure the updated draft exists in the repository
             var exists = await repository.draftExists(tag, version);
@@ -400,7 +400,7 @@ describe('Bali Nebula™ Repository Service', function() {
             const document = await notary.notarizeDocument(transaction);
 
             // create a new document in the repository
-            await repository.createDocument(tag, version, document);
+            await repository.createDocument(document);
 
             // make sure the same draft does not exist in the repository
             var exists = await repository.draftExists(tag, version);
@@ -420,7 +420,7 @@ describe('Bali Nebula™ Repository Service', function() {
 
             // attempt to create the same document in the repository
             await assert.rejects(async function() {
-                await repository.createDocument(tag, version, document);
+                await repository.createDocument(document);
             });
 
         });
@@ -431,7 +431,7 @@ describe('Bali Nebula™ Repository Service', function() {
             const type = await notary.notarizeDocument(code);
 
             // create a new type in the repository
-            await repository.createType(tag, version, type);
+            await repository.createType(type);
 
             // make sure the same draft does not exist in the repository
             var exists = await repository.draftExists(tag, version);
@@ -451,7 +451,7 @@ describe('Bali Nebula™ Repository Service', function() {
 
             // attempt to create the same type in the repository
             await assert.rejects(async function() {
-                await repository.createType(tag, version, type);
+                await repository.createType(type);
             });
 
         });
