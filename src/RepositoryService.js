@@ -192,141 +192,128 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
             'Access-Control-Allow-Origin': 'bali-nebula.net'
         }
     };
-    switch (method) {
-        case HEAD:
-        case GET:
-        case DELETE:
-            if (exists) {
-                if (authenticated) {
-                    if (authorized) {
-                        switch (method) {
-                            case HEAD:
-                                response.statusCode = 200;
-                                response.statusString = 'Resource Exists';
+    if (authenticated) {
+        if (exists) {
+            if (authorized) {
+                switch (method) {
+                    case HEAD:
+                        response.statusCode = 200;
+                        response.statusString = 'Resource Exists';
+                        break;
+                    case GET:
+                        switch (responseType) {
+                            case 'application/bali':
+                                response.body = body.toBDN();
                                 break;
-                            case GET:
-                                switch (responseType) {
-                                    case 'application/bali':
-                                        response.body = body.toBDN();
-                                        break;
-                                    default:
-                                        response.headers['Content-Type'] = 'text/html';
-                                        response.body = body.toHTML(style);
-                                }
-                                response.headers['Content-Length'] = response.body.length;
-                                response.headers['Cache-Control'] = cacheControl;
-                                response.statusCode = 200;
-                                response.statusString = 'Resource Retrieved';
-                                break;
-                            case DELETE:
-                                // only a draft document or queued message may be deleted
-                                if (cacheControl === 'no-store') {
-                                    switch (responseType) {
-                                        case 'application/bali':
-                                            response.body = body.toBDN();
-                                            break;
-                                        default:
-                                            response.headers['Content-Type'] = 'text/html';
-                                            response.body = body.toHTML(style);
-                                    }
-                                    response.headers['Content-Length'] = response.body.length;
-                                    response.headers['Cache-Control'] = cacheControl;
-                                    response.statusCode = 200;
-                                    response.statusString = 'Resource Deleted';
-                                } else {
-                                    response.statusCode = 403;
-                                    response.statusString = 'Not Authorized';
-                                }
-                                break;
+                            default:
+                                response.headers['Content-Type'] = 'text/html';
+                                response.body = body.toHTML(style);
                         }
-                    } else {
-                        response.statusCode = 403;
-                        response.statusString = 'Not Authorized';
-                    }
-                } else {
-                    if (authorized) {
-                        switch (method) {
-                            case HEAD:
-                                response.statusCode = 200;
-                                response.statusString = 'Resource Exists';
-                                break;
-                            case GET:
-                                switch (responseType) {
-                                    case 'application/bali':
-                                        response.body = body.toBDN();
-                                        break;
-                                    default:
-                                        response.headers['Content-Type'] = 'text/html';
-                                        response.body = body.toHTML(style);
-                                }
-                                response.headers['Content-Length'] = response.body.length;
-                                response.headers['Cache-Control'] = cacheControl;
-                                response.statusCode = 200;
-                                response.statusString = 'Resource Retrieved';
-                                break;
-                            case DELETE:
-                                // must be authenticated to delete a draft document or queued message
-                                response.statusCode = 401;
-                                response.statusString = 'Not Authenticated';
-                                response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-                                break;
+                        response.headers['Content-Length'] = response.body.length;
+                        response.headers['Cache-Control'] = cacheControl;
+                        response.statusCode = 200;
+                        response.statusString = 'Resource Retrieved';
+                        break;
+                    case POST:
+                        response.statusCode = 409;
+                        response.statusString = 'Resource Conflict';
+                        break;
+                    case PUT:
+                        response.statusCode = 204;
+                        response.statusString = 'Resource Updated';
+                        break;
+                    case DELETE:
+                        // only a mutable resource may be deleted
+                        if (cacheControl === 'no-store') {
+                            switch (responseType) {
+                                case 'application/bali':
+                                    response.body = body.toBDN();
+                                    break;
+                                default:
+                                    response.headers['Content-Type'] = 'text/html';
+                                    response.body = body.toHTML(style);
+                            }
+                            response.headers['Content-Length'] = response.body.length;
+                            response.headers['Cache-Control'] = cacheControl;
+                            response.statusCode = 200;
+                            response.statusString = 'Resource Deleted';
+                        } else {
+                            response.statusCode = 403;
+                            response.statusString = 'Not Authorized';
                         }
-                    } else {
+                        break;
+                    default:
+                        if (debug > 2) console.log('An invalid request method was attempted: ' + method);
+                        response.statusCode = 405;
+                        response.statusString = 'Method Not Allowed';
+                }
+            } else {
+                // not authorized
+                response.statusCode = 403;
+                response.statusString = 'Not Authorized';
+            }
+        } else {
+            // doesn't exist
+            switch (method) {
+                case HEAD:
+                case GET:
+                case DELETE:
+                    response.statusCode = 404;
+                    response.statusString = 'Resource Not Found';
+                    break;
+                case POST:
+                case PUT:
+                    response.statusCode = 201;
+                    response.statusString = 'Resource Created';
+                    break;
+                default:
+                    if (debug > 2) console.log('An invalid request method was attempted: ' + method);
+                    response.statusCode = 405;
+                    response.statusString = 'Method Not Allowed';
+            }
+        }
+    } else {
+        // not authenticated
+        if (exists) {
+            if (authorized) {
+                switch (method) {
+                    case HEAD:
+                        response.statusCode = 200;
+                        response.statusString = 'Resource Exists';
+                        break;
+                    case GET:
+                        switch (responseType) {
+                            case 'application/bali':
+                                response.body = body.toBDN();
+                                break;
+                            default:
+                                response.headers['Content-Type'] = 'text/html';
+                                response.body = body.toHTML(style);
+                        }
+                        response.headers['Content-Length'] = response.body.length;
+                        response.headers['Cache-Control'] = cacheControl;
+                        response.statusCode = 200;
+                        response.statusString = 'Resource Retrieved';
+                        break;
+                    default:
+                        // must be authenticated create, update or delete a resource
                         response.statusCode = 401;
                         response.statusString = 'Not Authenticated';
                         response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-                    }
+                        break;
                 }
             } else {
-                if (authenticated) {
-                    response.statusCode = 404;
-                    response.statusString = 'Resource Not Found';
-                } else {
-                    response.statusCode = 401;
-                    response.statusString = 'Not Authenticated';
-                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-                }
+                // not authorized
+                response.statusCode = 401;
+                response.statusString = 'Not Authenticated';
+                response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
             }
-            break;
-        case POST:
-        case PUT:
-            if (exists) {
-                if (authenticated) {
-                    if (authorized) {
-                        switch (method) {
-                            case POST:
-                                response.statusCode = 409;
-                                response.statusString = 'Resource Conflict';
-                                break;
-                            case PUT:
-                                response.statusCode = 204;
-                                response.statusString = 'Resource Updated';
-                                break;
-                        }
-                    } else {
-                        response.statusCode = 403;
-                        response.statusString = 'Not Authorized';
-                    }
-                } else {
-                    response.statusCode = 401;
-                    response.statusString = 'Not Authenticated';
-                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-                }
-            } else {
-                if (authenticated) {
-                    response.statusCode = 201;
-                    response.statusString = 'Resource Created';
-                } else {
-                    response.statusCode = 401;
-                    response.statusString = 'Not Authenticated';
-                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-                }
-            }
-            break;
-        default:
-            if (debug > 2) console.log('An invalid request method was attempted: ' + method);
-            response.statusCode = 405;
-            response.statusString = 'Method Not Allowed';
+        } else {
+            // doesn't exist
+            response.statusCode = 401;
+            response.statusString = 'Not Authenticated';
+            response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+        }
     }
     if (debug > 0) console.log('Response ' + response.statusCode + ': ' + response.statusString);
     return response;
