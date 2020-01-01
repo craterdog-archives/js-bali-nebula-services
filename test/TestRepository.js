@@ -75,8 +75,10 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const citation = response.body.toString('utf8');
-        if (citation) return bali.component(citation);
+        if (response.body && response.body.length) {
+            const source = response.body.toString('utf8');
+            return bali.component(source);
+        }
     };
 
     this.createCitation = async function(name, citation) {
@@ -120,8 +122,10 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const draft = response.body.toString('utf8');
-        if (draft) return bali.component(draft);
+        if (response.body && response.body.length) {
+            const source = response.body.toString('utf8');
+            return bali.component(source);
+        }
     };
 
     this.saveDraft = async function(draft) {
@@ -150,7 +154,10 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        return response.statusCode === 200;
+        if (response.body && response.body.length) {
+            const source = response.body.toString('utf8');
+            return bali.component(source);
+        }
     };
 
 
@@ -179,8 +186,10 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const document = response.body.toString('utf8');
-        if (document) return bali.component(document);
+        if (response.body && response.body.length) {
+            const source = response.body.toString('utf8');
+            return bali.component(source);
+        }
     };
 
     this.createDocument = async function(document) {
@@ -198,51 +207,33 @@ const RepositoryClient = function(service, debug) {
         if (response.statusCode !== 201) throw Error('Unable to create the document: ' + response.statusCode);
     };
 
-
-    this.typeExists = async function(tag, version) {
+    this.queueExists = async function(queue) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
                 'Accept': 'application/bali'
             },
             httpMethod: 'HEAD',
-            path: '/repository/types/' + getPath(tag, version),
+            path: '/repository/queues/' + getPath(queue),
             body: undefined
         };
         const response = await service.handler(request);
         return response.statusCode === 200;
     };
 
-    this.fetchType = async function(tag, version) {
+    this.messageCount = async function(queue) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
                 'Accept': 'application/bali'
             },
             httpMethod: 'GET',
-            path: '/repository/types/' + getPath(tag, version),
+            path: '/repository/queues/' + getPath(queue),
             body: undefined
         };
         const response = await service.handler(request);
-        const type = response.body.toString('utf8');
-        if (type) return bali.component(type);
+        return Number(response.body.toString('utf8'));
     };
-
-    this.createType = async function(type) {
-        const request = {
-            headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Content-Type': 'application/bali',
-                'Accept': 'application/bali'
-            },
-            httpMethod: 'POST',
-            path: '/repository/types/' + extractId(type),
-            body: type.toString()
-        };
-        const response = await service.handler(request);
-        if (response.statusCode !== 201) throw Error('Unable to create the type: ' + response.statusCode);
-    };
-
 
     this.queueMessage = async function(queue, message) {
         const request = {
@@ -270,8 +261,10 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        const message = response.body;
-        if (message) return bali.component(message);
+        if (response.body && response.body.length) {
+            const source = response.body.toString('utf8');
+            return bali.component(source);
+        }
     };
 
     return this;
@@ -292,27 +285,6 @@ describe('Bali Nebula™ Repository Service', function() {
         $total: '13.57($currency: $USD)'
     }, {
         $type: '/bali/examples/Transaction/v1',
-        $tag: bali.tag(),
-        $version: bali.version(),
-        $permissions: '/bali/permissions/public/v1',
-        $previous: bali.pattern.NONE
-    });
-
-    const code = bali.catalog({
-        $source: bali.catalog({
-            $protocol: notary.getProtocols()[0],
-            $timestamp: bali.moment(),
-            $tag: bali.tag(),
-            $version: bali.version(),
-            $digest: bali.component("'Z41S87YHGGV3BW2WHW72NMN3XQ1G146B1J4QGZF3NBTY1AGVDXHF6KK7YBNB89BZL4GDY2F457LBC7P0BR0T9TNJW4MKYYLC0VV6FC8'")
-        }, {
-            $type: bali.component('/bali/notary/Citation/v1')
-        }),
-        $literals: [],
-        $constants: {},
-        $procedures: {}
-    }, {
-        $type: '/bali/examples/Code/v1',
         $tag: bali.tag(),
         $version: bali.version(),
         $permissions: '/bali/permissions/public/v1',
@@ -340,6 +312,8 @@ describe('Bali Nebula™ Repository Service', function() {
             // make sure the new name does not yet exist in the repository
             var exists = await repository.citationExists(name);
             expect(exists).is.false;
+            var none = await repository.fetchCitation(name);
+            expect(none).to.not.exist;
 
             // create a new name in the repository
             await repository.createCitation(name, citation);
@@ -381,16 +355,18 @@ describe('Bali Nebula™ Repository Service', function() {
             expect(exists).is.true;
 
             // delete the draft from the repository
-            exists = await repository.deleteDraft(tag, version);
-            expect(exists).is.true;
+            const deleted = await repository.deleteDraft(tag, version);
+            expect(draft.isEqualTo(deleted)).is.true;
 
             // make sure the draft no longer exists in the repository
             exists = await repository.draftExists(tag, version);
             expect(exists).is.false;
+            var none = await repository.fetchDraft(tag, version);
+            expect(none).to.not.exist;
 
             // delete a non-existent draft from the repository
-            exists = await repository.deleteDraft(tag, version);
-            expect(exists).is.false;
+            none = await repository.deleteDraft(tag, version);
+            expect(none).to.not.exist;
 
         });
 
@@ -399,12 +375,20 @@ describe('Bali Nebula™ Repository Service', function() {
             version = transaction.getParameter('$version');
             const document = await notary.notarizeDocument(transaction);
 
+            // make sure the new document does not already exists in the repository
+            exists = await repository.documentExists(tag, version);
+            expect(exists).is.false;
+            var none = await repository.fetchDocument(tag, version);
+            expect(none).to.not.exist;
+
             // create a new document in the repository
             await repository.createDocument(document);
 
             // make sure the same draft does not exist in the repository
             var exists = await repository.draftExists(tag, version);
             expect(exists).is.false;
+            none = await repository.fetchDraft(tag, version);
+            expect(none).to.not.exist;
 
             // make sure the new document exists in the repository
             exists = await repository.documentExists(tag, version);
@@ -425,65 +409,59 @@ describe('Bali Nebula™ Repository Service', function() {
 
         });
 
-        it('should perform a committed type lifecycle', async function() {
-            tag = code.getParameter('$tag');
-            version = code.getParameter('$version');
-            const type = await notary.notarizeDocument(code);
-
-            // create a new type in the repository
-            await repository.createType(type);
-
-            // make sure the same draft does not exist in the repository
-            var exists = await repository.draftExists(tag, version);
-            expect(exists).is.false;
-
-            // make sure the new type exists in the repository
-            exists = await repository.typeExists(tag, version);
-            expect(exists).is.true;
-
-            // fetch the new type from the repository
-            const result = await repository.fetchType(tag, version);
-            expect(type.isEqualTo(result)).is.true;
-
-            // make sure the new type still exists in the repository
-            exists = await repository.typeExists(tag, version);
-            expect(exists).is.true;
-
-            // attempt to create the same type in the repository
-            await assert.rejects(async function() {
-                await repository.createType(type);
-            });
-
-        });
-
         it('should perform a message queue lifecycle', async function() {
             const queue = bali.tag();
 
+            // make sure the queue does not exist
+            var exists = await repository.queueExists(queue);
+            expect(exists).is.false;
 
             // make sure the message queue is empty
+            var count = await repository.messageCount(queue);
+            expect(count).to.equal(0);
             var none = await repository.dequeueMessage(queue);
             expect(none).to.not.exist;
 
             // queue up some messages
             var message = await notary.notarizeDocument(transaction);
             await repository.queueMessage(queue, message);
+            count = await repository.messageCount(queue);
+            expect(count).to.equal(1);
             await repository.queueMessage(queue, message);
+            count = await repository.messageCount(queue);
+            expect(count).to.equal(2);
             await repository.queueMessage(queue, message);
+            count = await repository.messageCount(queue);
+            expect(count).to.equal(3);
+
+            // make sure the queue does exist
+            exists = await repository.queueExists(queue);
+            expect(exists).is.true;
 
             // dequeue the messages
             var result = await repository.dequeueMessage(queue);
             expect(result).to.exist;
             expect(message.isEqualTo(result)).is.true;
+            count = await repository.messageCount(queue);
+            expect(count).to.equal(2);
             result = await repository.dequeueMessage(queue);
             expect(result).to.exist;
             expect(message.isEqualTo(result)).is.true;
+            count = await repository.messageCount(queue);
+            expect(count).to.equal(1);
             result = await repository.dequeueMessage(queue);
             expect(result).to.exist;
             expect(message.isEqualTo(result)).is.true;
+            count = await repository.messageCount(queue);
+            expect(count).to.equal(0);
 
             // make sure the message queue is empty
             none = await repository.dequeueMessage(queue);
             expect(none).to.not.exist;
+
+            // make sure the queue does not exist
+            exists = await repository.queueExists(queue);
+            expect(exists).is.false;
 
         });
 
