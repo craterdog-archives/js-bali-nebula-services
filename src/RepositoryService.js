@@ -221,7 +221,7 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
                         break;
                     case POST:
                         response.statusCode = 409;
-                        statusString = 'Resource Conflict';
+                        statusString = 'Resource Already Exists';
                         break;
                     case PUT:
                         response.statusCode = 204;
@@ -339,7 +339,15 @@ const citationRequest = async function(parameters) {
         case GET:
             break;
         case POST:
-            if (response.statusCode < 300) await repository.createCitation(name, citation);
+            if (response.statusCode < 300) {
+                const tag = citation.getValue('$tag');
+                const version = citation.getValue('$version');
+                if (await repository.documentExists(tag, version)) {
+                    await repository.createCitation(name, citation);
+                } else {
+                    response = encodeError(409, 'Cited Must Exist');
+                }
+            }
             break;
         default:
             response = encodeError(405, 'Method Not Allowed');
@@ -390,7 +398,13 @@ const documentRequest = async function(parameters) {
         case GET:
             break;
         case POST:
-            if (response.statusCode < 300) await repository.createDocument(document);
+            if (response.statusCode < 300) {
+                await repository.createDocument(document);
+                const content = document.getValue('$content');
+                const tag = content.getParameter('$tag');
+                const version = content.getParameter('$version');
+                await repository.deleteDraft(tag, version);
+            }
             break;
         default:
             response = encodeError(405, 'Method Not Allowed');
