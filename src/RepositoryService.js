@@ -179,9 +179,14 @@ const encodeError = function(statusCode, statusString) {
 };
 
 
+/*
+ * This method enforces strict symantics on the five methods supported by all resources that
+ * are managed by the Bali Nebula™ services.  For details on the symantics see here:
+ * https://github.com/craterdog-bali/js-bali-nebula-services/wiki/HTTP-Method-Semantics
+ */
 const encodeResponse = function(account, method, responseType, body, cacheControl) {
-    const exists = !!body;
     const authenticated = !!account;
+    const exists = !!body;
     const authorized = isAuthorized(account, body);
     responseType = responseType || 'text/html';
     const response = {
