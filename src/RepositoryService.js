@@ -171,7 +171,6 @@ const encodeError = function(statusCode, statusString) {
             'Access-Control-Allow-Origin': 'bali-nebula.net'
         },
         statusCode: statusCode,
-        statusString: statusString,
         body: undefined
     };
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
@@ -189,6 +188,7 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
     const exists = !!body;
     const authorized = isAuthorized(account, body);
     responseType = responseType || 'text/html';
+    var statusString;
     const response = {
         headers: {
             'Content-Type': responseType,
@@ -203,7 +203,7 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
                 switch (method) {
                     case HEAD:
                         response.statusCode = 200;
-                        response.statusString = 'Resource Exists';
+                        statusString = 'Resource Exists';
                         break;
                     case GET:
                         switch (responseType) {
@@ -217,15 +217,15 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
                         response.headers['Content-Length'] = response.body.length;
                         response.headers['Cache-Control'] = cacheControl;
                         response.statusCode = 200;
-                        response.statusString = 'Resource Retrieved';
+                        statusString = 'Resource Retrieved';
                         break;
                     case POST:
                         response.statusCode = 409;
-                        response.statusString = 'Resource Conflict';
+                        statusString = 'Resource Conflict';
                         break;
                     case PUT:
                         response.statusCode = 204;
-                        response.statusString = 'Resource Updated';
+                        statusString = 'Resource Updated';
                         break;
                     case DELETE:
                         // only a mutable resource may be deleted
@@ -241,21 +241,21 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
                             response.headers['Content-Length'] = response.body.length;
                             response.headers['Cache-Control'] = cacheControl;
                             response.statusCode = 200;
-                            response.statusString = 'Resource Deleted';
+                            statusString = 'Resource Deleted';
                         } else {
                             response.statusCode = 403;
-                            response.statusString = 'Not Authorized';
+                            statusString = 'Not Authorized';
                         }
                         break;
                     default:
                         if (debug > 2) console.log('An invalid request method was attempted: ' + method);
                         response.statusCode = 405;
-                        response.statusString = 'Method Not Allowed';
+                        statusString = 'Method Not Allowed';
                 }
             } else {
                 // not authorized
                 response.statusCode = 403;
-                response.statusString = 'Not Authorized';
+                statusString = 'Not Authorized';
             }
         } else {
             // doesn't exist
@@ -264,17 +264,17 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
                 case GET:
                 case DELETE:
                     response.statusCode = 404;
-                    response.statusString = 'Resource Not Found';
+                    statusString = 'Resource Not Found';
                     break;
                 case POST:
                 case PUT:
                     response.statusCode = 201;
-                    response.statusString = 'Resource Created';
+                    statusString = 'Resource Created';
                     break;
                 default:
                     if (debug > 2) console.log('An invalid request method was attempted: ' + method);
                     response.statusCode = 405;
-                    response.statusString = 'Method Not Allowed';
+                    statusString = 'Method Not Allowed';
             }
         }
     } else {
@@ -284,7 +284,7 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
                 switch (method) {
                     case HEAD:
                         response.statusCode = 200;
-                        response.statusString = 'Resource Exists';
+                        statusString = 'Resource Exists';
                         break;
                     case GET:
                         switch (responseType) {
@@ -298,29 +298,30 @@ const encodeResponse = function(account, method, responseType, body, cacheContro
                         response.headers['Content-Length'] = response.body.length;
                         response.headers['Cache-Control'] = cacheControl;
                         response.statusCode = 200;
-                        response.statusString = 'Resource Retrieved';
+                        statusString = 'Resource Retrieved';
                         break;
                     default:
                         // must be authenticated create, update or delete a resource
                         response.statusCode = 401;
-                        response.statusString = 'Not Authenticated';
+                        statusString = 'Not Authenticated';
                         response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
                         break;
                 }
             } else {
                 // not authorized
                 response.statusCode = 401;
-                response.statusString = 'Not Authenticated';
+                statusString = 'Not Authenticated';
                 response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
             }
         } else {
             // doesn't exist
             response.statusCode = 401;
-            response.statusString = 'Not Authenticated';
+            statusString = 'Not Authenticated';
             response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
         }
     }
-    if (debug > 0) console.log('Response ' + response.statusCode + ': ' + response.statusString);
+    if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+    if (debug > 2 && response.body) console.log('  body: ' + response.body);
     return response;
 };
 
@@ -416,9 +417,9 @@ const queueRequest = async function(parameters) {
                     'Cache-Control': 'no-store',
                     'Access-Control-Allow-Origin': 'bali-nebula.net'
                 },
-                statusCode: exists ? 200 : 404,
-                statusString: exists ? 'Resource Exists' : 'Resource Not Found'
+                statusCode: exists ? 200 : 404
             };
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + (exists ? 'Resource Exists' : 'Resource Not Found'));
             break;
         case GET:
             // since a queue is not a document with an owner we must do this manually
@@ -431,9 +432,9 @@ const queueRequest = async function(parameters) {
                     'Access-Control-Allow-Origin': 'bali-nebula.net'
                 },
                 statusCode: 200,
-                statusString: 'Count Retrieved',
                 body: count.toString()
             };
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + (count ? 'Resource Retrieved' : 'Resource Not Found'));
             break;
         case PUT:
             response = encodeResponse(parameters.account, method, responseType, undefined, 'no-store');
