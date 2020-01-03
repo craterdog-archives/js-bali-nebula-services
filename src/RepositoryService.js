@@ -37,38 +37,35 @@ if (debug > 2) console.log('Loading the "Bali Nebula™ Repository Service" lamb
 exports.handler = async function(request) {
     var parameters;
     try {
-        if (debug > 0) console.log('Request ' + request.httpMethod + ': ' + request.path);
-
         // extract the request parameters
         parameters = decodeRequest(request);
         if (!parameters) {
             if (debug > 2) console.log('The service received a badly formed request.');
             return encodeError(400, 'Bad Request');
         }
-        if (debug > 2) console.log('The request parameters: ' + bali.catalog(parameters).toString());
 
         // validate any credentials that were passed with the request (there may not be any)
         if (!(await validCredentials(parameters))) {
-            if (debug > 2) console.log('Invalid credentials were passed with the request: ' + bali.catalog(parameters).toString());
+            if (debug > 2) console.log('Invalid credentials were passed with the request.');
             const response = encodeError(401, 'Invalid Credentials');
             response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
             return response;
         }
 
-        // handle the request
-        switch (parameters.type) {
-            case 'citations':
-                return await citationRequest(parameters);
-            case 'drafts':
-                return await draftRequest(parameters);
-            case 'documents':
-                return await documentRequest(parameters);
-            case 'queues':
-                return await queueRequest(parameters);
-            default:
-                if (debug > 2) console.log('The service received an invalid request type: ' + bali.catalog(parameters).toString());
-                return encodeError(400, 'Bad Request');
+        // validate the request type
+        if (!handleRequest[parameters.type]) {
+            if (debug > 2) console.log('The service received an invalid request type: ' + parameters.type);
+            return encodeError(400, 'Bad Request');
         }
+
+        // validate the request method
+        if (!handleRequest[parameters.type][parameters.method]) {
+            if (debug > 2) console.log('The service received an invalid request method: ' + parameters.method);
+            return encodeError(405, 'Method Not Allowed');
+        }
+
+        // handle the request
+        return handleRequest[parameters.type][parameters.method](parameters);
 
     } catch (cause) {
         if (debug > 0) {
@@ -91,7 +88,9 @@ exports.handler = async function(request) {
 
 const decodeRequest = function(request) {
     try {
+        if (debug > 0) console.log('Request ' + request.httpMethod + ': ' + request.path);
         var responseType = request.headers['Accept'] || request.headers['accept'];
+        if (responseType !== 'application/bali') responseType = 'text/html';  // for a browser
         var credentials = request.headers['Nebula-Credentials'] || request.headers['nebula-credentials'];
         if (credentials) {
             credentials = decodeURI(credentials).slice(2, -2);  // strip off double quote delimiters
@@ -111,6 +110,7 @@ const decodeRequest = function(request) {
             identifier: identifier,
             body: body
         };
+        if (debug > 2) console.log('Parameters: ' + bali.catalog(parameters).toString());
         return parameters;
     } catch (cause) {
         if (debug > 2) console.log('An error occurred while attempting to extract the request parameters: ' + cause);
@@ -141,6 +141,11 @@ const validCredentials = async function(parameters) {
 };
 
 
+const isAuthenticated = function(parameters) {
+    return !!parameters.account;
+};
+
+
 const isAuthorized = function(account, document) {
     if (document) {
         // check the owner of the document
@@ -165,13 +170,9 @@ const isAuthorized = function(account, document) {
 const encodeError = function(statusCode, statusString) {
     const response = {
         headers: {
-            'Content-Type': undefined,
-            'Content-Length': 0,
-            'Cache-Control': 'no-store',
-            'Access-Control-Allow-Origin': 'bali-nebula.net'
+            'Content-Length': 0
         },
-        statusCode: statusCode,
-        body: undefined
+        statusCode: statusCode
     };
     if (debug > 0) console.log('Response ' + statusCode + ': ' + statusString);
     return response;
@@ -180,287 +181,680 @@ const encodeError = function(statusCode, statusString) {
 
 /*
  * This method enforces strict symantics on the five methods supported by all resources that
- * are managed by the Bali Nebula™ services.  For details on the symantics see here:
+ * are managed by the Bali Nebula™ services.  For details on the symantics see this page:
  * https://github.com/craterdog-bali/js-bali-nebula-services/wiki/HTTP-Method-Semantics
  */
-const encodeResponse = function(account, method, responseType, body, cacheControl) {
-    const authenticated = !!account;
-    const exists = !!body;
-    const authorized = isAuthorized(account, body);
-    responseType = responseType || 'text/html';
-    var statusString;
-    const response = {
-        headers: {
-            'Content-Type': responseType,
-            'Content-Length': 0,
-            'Cache-Control': 'no-store',
-            'Access-Control-Allow-Origin': 'bali-nebula.net'
-        }
-    };
-    if (authenticated) {
-        if (exists) {
-            if (authorized) {
-                switch (method) {
-                    case HEAD:
-                        response.statusCode = 200;
-                        statusString = 'Resource Exists';
-                        break;
-                    case GET:
-                        switch (responseType) {
-                            case 'application/bali':
-                                response.body = body.toBDN();
-                                break;
-                            default:
-                                response.headers['Content-Type'] = 'text/html';
-                                response.body = body.toHTML(style);
-                        }
-                        response.headers['Content-Length'] = response.body.length;
-                        response.headers['Cache-Control'] = cacheControl;
-                        response.statusCode = 200;
-                        statusString = 'Resource Retrieved';
-                        break;
-                    case POST:
-                        response.statusCode = 409;
-                        statusString = 'Resource Already Exists';
-                        break;
-                    case PUT:
-                        response.statusCode = 204;
-                        statusString = 'Resource Updated';
-                        break;
-                    case DELETE:
-                        // only a mutable resource may be deleted
-                        if (cacheControl === 'no-store') {
-                            switch (responseType) {
-                                case 'application/bali':
-                                    response.body = body.toBDN();
-                                    break;
-                                default:
-                                    response.headers['Content-Type'] = 'text/html';
-                                    response.body = body.toHTML(style);
-                            }
-                            response.headers['Content-Length'] = response.body.length;
-                            response.headers['Cache-Control'] = cacheControl;
-                            response.statusCode = 200;
-                            statusString = 'Resource Deleted';
-                        } else {
-                            response.statusCode = 403;
-                            statusString = 'Not Authorized';
-                        }
-                        break;
-                    default:
-                        if (debug > 2) console.log('An invalid request method was attempted: ' + method);
-                        response.statusCode = 405;
-                        statusString = 'Method Not Allowed';
+const handleRequest = {
+
+    citations: {
+        HEAD: async function(parameters) {
+            var statusString;
+            const name = bali.component('/' + parameters.identifier);
+            const existing = await repository.fetchCitation(name);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
                 }
-            } else {
-                // not authorized
-                response.statusCode = 403;
-                statusString = 'Not Authorized';
-            }
-        } else {
-            // doesn't exist
-            switch (method) {
-                case HEAD:
-                case GET:
-                case DELETE:
-                    response.statusCode = 404;
-                    statusString = 'Resource Not Found';
-                    break;
-                case POST:
-                case PUT:
-                    response.statusCode = 201;
-                    statusString = 'Resource Created';
-                    break;
-                default:
-                    if (debug > 2) console.log('An invalid request method was attempted: ' + method);
-                    response.statusCode = 405;
-                    statusString = 'Method Not Allowed';
-            }
-        }
-    } else {
-        // not authenticated
-        if (exists) {
-            if (authorized) {
-                switch (method) {
-                    case HEAD:
-                        response.statusCode = 200;
-                        statusString = 'Resource Exists';
-                        break;
-                    case GET:
-                        switch (responseType) {
-                            case 'application/bali':
-                                response.body = body.toBDN();
-                                break;
-                            default:
-                                response.headers['Content-Type'] = 'text/html';
-                                response.body = body.toHTML(style);
-                        }
-                        response.headers['Content-Length'] = response.body.length;
-                        response.headers['Cache-Control'] = cacheControl;
-                        response.statusCode = 200;
-                        statusString = 'Resource Retrieved';
-                        break;
-                    default:
-                        // must be authenticated create, update or delete a resource
+            };
+            if (existing) {
+                if (authorized) {
+                    response.statusCode = 200;
+                    statusString = 'Citation Exists';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
                         response.statusCode = 401;
                         statusString = 'Not Authenticated';
-                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-                        break;
+                    }
                 }
             } else {
-                // not authorized
-                response.statusCode = 401;
-                statusString = 'Not Authenticated';
-                response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-            }
-        } else {
-            // doesn't exist
-            response.statusCode = 401;
-            statusString = 'Not Authenticated';
-            response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
-        }
-    }
-    if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
-    if (debug > 2 && response.body) console.log('  body: ' + response.body);
-    return response;
-};
-
-
-const citationRequest = async function(parameters) {
-    const method = parameters.method;
-    const identifier = parameters.identifier;
-    const responseType = parameters.responseType;
-    const citation = parameters.body;
-    const name = bali.component('/' + identifier);
-    const existing = await repository.fetchCitation(name);
-    var response = encodeResponse(parameters.account, method, responseType, existing, 'immutable');
-    switch (method) {
-        case HEAD:
-        case GET:
-            break;
-        case POST:
-            if (response.statusCode < 300) {
-                const tag = citation.getValue('$tag');
-                const version = citation.getValue('$version');
-                if (await repository.documentExists(tag, version)) {
-                    await repository.createCitation(name, citation);
+                if (authenticated) {
+                    response.statusCode = 404;
+                    statusString = 'Citation Not Found';
                 } else {
-                    response = encodeError(409, 'Cited Must Exist');
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
                 }
             }
-            break;
-        default:
-            response = encodeError(405, 'Method Not Allowed');
-    }
-    return response;
-};
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
 
-
-const draftRequest = async function(parameters) {
-    const method = parameters.method;
-    const identifier = parameters.identifier;
-    const responseType = parameters.responseType;
-    const draft = parameters.body;
-    const tokens = identifier.split('/');
-    const tag = bali.component('#' + tokens[0]);
-    const version = bali.component(tokens[1]);
-    const existing = await repository.fetchDraft(tag, version);
-    var response = encodeResponse(parameters.account, method, responseType, existing, 'no-store');
-    switch (method) {
-        case HEAD:
-        case GET:
-            break;
-        case PUT:
-            if (response.statusCode < 300) await repository.saveDraft(draft);
-            break;
-        case DELETE:
-            if (response.statusCode < 300) await repository.deleteDraft(tag, version);
-            break;
-        default:
-            response = encodeError(405, 'Method Not Allowed');
-    }
-    return response;
-};
-
-
-const documentRequest = async function(parameters) {
-    const method = parameters.method;
-    const identifier = parameters.identifier;
-    const responseType = parameters.responseType;
-    const document = parameters.body;
-    const tokens = identifier.split('/');
-    const tag = bali.component('#' + tokens[0]);
-    const version = bali.component(tokens[1]);
-    const existing = await repository.fetchDocument(tag, version);
-    var response = encodeResponse(parameters.account, method, responseType, existing, 'immutable');
-    switch (method) {
-        case HEAD:
-        case GET:
-            break;
-        case POST:
-            if (response.statusCode < 300) {
-                await repository.createDocument(document);
-                const content = document.getValue('$content');
-                const tag = content.getParameter('$tag');
-                const version = content.getParameter('$version');
-                await repository.deleteDraft(tag, version);
+        GET: async function(parameters) {
+            var statusString;
+            const name = bali.component('/' + parameters.identifier);
+            const existing = await repository.fetchCitation(name);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    switch (parameters.responseType) {
+                        case 'application/bali':
+                            response.body = existing.toBDN();
+                            break;
+                        case 'text/html':
+                        default:
+                            response.body = existing.toHTML(style);
+                            response.headers['Access-Control-Allow-Origin'] = 'bali-nebula.net';
+                    }
+                    response.headers['Content-Length'] = response.body.length;
+                    response.headers['Content-Type'] = parameters.responseType;
+                    response.headers['Cache-Control'] = 'immutable';
+                    response.statusCode = 200;
+                    statusString = 'Citation Exists';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    response.statusCode = 404;
+                    statusString = 'Citation Not Found';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
             }
-            break;
-        default:
-            response = encodeError(405, 'Method Not Allowed');
-    }
-    return response;
-};
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
 
+        POST: async function(parameters) {
+            var statusString;
+            const name = bali.component('/' + parameters.identifier);
+            const citation = parameters.body;
+            const existing = await repository.fetchCitation(name);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    response.statusCode = 409;
+                    statusString = 'Citation Already Exists';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    const tag = citation.getValue('$tag');
+                    const version = citation.getValue('$version');
+                    if (!(await repository.documentExists(tag, version))) {
+                        response.statusCode = 409;
+                        statusString = 'Cited Document Must Exist';
+                    }
+                    await repository.createCitation(name, citation);
+                    response.statusCode = 201;
+                    statusString = 'Citation Created';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
 
-const queueRequest = async function(parameters) {
-    const method = parameters.method;
-    const identifier = parameters.identifier;
-    const responseType = parameters.responseType;
-    var message = parameters.body;
-    const queue = bali.component('#' + identifier);
-    var response;
-    switch (method) {
-        case HEAD:
-            // since a queue is not a document with an owner we must do this manually
+        PUT: async function(parameters) {
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                },
+                statusCode: 405
+            };
+            const statusString = 'Updates Not Supported';
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        DELETE: async function(parameters) {
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                },
+                statusCode: 405
+            };
+            const statusString = 'Deletion Not Supported';
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        }
+    },
+
+    drafts: {
+        HEAD: async function(parameters) {
+            var statusString;
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const existing = await repository.fetchDraft(tag, version);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    response.statusCode = 200;
+                    statusString = 'Draft Exists';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    response.statusCode = 404;
+                    statusString = 'Draft Not Found';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        GET: async function(parameters) {
+            var statusString;
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const existing = await repository.fetchDraft(tag, version);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    switch (parameters.responseType) {
+                        case 'application/bali':
+                            response.body = existing.toBDN();
+                            break;
+                        case 'text/html':
+                        default:
+                            response.body = existing.toHTML(style);
+                            response.headers['Access-Control-Allow-Origin'] = 'bali-nebula.net';
+                    }
+                    response.headers['Content-Length'] = response.body.length;
+                    response.headers['Content-Type'] = parameters.responseType;
+                    response.headers['Cache-Control'] = 'immutable';
+                    response.statusCode = 200;
+                    statusString = 'Draft Exists';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    response.statusCode = 404;
+                    statusString = 'Draft Not Found';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        POST: async function(parameters) {
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                },
+                statusCode: 405
+            };
+            const statusString = 'Posts Not Supported';
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        PUT: async function(parameters) {
+            var statusString;
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const draft = parameters.body;
+            const existing = await repository.fetchDraft(tag, version);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    await repository.saveDraft(draft);
+                    response.statusCode = 204;
+                    statusString = 'Draft Updated';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    await repository.saveDraft(draft);
+                    response.statusCode = 201;
+                    statusString = 'Draft Created';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        DELETE: async function(parameters) {
+            var statusString;
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const existing = await repository.fetchDraft(tag, version);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    if (authenticated) {
+                        await repository.deleteDraft(tag, version);
+                        switch (parameters.responseType) {
+                            case 'application/bali':
+                                response.body = existing.toBDN();
+                                break;
+                            case 'text/html':
+                            default:
+                                response.body = existing.toHTML(style);
+                                response.headers['Access-Control-Allow-Origin'] = 'bali-nebula.net';
+                        }
+                        response.headers['Content-Length'] = response.body.length;
+                        response.headers['Content-Type'] = parameters.responseType;
+                        response.headers['Cache-Control'] = 'no-store';
+                        response.statusCode = 200;
+                        statusString = 'Draft Deleted';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    response.statusCode = 404;
+                    statusString = 'Draft Not Found';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        }
+    },
+
+    documents: {
+        HEAD: async function(parameters) {
+            var statusString;
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const existing = await repository.fetchDocument(tag, version);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    response.statusCode = 200;
+                    statusString = 'Document Exists';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    response.statusCode = 404;
+                    statusString = 'Document Not Found';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        GET: async function(parameters) {
+            var statusString;
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const existing = await repository.fetchDocument(tag, version);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    switch (parameters.responseType) {
+                        case 'application/bali':
+                            response.body = existing.toBDN();
+                            break;
+                        case 'text/html':
+                        default:
+                            response.body = existing.toHTML(style);
+                            response.headers['Access-Control-Allow-Origin'] = 'bali-nebula.net';
+                    }
+                    response.headers['Content-Length'] = response.body.length;
+                    response.headers['Content-Type'] = parameters.responseType;
+                    response.headers['Cache-Control'] = 'immutable';
+                    response.statusCode = 200;
+                    statusString = 'Document Retrieved';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    response.statusCode = 404;
+                    statusString = 'Document Not Found';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        POST: async function(parameters) {
+            var statusString;
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const document = parameters.body;
+            const existing = await repository.fetchDocument(tag, version);
+            const authenticated = isAuthenticated(parameters);
+            const authorized = isAuthorized(parameters, existing);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (existing) {
+                if (authorized) {
+                    response.statusCode = 409;
+                    statusString = 'Document Already Exists';
+                } else {
+                    if (authenticated) {
+                        response.statusCode = 403;
+                        statusString = 'Not Authorized';
+                    } else {
+                        response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                        response.statusCode = 401;
+                        statusString = 'Not Authenticated';
+                    }
+                }
+            } else {
+                if (authenticated) {
+                    await repository.createDocument(document);
+                    await repository.deleteDraft(tag, version);
+                    response.statusCode = 201;
+                    statusString = 'Document Created';
+                } else {
+                    response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                    response.statusCode = 401;
+                    statusString = 'Not Authenticated';
+                }
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        PUT: async function(parameters) {
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                },
+                statusCode: 405
+            };
+            const statusString = 'Updates Not Supported';
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        DELETE: async function(parameters) {
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                },
+                statusCode: 405
+            };
+            const statusString = 'Deletion Not Supported';
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        }
+    },
+
+    queues: {
+        HEAD: async function(parameters) {
+            var statusString;
+            const queue = bali.component('#' + parameters.identifier);
+            const authenticated = isAuthenticated(parameters);
             const exists = await repository.queueExists(queue);
-            response = {
+            const response = {
                 headers: {
-                    'Content-Type': responseType,
-                    'Content-Length': 0,
-                    'Cache-Control': 'no-store',
-                    'Access-Control-Allow-Origin': 'bali-nebula.net'
-                },
-                statusCode: exists ? 200 : 404
+                    'Content-Length': 0
+                }
             };
-            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + (exists ? 'Resource Exists' : 'Resource Not Found'));
-            break;
-        case GET:
-            // since a queue is not a document with an owner we must do this manually
-            const count = await repository.messageCount(queue);
-            response = {
-                headers: {
-                    'Content-Type': responseType,
-                    'Content-Length': 0,
-                    'Cache-Control': 'no-store',
-                    'Access-Control-Allow-Origin': 'bali-nebula.net'
-                },
-                statusCode: 200,
-                body: count.toString()
-            };
-            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + (count ? 'Resource Retrieved' : 'Resource Not Found'));
-            break;
-        case PUT:
-            response = encodeResponse(parameters.account, method, responseType, undefined, 'no-store');
-            if (response.statusCode < 300) await repository.queueMessage(queue, message);
-            break;
-        case DELETE:
-            const existing = parameters.account ? await repository.dequeueMessage(queue) : undefined;
-            response = encodeResponse(parameters.account, method, responseType, existing, 'no-store');
-            break;
-        default:
-            response = encodeError(405, 'Method Not Allowed');
-    }
-    return response;
-};
+            if (authenticated) {
+                if (exists) {
+                    response.statusCode = 200;
+                    statusString = 'Queue Exists';
+                } else {
+                    response.statusCode = 404;
+                    statusString = 'Queue Not Found';
+                }
+            } else {
+                response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                response.statusCode = 401;
+                statusString = 'Not Authenticated';
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
 
+        GET: async function(parameters) {
+            var statusString;
+            const queue = bali.component('#' + parameters.identifier);
+            const authenticated = isAuthenticated(parameters);
+            const exists = await repository.queueExists(queue);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (authenticated) {
+                const count = await repository.messageCount(queue);
+                response.body = count.toString();
+                response.headers['Content-Length'] = response.body.length;
+                response.headers['Content-Type'] = parameters.responseType;
+                response.headers['Cache-Control'] = 'immutable';
+                response.statusCode = 200;
+                statusString = 'Message Count Retrieved';
+            } else {
+                response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                response.statusCode = 401;
+                statusString = 'Not Authenticated';
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        POST: async function(parameters) {
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                },
+                statusCode: 405
+            };
+            const statusString = 'Posts Not Supported';
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        PUT: async function(parameters) {
+            var statusString;
+            const queue = bali.component('#' + parameters.identifier);
+            const authenticated = isAuthenticated(parameters);
+            const exists = await repository.queueExists(queue);
+            const message = parameters.body;
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (authenticated) {
+                await repository.queueMessage(queue, message);
+                response.statusCode = exists ? 204 : 201;
+                statusString = 'Message Queued';
+            } else {
+                response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                response.statusCode = 401;
+                statusString = 'Not Authenticated';
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        },
+
+        DELETE: async function(parameters) {
+            var statusString;
+            const queue = bali.component('#' + parameters.identifier);
+            const authenticated = isAuthenticated(parameters);
+            const exists = await repository.queueExists(queue);
+            const response = {
+                headers: {
+                    'Content-Length': 0
+                }
+            };
+            if (authenticated) {
+                if (exists) {
+                    const message = await repository.dequeueMessage(queue);
+                    switch (parameters.responseType) {
+                        case 'application/bali':
+                            response.body = message.toBDN();
+                            break;
+                        case 'text/html':
+                        default:
+                            response.body = message.toHTML(style);
+                            response.headers['Access-Control-Allow-Origin'] = 'bali-nebula.net';
+                    }
+                    response.headers['Content-Length'] = response.body.length;
+                    response.headers['Content-Type'] = parameters.responseType;
+                    response.headers['Cache-Control'] = 'no-store';
+                    response.statusCode = 200;
+                    statusString = 'Message Retrieved';
+                } else {
+                    response.statusCode = 404;
+                    statusString = 'Queue Not Found';
+                }
+            } else {
+                response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+                response.statusCode = 401;
+                statusString = 'Not Authenticated';
+            }
+            if (debug > 0) console.log('Response ' + response.statusCode + ': ' + statusString);
+            return response;
+        }
+    }
+
+};

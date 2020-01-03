@@ -247,7 +247,7 @@ const RepositoryClient = function(service, debug) {
             body: message.toString()
         };
         const response = await service.handler(request);
-        if (response.statusCode !== 201) throw Error('Unable to queue the message: ' + response.statusCode);
+        if (!(response.statusCode < 300)) throw Error('Unable to queue the message: ' + response.statusCode);
     };
 
     this.dequeueMessage = async function(queue) {
