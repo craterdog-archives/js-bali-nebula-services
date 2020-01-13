@@ -184,6 +184,121 @@ const encodeError = function(statusCode, statusString) {
  * are managed by the Bali Nebula™ services.  For details on the symantics see this page:
  * https://github.com/craterdog-bali/js-bali-nebula-services/wiki/HTTP-Method-Semantics
  */
+const encodeResponse = function(parameters, existing) {
+    const authenticated = isAuthenticated(parameters);
+    const authorized = isAuthorized(parameters, existing);
+    const method = parameters.method;
+    const responseType = parameters.responseType;
+    const body = parameters.body;
+    var citation;
+    const error = bali.catalog(
+        {
+            $method: method,
+            $authenticated: authenticated,
+            $authorized: authorized,
+            $status: 405,
+            $message: 'The requested method is not supported by this service.'
+        }
+    );
+    const response = {
+        headers: {
+            'Content-Length': 0
+        },
+        statusCode: undefined,
+        body: undefined
+    };
+    if (![POST, PUT, DELETE, GET, HEAD].includes(method)) {
+        // Unsupported Method
+        response.statusCode = 405;
+        response.body = (responseType === 'text/html') ? error.toHTML(style) : error;
+        response.headers['Content-Length'] = response.body.length;
+        return response;
+    }
+    if (!authenticated) {
+        if (!existing || !authorized || ![HEAD, GET].includes(method)) {
+            // Not Authenticated
+            error.setValue('$status', 401);
+            error.setValue('$message', 'The client must be authenticated to perform the requested method.');
+            response.statusCode = 401;
+            response.body = (responseType === 'text/html') ? error.toHTML(style) : error;
+            response.headers['Content-Length'] = response.body.length;
+            response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
+            return response;
+        }
+        // Existing Public Document
+        switch (method) {
+            case GET:
+                response.statusCode = 200;
+                response.body = (responseType === 'text/html') ? existing.toHTML(style) : existing;
+                response.headers['Content-Length'] = response.body.length;
+                return response;
+            case HEAD:
+                citation = notary.citeDocument(existing);
+                response.statusCode = 200;
+                response.body = (responseType === 'text/html') ? citation.toHTML(style) : citation;
+                response.headers['Content-Length'] = response.body.length;
+                return response;
+        }
+    }
+    if (!existing) {
+        switch (method) {
+            // Authenticated and No Existing Document
+            case POST:
+            case PUT:
+                citation = notary.citeDocument(body);
+                response.statusCode = 201;
+                response.body = (responseType === 'text/html') ? citation.toHTML(style) : citation;
+                response.headers['Content-Length'] = response.body.length;
+                return response;
+            default:
+                error.setValue('$status', 404);
+                error.setValue('$message', 'The specified document does not exist.');
+                response.statusCode = 404;
+                response.body = (responseType === 'text/html') ? error.toHTML(style) : error;
+                response.headers['Content-Length'] = response.body.length;
+                return response;
+        }
+    }
+    if (!authorized) {
+        // Authenticated but Not Authorized
+        error.setValue('$status', 403);
+        error.setValue('$message', 'The client is not authorized to access the specified document.');
+        response.statusCode = 403;
+        response.body = (responseType === 'text/html') ? error.toHTML(style) : error;
+        response.headers['Content-Length'] = response.body.length;
+        return response;
+    }
+    // Authenticated and Authorized
+    switch (method) {
+        case POST:
+            error.setValue('$status', 409);
+            error.setValue('$message', 'The specified document already exists.');
+            response.statusCode = 409;
+            response.body = (responseType === 'text/html') ? error.toHTML(style) : error;
+            response.headers['Content-Length'] = response.body.length;
+            return response;
+        case PUT:
+            citation = notary.citeDocument(body);
+            response.statusCode = 204;
+            response.body = (responseType === 'text/html') ? citation.toHTML(style) : citation;
+            response.headers['Content-Length'] = response.body.length;
+            return response;
+        case GET:
+        case DELETE:
+            response.statusCode = 200;
+            response.body = (responseType === 'text/html') ? existing.toHTML(style) : existing;
+            response.headers['Content-Length'] = response.body.length;
+            return response;
+        case HEAD:
+            citation = notary.citeDocument(existing);
+            response.statusCode = 200;
+            response.body = (responseType === 'text/html') ? citation.toHTML(style) : citation;
+            response.headers['Content-Length'] = response.body.length;
+            return response;
+    }
+};
+
+
 const handleRequest = {
 
     citations: {

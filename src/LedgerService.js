@@ -24,7 +24,7 @@ const PUT = 'PUT';
 const DELETE = 'DELETE';
 
 if (debug) console.log('Loading the "Nebula Ledger Service" lambda function');
- 
+
 exports.handleRequest = async function(request, context) {
     if (debug) console.log('Executing the "Nebula Ledger Service" lambda function for ' + request.httpMethod + ': ' + request.path);
 
@@ -87,7 +87,7 @@ exports.handleRequest = async function(request, context) {
             statusCode: 400  // Bad Request
         };
     }
-    
+
     // execute the request
     try {
         switch (type) {
