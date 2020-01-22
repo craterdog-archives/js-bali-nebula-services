@@ -93,7 +93,7 @@ const RepositoryClient = function(service, debug) {
             body: citation.toBDN()
         };
         const response = await service.handler(request);
-        if (response.statusCode !== 201) throw Error('Unable to create the named citation: ' + response.statusCode);
+        if (response.statusCode > 299) throw Error('Unable to create the named citation: ' + response.statusCode);
     };
 
 
@@ -140,7 +140,7 @@ const RepositoryClient = function(service, debug) {
             body: draft.toBDN()
         };
         const response = await service.handler(request);
-        if (response.statusCode !== 201 && response.statusCode !== 204) throw Error('Unable to save the draft: ' + response.statusCode);
+        if (response.statusCode > 299) throw Error('Unable to save the draft: ' + response.statusCode);
     };
 
     this.deleteDraft = async function(tag, version) {
@@ -204,7 +204,7 @@ const RepositoryClient = function(service, debug) {
             body: document.toBDN()
         };
         const response = await service.handler(request);
-        if (response.statusCode !== 201) throw Error('Unable to create the document: ' + response.statusCode);
+        if (response.statusCode > 299) throw Error('Unable to create the document: ' + response.statusCode);
     };
 
     this.queueExists = async function(queue) {
