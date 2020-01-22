@@ -75,7 +75,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        if (response.body && response.body.length) {
+        if (response.statusCode === 200) {
             const source = response.body.toString('utf8');
             return bali.component(source);
         }
@@ -90,7 +90,7 @@ const RepositoryClient = function(service, debug) {
             },
             httpMethod: 'POST',
             path: '/repository/citations' + name,
-            body: citation.toString()
+            body: citation.toBDN()
         };
         const response = await service.handler(request);
         if (response.statusCode !== 201) throw Error('Unable to create the named citation: ' + response.statusCode);
@@ -122,7 +122,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        if (response.body && response.body.length) {
+        if (response.statusCode === 200) {
             const source = response.body.toString('utf8');
             return bali.component(source);
         }
@@ -137,7 +137,7 @@ const RepositoryClient = function(service, debug) {
             },
             httpMethod: 'PUT',
             path: '/repository/drafts/' + extractId(draft),
-            body: draft.toString()
+            body: draft.toBDN()
         };
         const response = await service.handler(request);
         if (response.statusCode !== 201 && response.statusCode !== 204) throw Error('Unable to save the draft: ' + response.statusCode);
@@ -154,7 +154,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        if (response.body && response.body.length) {
+        if (response.statusCode === 200) {
             const source = response.body.toString('utf8');
             return bali.component(source);
         }
@@ -186,7 +186,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        if (response.body && response.body.length) {
+        if (response.statusCode === 200) {
             const source = response.body.toString('utf8');
             return bali.component(source);
         }
@@ -201,7 +201,7 @@ const RepositoryClient = function(service, debug) {
             },
             httpMethod: 'POST',
             path: '/repository/documents/' + extractId(document),
-            body: document.toString()
+            body: document.toBDN()
         };
         const response = await service.handler(request);
         if (response.statusCode !== 201) throw Error('Unable to create the document: ' + response.statusCode);
@@ -244,10 +244,10 @@ const RepositoryClient = function(service, debug) {
             },
             httpMethod: 'PUT',
             path: '/repository/queues/' + getPath(queue),
-            body: message.toString()
+            body: message.toBDN()
         };
         const response = await service.handler(request);
-        if (!(response.statusCode < 300)) throw Error('Unable to queue the message: ' + response.statusCode);
+        if (response.statusCode > 299) throw Error('Unable to queue the message: ' + response.statusCode);
     };
 
     this.dequeueMessage = async function(queue) {
@@ -261,7 +261,7 @@ const RepositoryClient = function(service, debug) {
             body: undefined
         };
         const response = await service.handler(request);
-        if (response.body && response.body.length) {
+        if (response.statusCode === 200) {
             const source = response.body.toString('utf8');
             return bali.component(source);
         }
