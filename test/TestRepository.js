@@ -141,6 +141,8 @@ const RepositoryClient = function(service, debug) {
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to save the draft: ' + response.statusCode);
+        const source = response.body.toString('utf8');
+        return bali.component(source);  // return a citation to the new document
     };
 
     this.deleteDraft = async function(tag, version) {
@@ -205,6 +207,8 @@ const RepositoryClient = function(service, debug) {
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to create the document: ' + response.statusCode);
+        const source = response.body.toString('utf8');
+        return bali.component(source);  // return a citation to the new document
     };
 
     this.queueExists = async function(queue) {
@@ -248,6 +252,8 @@ const RepositoryClient = function(service, debug) {
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to queue the message: ' + response.statusCode);
+        const source = response.body.toString('utf8');
+        return bali.component(source);  // return a citation to the new message
     };
 
     this.dequeueMessage = async function(queue) {
@@ -303,70 +309,59 @@ describe('Bali Nebula™ Repository Service', function() {
             version = certificate.getParameter('$version');
             certificate = await notary.notarizeDocument(certificate);
             citation = await notary.activateKey(certificate);
-            await repository.createDocument(certificate);
+            expect(citation.isEqualTo(await repository.createDocument(certificate))).is.true;
         });
 
         it('should perform a citation name lifecycle', async function() {
             const name = bali.component('/bali/certificates/' + tag.getValue() + '/v1');
 
             // make sure the new name does not yet exist in the repository
-            var exists = await repository.citationExists(name);
-            expect(exists).is.false;
-            var none = await repository.fetchCitation(name);
-            expect(none).to.not.exist;
+            expect(await repository.citationExists(name)).is.false;
+            expect(await repository.fetchCitation(name)).to.not.exist;
 
             // create a new name in the repository
             await repository.createCitation(name, citation);
 
             // make sure the new name exists in the repository
-            exists = await repository.citationExists(name);
-            expect(exists).is.true;
+            expect(await repository.citationExists(name)).is.true;
 
             // fetch the new citation from the repository
-            const result = await repository.fetchCitation(name);
-            expect(citation.isEqualTo(result)).is.true;
+            expect(citation.isEqualTo(await repository.fetchCitation(name))).is.true;
         });
 
         it('should perform a draft document lifecycle', async function() {
             tag = transaction.getParameter('$tag');
             version = transaction.getParameter('$version');
             const draft = await notary.notarizeDocument(transaction);
+            citation = await notary.citeDocument(draft);
 
             // create a new draft in the repository
-            await repository.saveDraft(draft);
+            expect(citation.isEqualTo(await repository.saveDraft(draft))).is.true;
 
             // make sure the new draft exists in the repository
-            var exists = await repository.draftExists(tag, version);
-            expect(exists).is.true;
+            expect(await repository.draftExists(tag, version)).is.true;
 
             // make sure the same document does not exist in the repository
-            exists = await repository.documentExists(tag, version);
-            expect(exists).is.false;
+            expect(await repository.documentExists(tag, version)).is.false;
 
             // fetch the new draft from the repository
-            const result = await repository.fetchDraft(tag, version);
-            expect(draft.isEqualTo(result)).is.true;
+            expect(draft.isEqualTo(await repository.fetchDraft(tag, version))).is.true;
 
             // update the existing draft in the repository
-            await repository.saveDraft(draft);
+            expect(citation.isEqualTo(await repository.saveDraft(draft))).is.true;
 
             // make sure the updated draft exists in the repository
-            var exists = await repository.draftExists(tag, version);
-            expect(exists).is.true;
+            expect(await repository.draftExists(tag, version)).is.true;
 
             // delete the draft from the repository
-            const deleted = await repository.deleteDraft(tag, version);
-            expect(draft.isEqualTo(deleted)).is.true;
+            expect(draft.isEqualTo(await repository.deleteDraft(tag, version))).is.true;
 
             // make sure the draft no longer exists in the repository
-            exists = await repository.draftExists(tag, version);
-            expect(exists).is.false;
-            var none = await repository.fetchDraft(tag, version);
-            expect(none).to.not.exist;
+            expect(await repository.draftExists(tag, version)).is.false;
+            expect(await repository.fetchDraft(tag, version)).to.not.exist;
 
             // delete a non-existent draft from the repository
-            none = await repository.deleteDraft(tag, version);
-            expect(none).to.not.exist;
+            expect(await repository.deleteDraft(tag, version)).to.not.exist;
 
         });
 
@@ -374,33 +369,27 @@ describe('Bali Nebula™ Repository Service', function() {
             tag = transaction.getParameter('$tag');
             version = transaction.getParameter('$version');
             const document = await notary.notarizeDocument(transaction);
+            citation = await notary.citeDocument(document);
 
             // make sure the new document does not already exists in the repository
-            exists = await repository.documentExists(tag, version);
-            expect(exists).is.false;
-            var none = await repository.fetchDocument(tag, version);
-            expect(none).to.not.exist;
+            expect(await repository.documentExists(tag, version)).is.false;
+            expect(await repository.fetchDocument(tag, version)).to.not.exist;
 
             // create a new document in the repository
-            await repository.createDocument(document);
+            expect(citation.isEqualTo(await repository.createDocument(document))).is.true;
 
             // make sure the same draft does not exist in the repository
-            var exists = await repository.draftExists(tag, version);
-            expect(exists).is.false;
-            none = await repository.fetchDraft(tag, version);
-            expect(none).to.not.exist;
+            expect(await repository.draftExists(tag, version)).is.false;
+            expect(await repository.fetchDraft(tag, version)).to.not.exist;
 
             // make sure the new document exists in the repository
-            exists = await repository.documentExists(tag, version);
-            expect(exists).is.true;
+            expect(await repository.documentExists(tag, version)).is.true;
 
             // fetch the new document from the repository
-            const result = await repository.fetchDocument(tag, version);
-            expect(document.isEqualTo(result)).is.true;
+            expect(document.isEqualTo(await repository.fetchDocument(tag, version))).is.true;
 
             // make sure the new document still exists in the repository
-            exists = await repository.documentExists(tag, version);
-            expect(exists).is.true;
+            expect(await repository.documentExists(tag, version)).is.true;
 
             // attempt to create the same document in the repository
             await assert.rejects(async function() {
@@ -411,57 +400,40 @@ describe('Bali Nebula™ Repository Service', function() {
 
         it('should perform a message queue lifecycle', async function() {
             const queue = bali.tag();
+            var message = await notary.notarizeDocument(transaction);
+            citation = await notary.citeDocument(message);
 
             // make sure the queue does not exist
-            var exists = await repository.queueExists(queue);
-            expect(exists).is.false;
+            expect(await repository.queueExists(queue)).is.false;
 
             // make sure the message queue is empty
-            var count = await repository.messageCount(queue);
-            expect(count).to.equal(0);
-            var none = await repository.dequeueMessage(queue);
-            expect(none).to.not.exist;
+            expect(await repository.messageCount(queue)).to.equal(0);
+            expect(await repository.dequeueMessage(queue)).to.not.exist;
 
             // queue up some messages
-            var message = await notary.notarizeDocument(transaction);
-            await repository.queueMessage(queue, message);
-            count = await repository.messageCount(queue);
-            expect(count).to.equal(1);
-            await repository.queueMessage(queue, message);
-            count = await repository.messageCount(queue);
-            expect(count).to.equal(2);
-            await repository.queueMessage(queue, message);
-            count = await repository.messageCount(queue);
-            expect(count).to.equal(3);
+            expect(citation.isEqualTo(await repository.queueMessage(queue, message))).is.true;
+            expect(await repository.messageCount(queue)).to.equal(1);
+            expect(citation.isEqualTo(await repository.queueMessage(queue, message))).is.true;
+            expect(await repository.messageCount(queue)).to.equal(2);
+            expect(citation.isEqualTo(await repository.queueMessage(queue, message))).is.true;
+            expect(await repository.messageCount(queue)).to.equal(3);
 
             // make sure the queue does exist
-            exists = await repository.queueExists(queue);
-            expect(exists).is.true;
+            expect(await repository.queueExists(queue)).is.true;
 
             // dequeue the messages
-            var result = await repository.dequeueMessage(queue);
-            expect(result).to.exist;
-            expect(message.isEqualTo(result)).is.true;
-            count = await repository.messageCount(queue);
-            expect(count).to.equal(2);
-            result = await repository.dequeueMessage(queue);
-            expect(result).to.exist;
-            expect(message.isEqualTo(result)).is.true;
-            count = await repository.messageCount(queue);
-            expect(count).to.equal(1);
-            result = await repository.dequeueMessage(queue);
-            expect(result).to.exist;
-            expect(message.isEqualTo(result)).is.true;
-            count = await repository.messageCount(queue);
-            expect(count).to.equal(0);
+            expect(message.isEqualTo(await repository.dequeueMessage(queue))).is.true;
+            expect(await repository.messageCount(queue)).to.equal(2);
+            expect(message.isEqualTo(await repository.dequeueMessage(queue))).is.true;
+            expect(await repository.messageCount(queue)).to.equal(1);
+            expect(message.isEqualTo(await repository.dequeueMessage(queue))).is.true;
+            expect(await repository.messageCount(queue)).to.equal(0);
 
             // make sure the message queue is empty
-            none = await repository.dequeueMessage(queue);
-            expect(none).to.not.exist;
+            expect(await repository.dequeueMessage(queue)).to.not.exist;
 
             // make sure the queue does not exist
-            exists = await repository.queueExists(queue);
-            expect(exists).is.false;
+            expect(await repository.queueExists(queue)).is.false;
 
         });
 

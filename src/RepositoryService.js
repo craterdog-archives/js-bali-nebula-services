@@ -24,13 +24,6 @@ const repository = require('bali-document-repository').service(notary, configura
 const engine = require('./utilities/HTTPEngine').HTTPEngine(notary, repository, debug);
 const style = 'https://bali-nebula.net/static/styles/BDN.css';
 
-// SUPPORTED HTTP METHODS
-const HEAD = 'HEAD';
-const POST = 'POST';
-const GET = 'GET';
-const PUT = 'PUT';
-const DELETE = 'DELETE';
-
 
 // PUBLIC FUNCTIONS
 
