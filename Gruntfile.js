@@ -33,11 +33,6 @@ module.exports = function(grunt) {
     },
 
     exec: {
-      clean: {
-        command: 'scripts/empty-buckets',
-        stdout: false,
-        stderr: false
-      },
       publish: {
         command: 'scripts/publish-services',
         stdout: false,
@@ -81,7 +76,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-webpack');
 
   grunt.registerTask('build', 'Build the module.', ['clean:build', 'eslint', 'mochaTest']);
-  grunt.registerTask('publish', 'Publish the services.', ['clean:build', 'exec:clean', 'webpack', 'exec:publish']);
+  grunt.registerTask('publish', 'Publish the services.', ['clean:build', 'webpack', 'exec:publish']);
   grunt.registerTask('default', 'Default targets.', ['build']);
 
 };
