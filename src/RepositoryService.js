@@ -139,7 +139,7 @@ const handleRequest = {
             const draft = parameters.body;
             const existing = await repository.fetchDraft(tag, version);
             const response = await engine.encodeResponse(parameters, existing);
-            if (response.statusCode === 201 || response.statusCode === 204) await repository.saveDraft(draft);
+            if (response.statusCode < 299) await repository.saveDraft(draft);
             return response;
         },
 
