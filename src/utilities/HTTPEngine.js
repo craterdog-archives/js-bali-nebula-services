@@ -173,6 +173,7 @@ const HTTPEngine = function(notary, repository, debug) {
         const method = parameters.method;
         const responseType = parameters.responseType || 'application/bali';
         const document = parameters.body;
+        var citation;
         if (![POST, PUT, HEAD, GET, DELETE].includes(method)) {
             // Unsupported Method
             return this.encodeError(405, responseType, 'The requested method is not supported by this service.');
@@ -186,7 +187,7 @@ const HTTPEngine = function(notary, repository, debug) {
             // Existing Public Document
             switch (method) {
                 case HEAD:
-                    const citation = await citeComponent(existing);
+                    citation = await citeComponent(existing);
                     return encodeSuccess(200, responseType, citation);
                 case GET:
                     return encodeSuccess(200, responseType, existing);
@@ -197,7 +198,7 @@ const HTTPEngine = function(notary, repository, debug) {
                 // Authenticated and No Existing Document
                 case POST:
                 case PUT:
-                    const citation = await citeComponent(document);
+                    citation = await citeComponent(document);
                     return encodeSuccess(201, responseType, citation);
                 default:
                     return this.encodeError(404, responseType, 'The specified document does not exist.');
@@ -212,10 +213,10 @@ const HTTPEngine = function(notary, repository, debug) {
             case POST:
                 return this.encodeError(409, responseType, 'The specified document already exists.');
             case PUT:
-                var citation = await citeComponent(document);
-                return encodeSuccess(204, responseType, citation);
+                citation = await citeComponent(document);
+                return encodeSuccess(200, responseType, citation);
             case HEAD:
-                var citation = await citeComponent(existing);
+                citation = await citeComponent(existing);
                 return encodeSuccess(200, responseType, citation);
             case GET:
             case DELETE:
