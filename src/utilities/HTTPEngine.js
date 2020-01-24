@@ -187,8 +187,7 @@ const HTTPEngine = function(notary, repository, debug) {
             // Existing Public Document
             switch (method) {
                 case HEAD:
-                    citation = await citeComponent(existing);
-                    return encodeSuccess(200, responseType, citation);
+                    return encodeSuccess(200, responseType);
                 case GET:
                     return encodeSuccess(200, responseType, existing);
             }
@@ -216,8 +215,7 @@ const HTTPEngine = function(notary, repository, debug) {
                 citation = await citeComponent(document);
                 return encodeSuccess(200, responseType, citation);
             case HEAD:
-                citation = await citeComponent(existing);
-                return encodeSuccess(200, responseType, citation);
+                return encodeSuccess(200, responseType);
             case GET:
             case DELETE:
                 return encodeSuccess(200, responseType, existing);
