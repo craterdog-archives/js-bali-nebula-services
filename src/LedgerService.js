@@ -34,7 +34,7 @@ exports.handleRequest = async function(request, context) {
         const credentials = bali.parse(header);
         const citation = credentials.getValue('$component');
         const certificateId = citation.getValue('$tag').getValue() + citation.getValue('$version');
-        const source = await repository.fetchDocument(certificateId);
+        const source = await repository.readDocument(certificateId);
         const certificate = bali.parse(source);
         const isValid = notary.documentIsValid(credentials, certificate);
         if (!isValid) throw Error('Invalid credentials were passed with the request.');

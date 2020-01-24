@@ -12,10 +12,10 @@
 const debug = 2;  // logging level in range [0..3]
 const configuration = {
     uri: 'https://bali-nebula.net/repository/',
-    citations: 'craterdog-bali-citations-us-west-2',
+    names: 'craterdog-bali-names-us-west-2',
     drafts: 'craterdog-bali-drafts-us-west-2',
     documents: 'craterdog-bali-documents-us-west-2',
-    queues: 'craterdog-bali-queues-us-west-2'
+    bags: 'craterdog-bali-bags-us-west-2'
 };
 
 const bali = require('bali-component-framework').api(debug);
@@ -80,25 +80,25 @@ exports.handler = async function(request) {
 
 const handleRequest = {
 
-    citations: {
+    names: {
         HEAD: async function(parameters) {
             const name = bali.component('/' + parameters.identifier);
-            const existing = await repository.fetchCitation(name);
+            const existing = await repository.readName(name);
             return await engine.encodeResponse(parameters, existing);
         },
 
         GET: async function(parameters) {
             const name = bali.component('/' + parameters.identifier);
-            const existing = await repository.fetchCitation(name);
+            const existing = await repository.readName(name);
             return await engine.encodeResponse(parameters, existing);
         },
 
         POST: async function(parameters) {
             const name = bali.component('/' + parameters.identifier);
             const citation = parameters.body;
-            const existing = await repository.fetchCitation(name);
+            const existing = await repository.readName(name);
             const response = await engine.encodeResponse(parameters, existing);
-            if (response.statusCode === 201) await repository.createCitation(name, citation);
+            if (response.statusCode === 201) await repository.writeName(name, citation);
             return response;
         },
 
@@ -116,7 +116,7 @@ const handleRequest = {
             const tokens = parameters.identifier.split('/');
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
-            const existing = await repository.fetchDraft(tag, version);
+            const existing = await repository.readDraft(tag, version);
             return await engine.encodeResponse(parameters, existing);
         },
 
@@ -124,7 +124,7 @@ const handleRequest = {
             const tokens = parameters.identifier.split('/');
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
-            const existing = await repository.fetchDraft(tag, version);
+            const existing = await repository.readDraft(tag, version);
             return await engine.encodeResponse(parameters, existing);
         },
 
@@ -137,9 +137,9 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const draft = parameters.body;
-            const existing = await repository.fetchDraft(tag, version);
+            const existing = await repository.readDraft(tag, version);
             const response = await engine.encodeResponse(parameters, existing);
-            if (response.statusCode < 300) await repository.saveDraft(draft);
+            if (response.statusCode < 300) await repository.writeDraft(draft);
             return response;
         },
 
@@ -147,7 +147,7 @@ const handleRequest = {
             const tokens = parameters.identifier.split('/');
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
-            const existing = await repository.fetchDraft(tag, version);
+            const existing = await repository.readDraft(tag, version);
             const response = await engine.encodeResponse(parameters, existing);
             if (response.statusCode === 200) await repository.deleteDraft(tag, version);
             return response;
@@ -159,7 +159,7 @@ const handleRequest = {
             const tokens = parameters.identifier.split('/');
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
-            const existing = await repository.fetchDocument(tag, version);
+            const existing = await repository.readDocument(tag, version);
             return await engine.encodeResponse(parameters, existing);
         },
 
@@ -167,7 +167,7 @@ const handleRequest = {
             const tokens = parameters.identifier.split('/');
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
-            const existing = await repository.fetchDocument(tag, version);
+            const existing = await repository.readDocument(tag, version);
             return await engine.encodeResponse(parameters, existing);
         },
 
@@ -176,10 +176,10 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const document = parameters.body;
-            const existing = await repository.fetchDocument(tag, version);
+            const existing = await repository.readDocument(tag, version);
             const response = await engine.encodeResponse(parameters, existing);
             if (response.statusCode === 201) {
-                await repository.createDocument(document);
+                await repository.writeDocument(document);
                 await repository.deleteDraft(tag, version);
             }
             return response;
@@ -194,16 +194,14 @@ const handleRequest = {
         }
     },
 
-    queues: {
+    bags: {
         HEAD: async function(parameters) {
-            const queue = bali.component('#' + parameters.identifier);
-            var exists = bali.probability(await repository.queueExists(queue));
-            return await engine.encodeResponse(parameters, exists);
+            return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
         },
 
         GET: async function(parameters) {
-            const queue = bali.component('#' + parameters.identifier);
-            const count = bali.number(await repository.messageCount(queue));
+            const bag = bali.component('#' + parameters.identifier);
+            const count = bali.number(await repository.messageCount(bag));
             return await engine.encodeResponse(parameters, count);
         },
 
@@ -212,17 +210,16 @@ const handleRequest = {
         },
 
         PUT: async function(parameters) {
-            const queue = bali.component('#' + parameters.identifier);
-            const exists = bali.probability(await repository.queueExists(queue));
+            const bag = bali.component('#' + parameters.identifier);
             const message = parameters.body;
-            const response = await engine.encodeResponse(parameters, exists);
-            await repository.queueMessage(queue, message);
+            const response = await engine.encodeResponse(parameters);
+            await repository.addMessage(bag, message);
             return response;
         },
 
         DELETE: async function(parameters) {
-            const queue = bali.component('#' + parameters.identifier);
-            const message = await repository.dequeueMessage(queue);
+            const bag = bali.component('#' + parameters.identifier);
+            const message = await repository.removeMessage(bag);
             return await engine.encodeResponse(parameters, message);
         }
     }

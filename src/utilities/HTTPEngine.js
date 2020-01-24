@@ -122,7 +122,7 @@ const HTTPEngine = function(notary, repository, debug) {
                     const tag = citation.getValue('$tag');
                     const version = citation.getValue('$version');
                     // if the certificate doesn't yet exist, there is a self-signed certificate in the body
-                    var certificate = (await repository.fetchDocument(tag, version)) || parameters.body;
+                    var certificate = (await repository.readDocument(tag, version)) || parameters.body;
                     if (await notary.validDocument(credentials, certificate)) {
                         parameters.account = certificate.getValue('$account');
                         return true;  // the credentials are valid
