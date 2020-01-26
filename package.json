@@ -31,9 +31,9 @@
     "webpack": "^4.41.5"
   },
   "dependencies": {
-    "aws-sdk": "^2.596.0",
+    "aws-sdk": "^2.610.0",
     "bali-component-framework": "^2.5.2",
     "bali-digital-notary": "^2.10.0",
-    "bali-document-repository": "^2.18.0"
+    "bali-document-repository": "^2.19.0"
   }
 }

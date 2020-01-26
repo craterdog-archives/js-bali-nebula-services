@@ -218,7 +218,7 @@ const RepositoryClient = function(service, debug) {
                 'Accept': 'application/bali'
             },
             httpMethod: 'GET',
-            path: '/repository/bags/' + getPath(bag),
+            path: '/repository/messages/' + getPath(bag),
             body: undefined
         };
         const response = await service.handler(request);
@@ -233,7 +233,7 @@ const RepositoryClient = function(service, debug) {
                 'Accept': 'application/bali'
             },
             httpMethod: 'PUT',
-            path: '/repository/bags/' + getPath(bag),
+            path: '/repository/messages/' + getPath(bag),
             body: message.toBDN()
         };
         const response = await service.handler(request);
@@ -249,7 +249,7 @@ const RepositoryClient = function(service, debug) {
                 'Accept': 'application/bali'
             },
             httpMethod: 'DELETE',
-            path: '/repository/bags/' + getPath(bag),
+            path: '/repository/messages/' + getPath(bag),
             body: undefined
         };
         const response = await service.handler(request);
