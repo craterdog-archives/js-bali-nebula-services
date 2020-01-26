@@ -58,15 +58,12 @@ const HTTPEngine = function(notary, repository, debug) {
     const encodeSuccess = function(status, responseType, component) {
         const response = {
             headers: {
-                'Content-Length': 0
             },
             statusCode: status
         };
-        if (component) {
-            response.body = (responseType === 'text/html') ? component.toHTML(STYLE) : component.toBDN();
-            response.headers['Content-Length'] = response.body.length;
-            response.headers['Content-Type'] = responseType;
-        }
+        response.body = (responseType === 'text/html') ? component.toHTML(STYLE) : component.toBDN();
+        response.headers['Content-Length'] = response.body.length;
+        response.headers['Content-Type'] = responseType;
         return response;
     };
 
@@ -92,15 +89,16 @@ const HTTPEngine = function(notary, repository, debug) {
                 credentials = bali.component(credentials);
             }
             const method = request.httpMethod.toUpperCase();
-            var path = request.path.slice(1);  // remove the leading '/'
-            path = path.slice(path.indexOf('/') + 1);  // remove leading 'repository/' or 'ledger/'
-            const type = path.slice(0, path.indexOf('/'));  // extract type from <type>/<identifier>
-            const identifier = path.slice(path.indexOf('/') + 1);  // extract identifier from <type>/<identifier>
+            const tokens = request.path.split('/');
+            const service = tokens[1];
+            const type = tokens[2];
+            const identifier = tokens.slice(3).join('/');
             const body = request.body ? bali.component(request.body) : undefined;
             const parameters = {
                 responseType: responseType,
                 credentials: credentials,
                 method: method,
+                service: service,
                 type: type,
                 identifier: identifier,
                 body: body
@@ -138,7 +136,7 @@ const HTTPEngine = function(notary, repository, debug) {
     };
 
 
-    this.encodeError = function(status, message, responseType) {
+    this.encodeError = function(status, responseType, message) {
         const error = bali.catalog(
             {
                 $status: status,
@@ -187,7 +185,9 @@ const HTTPEngine = function(notary, repository, debug) {
             // Existing Public Document
             switch (method) {
                 case HEAD:
-                    return encodeSuccess(200, responseType);
+                    const response = encodeSuccess(200, responseType, existing);
+                    response.body = undefined;
+                    return response;
                 case GET:
                     return encodeSuccess(200, responseType, existing);
             }
@@ -198,7 +198,13 @@ const HTTPEngine = function(notary, repository, debug) {
                 case POST:
                 case PUT:
                     citation = await citeComponent(document);
-                    return encodeSuccess(201, responseType, citation);
+                    const service = parameters.service;
+                    const type = parameters.type;
+                    const tag = citation.getValue('$tag').toString().slice(1);  // remove leading '#'
+                    const version = citation.getValue('$version');
+                    const response = encodeSuccess(201, responseType, citation);
+                    response.headers['Location'] = 'https://bali-nebula.net/' + service + '/' + type + '/' + tag + '/' + version;
+                    return response;
                 default:
                     return this.encodeError(404, responseType, 'The specified document does not exist.');
             }
@@ -215,7 +221,9 @@ const HTTPEngine = function(notary, repository, debug) {
                 citation = await citeComponent(document);
                 return encodeSuccess(200, responseType, citation);
             case HEAD:
-                return encodeSuccess(200, responseType);
+                const response = encodeSuccess(200, responseType, existing);
+                response.body = undefined;
+                return response;
             case GET:
             case DELETE:
                 return encodeSuccess(200, responseType, existing);

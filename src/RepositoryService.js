@@ -57,7 +57,9 @@ exports.handler = async function(request) {
         }
 
         // handle the request
-        return handleRequest[parameters.type][parameters.method](parameters);
+        const response = await handleRequest[parameters.type][parameters.method](parameters);
+        if (debug > 2) console.log('Response: ' + bali.catalog(response));
+        return response;
 
     } catch (cause) {
         if (debug > 0) {
