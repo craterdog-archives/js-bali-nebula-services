@@ -55,7 +55,7 @@ const HTTPEngine = function(notary, repository, debug) {
     };
 
 
-    const encodeSuccess = function(status, responseType, component) {
+    const encodeSuccess = function(status, responseType, component, cacheControl) {
         const response = {
             headers: {
             },
@@ -64,6 +64,7 @@ const HTTPEngine = function(notary, repository, debug) {
         response.body = (responseType === 'text/html') ? component.toHTML(STYLE) : component.toBDN();
         response.headers['Content-Length'] = response.body.length;
         response.headers['Content-Type'] = responseType;
+        response.headers['Cache-Control'] = cacheControl;
         return response;
     };
 
@@ -151,6 +152,7 @@ const HTTPEngine = function(notary, repository, debug) {
         };
         response.headers['Content-Length'] = response.body.length;
         response.headers['Content-Type'] = responseType;
+        response.headers['Cache-Control'] = 'no-store';
         if (status === 401) {
             response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
         }
@@ -163,7 +165,7 @@ const HTTPEngine = function(notary, repository, debug) {
      * are managed by the Bali Nebula™ services.  For details on the symantics see this page:
      * https://github.com/craterdog-bali/js-bali-nebula-services/wiki/HTTP-Method-Semantics
      */
-    this.encodeResponse = async function(parameters, existing) {
+    this.encodeResponse = async function(parameters, existing, isMutable) {
         // TODO: fix this bug workaround once Probability class has been fixed
         const exists = !(existing === undefined || (existing.isType('/bali/elements/Probability') && existing.getValue() === 0));
         const authenticated = isAuthenticated(parameters);
@@ -185,11 +187,11 @@ const HTTPEngine = function(notary, repository, debug) {
             // Existing Public Document
             switch (method) {
                 case HEAD:
-                    const response = encodeSuccess(200, responseType, existing);
+                    const response = encodeSuccess(200, responseType, existing, 'public, immutable');
                     response.body = undefined;
                     return response;
                 case GET:
-                    return encodeSuccess(200, responseType, existing);
+                    return encodeSuccess(200, responseType, existing, 'public, immutable');
             }
         }
         if (!exists) {
@@ -202,7 +204,7 @@ const HTTPEngine = function(notary, repository, debug) {
                     const type = parameters.type;
                     const tag = citation.getValue('$tag').toString().slice(1);  // remove leading '#'
                     const version = citation.getValue('$version');
-                    const response = encodeSuccess(201, responseType, citation);
+                    const response = encodeSuccess(201, responseType, citation, 'no-store');
                     response.headers['Location'] = 'https://bali-nebula.net/' + service + '/' + type + '/' + tag + '/' + version;
                     return response;
                 default:
@@ -210,23 +212,25 @@ const HTTPEngine = function(notary, repository, debug) {
             }
         }
         if (!authorized) {
-            // Authenticated but Not Authorized
+            // Authenticated, Existing Document, but Not Authorized
             return this.encodeError(403, responseType, 'The client is not authorized to access the specified document.');
         }
-        // Authenticated and Authorized
+        // Authenticated, Existing Document, and Authorized
+        const cacheControl = isMutable ? 'private, immutable' : 'no-store';
         switch (method) {
             case POST:
                 return this.encodeError(409, responseType, 'The specified document already exists.');
             case PUT:
                 citation = await citeComponent(document);
-                return encodeSuccess(200, responseType, citation);
+                return encodeSuccess(200, responseType, citation, 'no-store');
             case HEAD:
-                const response = encodeSuccess(200, responseType, existing);
+                const response = encodeSuccess(200, responseType, existing, cacheControl);
                 response.body = undefined;
                 return response;
             case GET:
+                return encodeSuccess(200, responseType, existing, cacheControl);
             case DELETE:
-                return encodeSuccess(200, responseType, existing);
+                return encodeSuccess(200, responseType, existing, 'no-store');
         }
     };
 
