@@ -17,8 +17,8 @@ const HTTPEngine = function(notary, repository, debug) {
 
     // PRIVATE ASPECTS
 
-    const POST = 'POST';
     const PUT = 'PUT';
+    const POST = 'POST';
     const HEAD = 'HEAD';
     const GET = 'GET';
     const DELETE = 'DELETE';
@@ -33,7 +33,8 @@ const HTTPEngine = function(notary, repository, debug) {
 
     const isAuthorized = async function(parameters, component) {
         if (component && component.isComponent) {
-            // check for a JS boolean value
+            // check for a element type
+            // TODO: this should go away once bags are implemented as documents with permissions
             if (component.isType('/bali/abstractions/Element')) return true;  // elemental types are always authorized
 
             if (component.isType('/bali/collections/Catalog')) {
@@ -167,14 +168,14 @@ const HTTPEngine = function(notary, repository, debug) {
      */
     this.encodeResponse = async function(parameters, existing, isMutable) {
         // TODO: fix this bug workaround once Probability class has been fixed
-        const exists = !(existing === undefined || (existing.isType('/bali/elements/Probability') && existing.getValue() === 0));
+        const exists = !!existing;
         const authenticated = isAuthenticated(parameters);
         const authorized = await isAuthorized(parameters, existing);
         const method = parameters.method;
         const responseType = parameters.responseType || 'application/bali';
         const document = parameters.body;
         var citation;
-        if (![POST, PUT, HEAD, GET, DELETE].includes(method)) {
+        if (![PUT, POST, HEAD, GET, DELETE].includes(method)) {
             // Unsupported Method
             return this.encodeError(405, responseType, 'The requested method is not supported by this service.');
         }
@@ -184,7 +185,7 @@ const HTTPEngine = function(notary, repository, debug) {
                 const error = this.encodeError(401, responseType, 'The client must be authenticated to perform the requested method.');
                 return error;
             }
-            // Existing Public Document
+            // Existing Public Resource
             switch (method) {
                 case HEAD:
                     const response = encodeSuccess(200, responseType, existing, 'public, immutable');
@@ -196,8 +197,7 @@ const HTTPEngine = function(notary, repository, debug) {
         }
         if (!exists) {
             switch (method) {
-                // Authenticated and No Existing Document
-                case POST:
+                // Authenticated and no Existing Resource
                 case PUT:
                     citation = await citeComponent(document);
                     const service = parameters.service;
@@ -208,23 +208,34 @@ const HTTPEngine = function(notary, repository, debug) {
                     response.headers['Location'] = 'https://bali-nebula.net/' + service + '/' + type + '/' + tag + '/' + version;
                     return response;
                 default:
-                    return this.encodeError(404, responseType, 'The specified document does not exist.');
+                    return this.encodeError(404, responseType, 'The specified resource does not exist.');
             }
         }
         if (!authorized) {
-            // Authenticated, Existing Document, but Not Authorized
-            return this.encodeError(403, responseType, 'The client is not authorized to access the specified document.');
+            // Authenticated, Existing Resource, but not Authorized
+            return this.encodeError(403, responseType, 'The client is not authorized to access the specified resource.');
         }
-        // Authenticated, Existing Document, and Authorized
-        const cacheControl = isMutable ? 'private, immutable' : 'no-store';
+        // Authenticated, Existing Resource, and Authorized
+        const cacheControl = isMutable ? 'no-store' : 'private, immutable';
         switch (method) {
-            case POST:
-                return this.encodeError(409, responseType, 'The specified document already exists.');
             case PUT:
+                if (isMutable) {
+                    citation = await citeComponent(document);
+                    return encodeSuccess(200, responseType, citation, 'no-store');
+                }
+                return this.encodeError(409, responseType, 'The specified resource already exists.');
+            case POST:
+                // post a new document to the parent resource specified by the URI
                 citation = await citeComponent(document);
-                return encodeSuccess(200, responseType, citation, 'no-store');
+                const service = parameters.service;
+                const type = parameters.type;
+                const tag = citation.getValue('$tag').toString().slice(1);  // remove leading '#'
+                const version = citation.getValue('$version');
+                var response = encodeSuccess(201, responseType, citation, 'no-store');
+                response.headers['Location'] = 'https://bali-nebula.net/' + service + '/' + type + '/' + tag + '/' + version;
+                return response;
             case HEAD:
-                const response = encodeSuccess(200, responseType, existing, cacheControl);
+                response = encodeSuccess(200, responseType, existing, cacheControl);
                 response.body = undefined;
                 return response;
             case GET:

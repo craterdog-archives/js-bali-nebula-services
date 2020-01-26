@@ -88,7 +88,7 @@ const RepositoryClient = function(service, debug) {
                 'Content-Type': 'application/bali',
                 'Accept': 'application/bali'
             },
-            httpMethod: 'POST',
+            httpMethod: 'PUT',
             path: '/repository/names' + name,
             body: citation.toBDN()
         };
@@ -201,7 +201,7 @@ const RepositoryClient = function(service, debug) {
                 'Content-Type': 'application/bali',
                 'Accept': 'application/bali'
             },
-            httpMethod: 'POST',
+            httpMethod: 'PUT',
             path: '/repository/documents/' + extractId(document),
             body: document.toBDN()
         };
@@ -232,7 +232,7 @@ const RepositoryClient = function(service, debug) {
                 'Content-Type': 'application/bali',
                 'Accept': 'application/bali'
             },
-            httpMethod: 'PUT',
+            httpMethod: 'POST',
             path: '/repository/messages/' + getPath(bag),
             body: message.toBDN()
         };

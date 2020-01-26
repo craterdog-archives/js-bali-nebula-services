@@ -73,7 +73,7 @@ exports.handler = async function(request) {
             console.log(exception.toString());
             console.log('Response: 503 (Service Unavailable)');
         }
-        return encodeError(503, 'Service Unavailable');
+        return engine.encodeError(503, 'Service Unavailable');
     }
 };
 
@@ -86,25 +86,25 @@ const handleRequest = {
         HEAD: async function(parameters) {
             const name = bali.component('/' + parameters.identifier);
             const existing = await repository.readName(name);
-            return await engine.encodeResponse(parameters, existing, true);
+            return await engine.encodeResponse(parameters, existing, false);
         },
 
         GET: async function(parameters) {
             const name = bali.component('/' + parameters.identifier);
             const existing = await repository.readName(name);
-            return await engine.encodeResponse(parameters, existing, true);
+            return await engine.encodeResponse(parameters, existing, false);
         },
 
-        POST: async function(parameters) {
+        PUT: async function(parameters) {
             const name = bali.component('/' + parameters.identifier);
             const citation = parameters.body;
             const existing = await repository.readName(name);
-            const response = await engine.encodeResponse(parameters, existing, true);
+            const response = await engine.encodeResponse(parameters, existing, false);
             if (response.statusCode === 201) await repository.writeName(name, citation);
             return response;
         },
 
-        PUT: async function(parameters) {
+        POST: async function(parameters) {
             return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
         },
 
@@ -119,7 +119,7 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const existing = await repository.readDraft(tag, version);
-            return await engine.encodeResponse(parameters, existing, false);
+            return await engine.encodeResponse(parameters, existing, true);
         },
 
         GET: async function(parameters) {
@@ -127,11 +127,7 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const existing = await repository.readDraft(tag, version);
-            return await engine.encodeResponse(parameters, existing, false);
-        },
-
-        POST: async function(parameters) {
-            return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
+            return await engine.encodeResponse(parameters, existing, true);
         },
 
         PUT: async function(parameters) {
@@ -140,9 +136,13 @@ const handleRequest = {
             const version = bali.component(tokens[1]);
             const draft = parameters.body;
             const existing = await repository.readDraft(tag, version);
-            const response = await engine.encodeResponse(parameters, existing, false);
+            const response = await engine.encodeResponse(parameters, existing, true);
             if (response.statusCode < 300) await repository.writeDraft(draft);
             return response;
+        },
+
+        POST: async function(parameters) {
+            return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
         },
 
         DELETE: async function(parameters) {
@@ -150,7 +150,7 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const existing = await repository.readDraft(tag, version);
-            const response = await engine.encodeResponse(parameters, existing, false);
+            const response = await engine.encodeResponse(parameters, existing, true);
             if (response.statusCode === 200) await repository.deleteDraft(tag, version);
             return response;
         }
@@ -162,7 +162,7 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const existing = await repository.readDocument(tag, version);
-            return await engine.encodeResponse(parameters, existing, true);
+            return await engine.encodeResponse(parameters, existing, false);
         },
 
         GET: async function(parameters) {
@@ -170,16 +170,16 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const existing = await repository.readDocument(tag, version);
-            return await engine.encodeResponse(parameters, existing, true);
+            return await engine.encodeResponse(parameters, existing, false);
         },
 
-        POST: async function(parameters) {
+        PUT: async function(parameters) {
             const tokens = parameters.identifier.split('/');
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const document = parameters.body;
             const existing = await repository.readDocument(tag, version);
-            const response = await engine.encodeResponse(parameters, existing, true);
+            const response = await engine.encodeResponse(parameters, existing, false);
             if (response.statusCode === 201) {
                 await repository.writeDocument(document);
                 await repository.deleteDraft(tag, version);
@@ -187,7 +187,7 @@ const handleRequest = {
             return response;
         },
 
-        PUT: async function(parameters) {
+        POST: async function(parameters) {
             return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
         },
 
@@ -198,23 +198,33 @@ const handleRequest = {
 
     messages: {
         HEAD: async function(parameters) {
+            // TODO: implement bags as actual documents with permissions
+            //const bag = bali.component('#' + parameters.identifier);
+            //const existing = await repository.readBag(bag);
+            //return await engine.encodeResponse(parameters, existing, true);
             return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
         },
 
         GET: async function(parameters) {
             const bag = bali.component('#' + parameters.identifier);
+            // TODO: implement bags as actual documents with permissions
+            //const existing = await repository.readBag(bag);
+            //return await engine.encodeResponse(parameters, existing, true);
             const count = bali.number(await repository.messageCount(bag));
-            return await engine.encodeResponse(parameters, count, false);
-        },
-
-        POST: async function(parameters) {
-            return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
+            return await engine.encodeResponse(parameters, count, true);
         },
 
         PUT: async function(parameters) {
+            return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
+        },
+
+        POST: async function(parameters) {
             const bag = bali.component('#' + parameters.identifier);
             const message = parameters.body;
-            const response = await engine.encodeResponse(parameters, undefined, false);
+            // TODO: implement bags as actual documents with permissions
+            //const existing = await repository.readBag(bag);
+            //const response = await engine.encodeResponse(parameters, existing, true);
+            const response = await engine.encodeResponse(parameters, bali.probability(true), true);
             await repository.addMessage(bag, message);
             return response;
         },
@@ -222,7 +232,7 @@ const handleRequest = {
         DELETE: async function(parameters) {
             const bag = bali.component('#' + parameters.identifier);
             const message = await repository.removeMessage(bag);
-            return await engine.encodeResponse(parameters, message, false);
+            return await engine.encodeResponse(parameters, message, true);
         }
     }
 
