@@ -404,7 +404,7 @@ describe('Bali Nebula™ Repository Service', function() {
                     $type: '/bali/examples/Bag/v1',
                     $tag: tag,
                     $version: version,
-                    $permissions: '/bali/permissions/public/v1',
+                    $permissions: '/bali/permissions/private/v1',
                     $previous: bali.pattern.NONE
                 })
             );
@@ -422,7 +422,7 @@ describe('Bali Nebula™ Repository Service', function() {
                     $type: '/bali/examples/Message/v1',
                     $tag: bali.tag(),
                     $version: bali.version(),
-                    $permissions: '/bali/permissions/public/v1',
+                    $permissions: '/bali/permissions/private/v1',
                     $previous: bali.pattern.NONE
                 });
                 return await notary.notarizeDocument(content);

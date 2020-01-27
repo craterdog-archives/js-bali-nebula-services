@@ -238,7 +238,9 @@ const handleRequest = {
             const version = bali.component(tokens[1]);
             const bag = await repository.readDocument(tag, version);
             const message = await repository.removeMessage(tag, version);
-            return await engine.encodeResponse(parameters, bag, message, true);
+            const response = await engine.encodeResponse(parameters, bag, message, true);
+            if (response.statusCode !== 200) await repository.addMessage(tag, version, message);
+            return response;
         }
     }
 
