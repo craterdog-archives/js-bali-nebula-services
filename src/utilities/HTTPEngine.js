@@ -31,39 +31,34 @@ const HTTPEngine = function(notary, repository, debug) {
     };
 
 
-    const isAuthorized = async function(parameters, component) {
-        if (component && component.isComponent) {
-            // check for a element type
-            if (component.isType('/bali/abstractions/Element')) return true;  // elemental types are always authorized
+    const isAuthorized = async function(parameters, authority) {
+        if (authority && authority.isComponent && authority.isType('/bali/collections/Catalog')) {
+            // check the account of the authority
+            const account = authority.getValue('$account');
+            if (account && account.isEqualTo(parameters.account)) return true;  // the authority is always authorized
 
-            if (component.isType('/bali/collections/Catalog')) {
-                // check the owner of the component
-                const owner = component.getValue('$account');
-                if (owner && owner.isEqualTo(parameters.account)) return true;  // the component owner is always authorized
+            // check for a citation rather than a notarized document
+            const content = authority.getValue('$content');
+            if (!content) return true;  // all citations are public by default
 
-                // check for a citation rather than a notarized document
-                const content = component.getValue('$content');
-                if (!content) return true;  // all citations are public by default
-
-                // check the permissions on the notarized document
-                const permissions = content.getParameter('$permissions');
-                if (permissions.toString() === '/bali/permissions/public/v1') return true;  // publicly available
-                // TODO: load in the real permissions and check them
-            }
+            // check the permissions on the notarized document
+            const permissions = content.getParameter('$permissions');
+            if (permissions.toString() === '/bali/permissions/public/v1') return true;  // publicly available
+            // TODO: load in the real permissions and check them
         }
-        return false;  // otherwise the account is not authorized to access the component
+        return false;  // otherwise the account is not authorized to perform the request
     };
 
 
-    const encodeSuccess = function(status, responseType, component, cacheControl) {
+    const encodeSuccess = function(status, resultType, component, cacheControl) {
         const response = {
             headers: {
             },
             statusCode: status
         };
-        response.body = (responseType === 'text/html') ? component.toHTML(STYLE) : component.toBDN();
+        response.body = (resultType === 'text/html') ? component.toHTML(STYLE) : component.toBDN();
         response.headers['Content-Length'] = response.body.length;
-        response.headers['Content-Type'] = responseType;
+        response.headers['Content-Type'] = resultType;
         response.headers['Cache-Control'] = cacheControl;
         return response;
     };
@@ -82,8 +77,8 @@ const HTTPEngine = function(notary, repository, debug) {
     this.decodeRequest = function(request) {
         try {
             if (debug > 0) console.log('Request ' + request.httpMethod + ': ' + request.path);
-            var responseType = request.headers['Accept'] || request.headers['accept'];
-            if (responseType !== 'application/bali') responseType = 'text/html';  // for a browser
+            var resultType = request.headers['Accept'] || request.headers['accept'];
+            if (resultType !== 'application/bali') resultType = 'text/html';  // for a browser
             var credentials = request.headers['Nebula-Credentials'] || request.headers['nebula-credentials'];
             if (credentials) {
                 credentials = decodeURI(credentials).slice(2, -2);  // strip off double quote delimiters
@@ -96,7 +91,7 @@ const HTTPEngine = function(notary, repository, debug) {
             const identifier = tokens.slice(3).join('/');
             const body = request.body ? bali.component(request.body) : undefined;
             const parameters = {
-                responseType: responseType,
+                resultType: resultType,
                 credentials: credentials,
                 method: method,
                 service: service,
@@ -137,7 +132,7 @@ const HTTPEngine = function(notary, repository, debug) {
     };
 
 
-    this.encodeError = function(status, responseType, message) {
+    this.encodeError = function(status, resultType, message) {
         const error = bali.catalog(
             {
                 $status: status,
@@ -148,10 +143,10 @@ const HTTPEngine = function(notary, repository, debug) {
             headers: {
             },
             statusCode: status,
-            body: (responseType === 'text/html') ? error.toHTML(STYLE) : error.toBDN()
+            body: (resultType === 'text/html') ? error.toHTML(STYLE) : error.toBDN()
         };
         response.headers['Content-Length'] = response.body.length;
-        response.headers['Content-Type'] = responseType;
+        response.headers['Content-Type'] = resultType;
         response.headers['Cache-Control'] = 'no-store';
         if (status === 401) {
             response.headers['WWW-Authenticate'] = 'Nebula-Credentials realm="The Bali Nebula™", charset="UTF-8"';
@@ -165,32 +160,32 @@ const HTTPEngine = function(notary, repository, debug) {
      * are managed by the Bali Nebula™ services.  For details on the symantics see this page:
      * https://github.com/craterdog-bali/js-bali-nebula-services/wiki/HTTP-Method-Semantics
      */
-    this.encodeResponse = async function(parameters, existing, isMutable) {
-        const exists = !!existing;
+    this.encodeResponse = async function(parameters, authority, result, isMutable) {
+        const exists = !!result;
         const authenticated = isAuthenticated(parameters);
-        const authorized = await isAuthorized(parameters, existing);
+        const authorized = await isAuthorized(parameters, authority);
         const method = parameters.method;
-        const responseType = parameters.responseType || 'application/bali';
+        const resultType = parameters.resultType || 'application/bali';
         const document = parameters.body;
         var citation;
         if (![PUT, POST, HEAD, GET, DELETE].includes(method)) {
             // Unsupported Method
-            return this.encodeError(405, responseType, 'The requested method is not supported by this service.');
+            return this.encodeError(405, resultType, 'The requested method is not supported by this service.');
         }
         if (!authenticated) {
             if (!exists || !authorized || ![HEAD, GET].includes(method)) {
                 // Not Authenticated
-                const error = this.encodeError(401, responseType, 'The client must be authenticated to perform the requested method.');
+                const error = this.encodeError(401, resultType, 'The client must be authenticated to perform the requested method.');
                 return error;
             }
             // Existing Public Resource
             switch (method) {
                 case HEAD:
-                    const response = encodeSuccess(200, responseType, existing, 'public, immutable');
+                    const response = encodeSuccess(200, resultType, result, 'public, immutable');
                     response.body = undefined;
                     return response;
                 case GET:
-                    return encodeSuccess(200, responseType, existing, 'public, immutable');
+                    return encodeSuccess(200, resultType, result, 'public, immutable');
             }
         }
         if (!exists) {
@@ -202,16 +197,16 @@ const HTTPEngine = function(notary, repository, debug) {
                     const type = parameters.type;
                     const tag = citation.getValue('$tag').toString().slice(1);  // remove leading '#'
                     const version = citation.getValue('$version');
-                    const response = encodeSuccess(201, responseType, citation, 'no-store');
+                    const response = encodeSuccess(201, resultType, citation, 'no-store');
                     response.headers['Location'] = 'https://bali-nebula.net/' + service + '/' + type + '/' + tag + '/' + version;
                     return response;
                 default:
-                    return this.encodeError(404, responseType, 'The specified resource does not exist.');
+                    return this.encodeError(404, resultType, 'The specified resource does not exist.');
             }
         }
         if (!authorized) {
             // Authenticated, Existing Resource, but not Authorized
-            return this.encodeError(403, responseType, 'The client is not authorized to access the specified resource.');
+            return this.encodeError(403, resultType, 'The client is not authorized to access the specified resource.');
         }
         // Authenticated, Existing Resource, and Authorized
         const cacheControl = isMutable ? 'no-store' : 'private, immutable';
@@ -219,9 +214,9 @@ const HTTPEngine = function(notary, repository, debug) {
             case PUT:
                 if (isMutable) {
                     citation = await citeComponent(document);
-                    return encodeSuccess(200, responseType, citation, 'no-store');
+                    return encodeSuccess(200, resultType, citation, 'no-store');
                 }
-                return this.encodeError(409, responseType, 'The specified resource already exists.');
+                return this.encodeError(409, resultType, 'The specified resource already exists.');
             case POST:
                 // post a new document to the parent resource specified by the URI
                 citation = await citeComponent(document);
@@ -229,17 +224,17 @@ const HTTPEngine = function(notary, repository, debug) {
                 const type = parameters.type;
                 const tag = citation.getValue('$tag').toString().slice(1);  // remove leading '#'
                 const version = citation.getValue('$version');
-                var response = encodeSuccess(201, responseType, citation, 'no-store');
+                var response = encodeSuccess(201, resultType, citation, 'no-store');
                 response.headers['Location'] = 'https://bali-nebula.net/' + service + '/' + type + '/' + tag + '/' + version;
                 return response;
             case HEAD:
-                response = encodeSuccess(200, responseType, existing, cacheControl);
+                response = encodeSuccess(200, resultType, result, cacheControl);
                 response.body = undefined;
                 return response;
             case GET:
-                return encodeSuccess(200, responseType, existing, cacheControl);
+                return encodeSuccess(200, resultType, result, cacheControl);
             case DELETE:
-                return encodeSuccess(200, responseType, existing, 'no-store');
+                return encodeSuccess(200, resultType, result, 'no-store');
         }
     };
 
