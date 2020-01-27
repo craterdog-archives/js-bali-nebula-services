@@ -34,7 +34,6 @@ const HTTPEngine = function(notary, repository, debug) {
     const isAuthorized = async function(parameters, component) {
         if (component && component.isComponent) {
             // check for a element type
-            // TODO: this should go away once bags are implemented as documents with permissions
             if (component.isType('/bali/abstractions/Element')) return true;  // elemental types are always authorized
 
             if (component.isType('/bali/collections/Catalog')) {
@@ -167,7 +166,6 @@ const HTTPEngine = function(notary, repository, debug) {
      * https://github.com/craterdog-bali/js-bali-nebula-services/wiki/HTTP-Method-Semantics
      */
     this.encodeResponse = async function(parameters, existing, isMutable) {
-        // TODO: fix this bug workaround once Probability class has been fixed
         const exists = !!existing;
         const authenticated = isAuthenticated(parameters);
         const authorized = await isAuthorized(parameters, existing);

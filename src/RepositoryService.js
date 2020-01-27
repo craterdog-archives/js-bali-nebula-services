@@ -86,7 +86,7 @@ const handleRequest = {
         HEAD: async function(parameters) {
             const name = bali.component('/' + parameters.identifier);
             const existing = await repository.readName(name);
-            return await engine.encodeResponse(parameters, existing, false);
+            return await engine.encodeResponse(parameters, existing, false);  // body is stripped off
         },
 
         GET: async function(parameters) {
@@ -119,7 +119,7 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const existing = await repository.readDraft(tag, version);
-            return await engine.encodeResponse(parameters, existing, true);
+            return await engine.encodeResponse(parameters, existing, true);  // body is stripped off
         },
 
         GET: async function(parameters) {
@@ -162,7 +162,7 @@ const handleRequest = {
             const tag = bali.component('#' + tokens[0]);
             const version = bali.component(tokens[1]);
             const existing = await repository.readDocument(tag, version);
-            return await engine.encodeResponse(parameters, existing, false);
+            return await engine.encodeResponse(parameters, existing, false);  // body is stripped off
         },
 
         GET: async function(parameters) {
@@ -198,19 +198,18 @@ const handleRequest = {
 
     messages: {
         HEAD: async function(parameters) {
-            // TODO: implement bags as actual documents with permissions
-            //const bag = bali.component('#' + parameters.identifier);
-            //const existing = await repository.readBag(bag);
-            //return await engine.encodeResponse(parameters, existing, true);
-            return engine.encodeError(405, parameters.responseType, 'Method Not Allowed');
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const hasMessages = bali.probability(await repository.messageCount(tag, version) > 0);
+            return await engine.encodeResponse(parameters, hasMessages, true);  // body is stripped off
         },
 
         GET: async function(parameters) {
-            const bag = bali.component('#' + parameters.identifier);
-            // TODO: implement bags as actual documents with permissions
-            //const existing = await repository.readBag(bag);
-            //return await engine.encodeResponse(parameters, existing, true);
-            const count = bali.number(await repository.messageCount(bag));
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const count = bali.number(await repository.messageCount(tag, version));
             return await engine.encodeResponse(parameters, count, true);
         },
 
@@ -219,19 +218,23 @@ const handleRequest = {
         },
 
         POST: async function(parameters) {
-            const bag = bali.component('#' + parameters.identifier);
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
             const message = parameters.body;
-            // TODO: implement bags as actual documents with permissions
-            //const existing = await repository.readBag(bag);
-            //const response = await engine.encodeResponse(parameters, existing, true);
-            const response = await engine.encodeResponse(parameters, bali.probability(true), true);
-            await repository.addMessage(bag, message);
+            const bag = await repository.readDocument(tag, version);
+            const response = await engine.encodeResponse(parameters, bag, true);
+            if (response.statusCode === 201) {
+                await repository.addMessage(tag, version, message);
+            }
             return response;
         },
 
         DELETE: async function(parameters) {
-            const bag = bali.component('#' + parameters.identifier);
-            const message = await repository.removeMessage(bag);
+            const tokens = parameters.identifier.split('/');
+            const tag = bali.component('#' + tokens[0]);
+            const version = bali.component(tokens[1]);
+            const message = await repository.removeMessage(tag, version);
             return await engine.encodeResponse(parameters, message, true);
         }
     }

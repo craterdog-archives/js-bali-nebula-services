@@ -211,21 +211,21 @@ const RepositoryClient = function(service, debug) {
         return bali.component(source);  // return a citation to the new document
     };
 
-    this.messageCount = async function(bag) {
+    this.messageCount = async function(tag, version) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
                 'Accept': 'application/bali'
             },
             httpMethod: 'GET',
-            path: '/repository/messages/' + getPath(bag),
+            path: '/repository/messages/' + getPath(tag, version),
             body: undefined
         };
         const response = await service.handler(request);
         return Number(response.body.toString('utf8'));
     };
 
-    this.addMessage = async function(bag, message) {
+    this.addMessage = async function(tag, version, message) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
@@ -233,7 +233,7 @@ const RepositoryClient = function(service, debug) {
                 'Accept': 'application/bali'
             },
             httpMethod: 'POST',
-            path: '/repository/messages/' + getPath(bag),
+            path: '/repository/messages/' + getPath(tag, version),
             body: message.toBDN()
         };
         const response = await service.handler(request);
@@ -242,14 +242,14 @@ const RepositoryClient = function(service, debug) {
         return bali.component(source);  // return a citation to the new message
     };
 
-    this.removeMessage = async function(bag) {
+    this.removeMessage = async function(tag, version) {
         const request = {
             headers: {
                 'Nebula-Credentials': await generateCredentials(),
                 'Accept': 'application/bali'
             },
             httpMethod: 'DELETE',
-            path: '/repository/messages/' + getPath(bag),
+            path: '/repository/messages/' + getPath(tag, version),
             body: undefined
         };
         const response = await service.handler(request);
@@ -267,6 +267,16 @@ RepositoryClient.prototype.constructor = RepositoryClient;
 describe('Bali Nebula™ Repository Service', function() {
 
     const repository = new RepositoryClient(service, debug);
+
+    const bag = bali.catalog({
+        $description: 'This is a test bag.'
+    }, {
+        $type: '/bali/collections/Bag/v1',
+        $tag: bali.tag(),
+        $version: bali.version(),
+        $permissions: '/bali/permissions/public/v1',
+        $previous: bali.pattern.NONE
+    });
 
     const transaction = bali.catalog({
         $timestamp: bali.moment(),
@@ -385,32 +395,66 @@ describe('Bali Nebula™ Repository Service', function() {
         });
 
         it('should perform a message bag lifecycle', async function() {
-            const bag = bali.tag();
-            var message = await notary.notarizeDocument(transaction);
+            // create the bag
+            const tag = bali.tag();
+            const version = bali.version();
+            const bag = await notary.notarizeDocument(bali.catalog({
+                    $description: 'This is an example bag.'
+                }, {
+                    $type: '/bali/examples/Bag/v1',
+                    $tag: tag,
+                    $version: version,
+                    $permissions: '/bali/permissions/public/v1',
+                    $previous: bali.pattern.NONE
+                })
+            );
+            await repository.writeDocument(bag);
+
+            // make sure the message bag is empty
+            expect(await repository.messageCount(tag, version)).to.equal(0);
+            expect(await repository.removeMessage(tag, version)).to.not.exist;
+
+            // add some messages to the bag
+            const generateMessage = async function(count) {
+                const content = bali.catalog({
+                    $count: count
+                }, {
+                    $type: '/bali/examples/Message/v1',
+                    $tag: bali.tag(),
+                    $version: bali.version(),
+                    $permissions: '/bali/permissions/public/v1',
+                    $previous: bali.pattern.NONE
+                });
+                return await notary.notarizeDocument(content);
+            };
+
+            var message = await generateMessage(1);
             citation = await notary.citeDocument(message);
+            expect(citation.isEqualTo(await repository.addMessage(tag, version, message))).is.true;
+            expect(await repository.messageCount(tag, version)).to.equal(1);
+
+            message = await generateMessage(2);
+            citation = await notary.citeDocument(message);
+            expect(citation.isEqualTo(await repository.addMessage(tag, version, message))).is.true;
+            expect(await repository.messageCount(tag, version)).to.equal(2);
+
+            message = await generateMessage(3);
+            citation = await notary.citeDocument(message);
+            expect(citation.isEqualTo(await repository.addMessage(tag, version, message))).is.true;
+            expect(await repository.messageCount(tag, version)).to.equal(3);
+
+            // remove the messages from the bag
+            message = await repository.removeMessage(tag, version);
+            expect(await repository.messageCount(tag, version)).to.equal(2);
+
+            message = await repository.removeMessage(tag, version);
+            expect(await repository.messageCount(tag, version)).to.equal(1);
+
+            message = await repository.removeMessage(tag, version);
+            expect(await repository.messageCount(tag, version)).to.equal(0);
 
             // make sure the message bag is empty
-            expect(await repository.messageCount(bag)).to.equal(0);
-            expect(await repository.removeMessage(bag)).to.not.exist;
-
-            // add some messages
-            expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(1);
-            expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(2);
-            expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(3);
-
-            // remove the messages
-            expect(message.isEqualTo(await repository.removeMessage(bag))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(2);
-            expect(message.isEqualTo(await repository.removeMessage(bag))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(1);
-            expect(message.isEqualTo(await repository.removeMessage(bag))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(0);
-
-            // make sure the message bag is empty
-            expect(await repository.removeMessage(bag)).to.not.exist;
+            expect(await repository.removeMessage(tag, version)).to.not.exist;
 
         });
 
