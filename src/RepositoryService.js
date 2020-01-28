@@ -11,7 +11,6 @@
 
 const debug = 2;  // logging level in range [0..3]
 const configuration = {
-    uri: 'https://bali-nebula.net/repository/',
     names: 'craterdog-bali-names-us-west-2',
     drafts: 'craterdog-bali-drafts-us-west-2',
     documents: 'craterdog-bali-documents-us-west-2',
