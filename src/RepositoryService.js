@@ -22,6 +22,7 @@ const notary = require('bali-digital-notary').service(debug);
 const repository = require('bali-document-repository').service(notary, configuration, debug);
 const engine = require('./utilities/HTTPEngine').HTTPEngine(notary, repository, debug);
 const style = 'https://bali-nebula.net/static/styles/BDN.css';
+const protocol = notary.getProtocols().getItem(-1);  // most recent protocol
 
 
 // PUBLIC FUNCTIONS
@@ -79,6 +80,23 @@ exports.handler = async function(request) {
 
 // PRIVATE FUNCTIONS
 
+const extractCitation = function(parameters) {
+    const tokens = parameters.identifier.split('/');
+    const tag = bali.component('#' + tokens[0]);
+    const version = bali.component(tokens[1]);
+    const digest = parameters.digest;
+    const citation = bali.catalog({
+        $protocol: protocol,
+        $tag: tag,
+        $version: version,
+        $digest: digest
+    }, {
+        $type: '/bali/notary/Citation/v1'
+    });
+    return citation;
+};
+
+
 const handleRequest = {
 
     names: {
@@ -114,27 +132,21 @@ const handleRequest = {
 
     drafts: {
         HEAD: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const existing = await repository.readDraft(tag, version);
+            const citation = extractCitation(parameters);
+            const existing = await repository.readDraft(citation);
             return await engine.encodeResponse(parameters, existing, existing, true);  // body is stripped off
         },
 
         GET: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const existing = await repository.readDraft(tag, version);
+            const citation = extractCitation(parameters);
+            const existing = await repository.readDraft(citation);
             return await engine.encodeResponse(parameters, existing, existing, true);
         },
 
         PUT: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
+            const citation = extractCitation(parameters);
             const draft = parameters.body;
-            const existing = await repository.readDraft(tag, version);
+            const existing = await repository.readDraft(citation);
             const response = await engine.encodeResponse(parameters, existing, existing, true);
             if (response.statusCode < 300) await repository.writeDraft(draft);
             return response;
@@ -145,43 +157,34 @@ const handleRequest = {
         },
 
         DELETE: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const existing = await repository.readDraft(tag, version);
+            const citation = extractCitation(parameters);
+            const existing = await repository.readDraft(citation);
             const response = await engine.encodeResponse(parameters, existing, existing, true);
-            if (response.statusCode === 200) await repository.deleteDraft(tag, version);
+            if (response.statusCode === 200) await repository.deleteDraft(citation);
             return response;
         }
     },
 
     documents: {
         HEAD: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const existing = await repository.readDocument(tag, version);
+            const citation = extractCitation(parameters);
+            const existing = await repository.readDocument(citation);
             return await engine.encodeResponse(parameters, existing, existing, false);  // body is stripped off
         },
 
         GET: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const existing = await repository.readDocument(tag, version);
+            const citation = extractCitation(parameters);
+            const existing = await repository.readDocument(citation);
             return await engine.encodeResponse(parameters, existing, existing, false);
         },
 
         PUT: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
+            const citation = extractCitation(parameters);
             const document = parameters.body;
-            const existing = await repository.readDocument(tag, version);
+            const existing = await repository.readDocument(citation);
             const response = await engine.encodeResponse(parameters, existing, existing, false);
             if (response.statusCode === 201) {
                 await repository.writeDocument(document);
-                await repository.deleteDraft(tag, version);
             }
             return response;
         },
@@ -197,20 +200,16 @@ const handleRequest = {
 
     messages: {
         HEAD: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const bag = await repository.readDocument(tag, version);
-            const count = bali.number(await repository.messageCount(tag, version));
+            const citation = extractCitation(parameters);
+            const bag = await repository.readDocument(citation);
+            const count = bali.number(await repository.messageCount(citation));
             return await engine.encodeResponse(parameters, bag, count, true);  // body is stripped off
         },
 
         GET: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const bag = await repository.readDocument(tag, version);
-            const count = bali.number(await repository.messageCount(tag, version));
+            const citation = extractCitation(parameters);
+            const bag = await repository.readDocument(citation);
+            const count = bali.number(await repository.messageCount(citation));
             return await engine.encodeResponse(parameters, bag, count, true);
         },
 
@@ -219,26 +218,22 @@ const handleRequest = {
         },
 
         POST: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const bag = await repository.readDocument(tag, version);
+            const citation = extractCitation(parameters);
+            const bag = await repository.readDocument(citation);
             const message = parameters.body;
             const response = await engine.encodeResponse(parameters, bag, message, true);
             if (response.statusCode === 201) {
-                await repository.addMessage(tag, version, message);
+                await repository.addMessage(citation, message);
             }
             return response;
         },
 
         DELETE: async function(parameters) {
-            const tokens = parameters.identifier.split('/');
-            const tag = bali.component('#' + tokens[0]);
-            const version = bali.component(tokens[1]);
-            const bag = await repository.readDocument(tag, version);
+            const citation = extractCitation(parameters);
+            const bag = await repository.readDocument(citation);
             var message;
             if (bag) {
-                message = await repository.removeMessage(tag, version);
+                message = await repository.removeMessage(citation);
             }
             return await engine.encodeResponse(parameters, bag, message, true);
         }

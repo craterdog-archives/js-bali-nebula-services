@@ -75,60 +75,53 @@ const HTTPEngine = function(notary, repository, debug) {
     // PUBLIC ASPECTS
 
     this.decodeRequest = function(request) {
-        try {
-            if (debug > 0) console.log('Request ' + request.httpMethod + ': ' + request.path);
-            var resultType = request.headers['Accept'] || request.headers['accept'];
-            if (resultType !== 'application/bali') resultType = 'text/html';  // for a browser
-            var credentials = request.headers['Nebula-Credentials'] || request.headers['nebula-credentials'];
-            if (credentials) {
-                credentials = decodeURI(credentials).slice(2, -2);  // strip off double quote delimiters
-                credentials = bali.component(credentials);
-            }
-            const method = request.httpMethod.toUpperCase();
-            const tokens = request.path.split('/');
-            const service = tokens[1];
-            const type = tokens[2];
-            const identifier = tokens.slice(3).join('/');
-            const body = request.body ? bali.component(request.body) : undefined;
-            const parameters = {
-                resultType: resultType,
-                credentials: credentials,
-                method: method,
-                service: service,
-                type: type,
-                identifier: identifier,
-                body: body
-            };
-            if (debug > 2) console.log('Parameters: ' + bali.catalog(parameters));
-            return parameters;
-        } catch (cause) {
-            if (debug > 2) console.log('An error occurred while attempting to extract the request parameters: ' + cause);
+        if (debug > 0) console.log('Request ' + request.httpMethod + ': ' + request.path);
+        var resultType = request.headers['Accept'] || request.headers['accept'];
+        if (resultType !== 'application/bali') resultType = 'text/html';  // for a browser
+        var credentials = request.headers['Nebula-Credentials'] || request.headers['nebula-credentials'];
+        if (credentials) {
+            const decoder = bali.decoder(0, debug);
+            credentials = Buffer.from(decoder.base32Decode(credentials)).toString('utf8');
+            credentials = bali.component(credentials);
         }
+        var digest = request.headers['Nebula-Digest'] || request.headers['nebula-digest'];
+        if (digest) digest = bali.component("'" + digest + "'");
+        const method = request.httpMethod.toUpperCase();
+        const tokens = request.path.split('/');
+        const service = tokens[1];
+        const type = tokens[2];
+        const identifier = tokens.slice(3).join('/');
+        const body = request.body ? bali.component(request.body) : undefined;
+        const parameters = {
+            resultType: resultType,
+            credentials: credentials,
+            method: method,
+            service: service,
+            type: type,
+            identifier: identifier,
+            digest: digest,
+            body: body
+        };
+        if (debug > 2) console.log('Parameters: ' + bali.catalog(parameters));
+        return parameters;
     };
 
 
     this.validCredentials = async function(parameters) {
-        try {
-            const credentials = parameters.credentials;
-            if (credentials) {
-                if (credentials.isType('/bali/collections/Catalog')) {
-                    const citation = credentials.getValue('$certificate');
-                    const tag = citation.getValue('$tag');
-                    const version = citation.getValue('$version');
-                    // if the certificate doesn't yet exist, there is a self-signed certificate in the body
-                    var certificate = (await repository.readDocument(tag, version)) || parameters.body;
-                    if (await notary.validDocument(credentials, certificate)) {
-                        parameters.account = certificate.getValue('$account');
-                        return true;  // the credentials are valid
-                    }
+        const credentials = parameters.credentials;
+        if (credentials) {
+            if (credentials.isType('/bali/collections/Catalog')) {
+                const citation = credentials.getValue('$certificate');
+                // if the certificate doesn't yet exist, there is a self-signed certificate in the body
+                var certificate = (await repository.readDocument(citation)) || parameters.body;
+                if (await notary.validDocument(credentials, certificate)) {
+                    parameters.account = certificate.getValue('$account');
+                    return true;  // the credentials are valid
                 }
-                return false;  // the credentials are invalid
             }
-            return true;  // no credentials were passed in, proceed anonymously
-        } catch (cause) {
-            if (debug > 2) console.log('An error occurred while attempting to extract the request credentials: ' + cause);
-            return false;  // the credentials were badly formed
+            return false;  // the credentials are invalid
         }
+        return true;  // no credentials were passed in, proceed anonymously
     };
 
 
