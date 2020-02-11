@@ -55,8 +55,8 @@ const RepositoryClient = function(service, debug) {
     this.nameExists = async function(name) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'accept': 'application/bali'
             },
             httpMethod: 'HEAD',
             path: '/repository/names' + name,
@@ -69,8 +69,8 @@ const RepositoryClient = function(service, debug) {
     this.readName = async function(name) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/names' + name,
@@ -86,9 +86,9 @@ const RepositoryClient = function(service, debug) {
     this.writeName = async function(name, citation) {
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Content-Type': 'application/bali',
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'content-type': 'application/bali',
+                'accept': 'application/bali'
             },
             httpMethod: 'PUT',
             path: '/repository/names' + name,
@@ -103,9 +103,9 @@ const RepositoryClient = function(service, debug) {
         const identifier = extractId(citation);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(citation),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(citation),
+                'accept': 'application/bali'
             },
             httpMethod: 'HEAD',
             path: '/repository/drafts/' + identifier,
@@ -119,9 +119,9 @@ const RepositoryClient = function(service, debug) {
         const identifier = extractId(citation);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(citation),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(citation),
+                'accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/drafts/' + identifier,
@@ -138,10 +138,10 @@ const RepositoryClient = function(service, debug) {
         const citation = await notary.citeDocument(draft);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(citation),
-                'Content-Type': 'application/bali',
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(citation),
+                'content-type': 'application/bali',
+                'accept': 'application/bali'
             },
             httpMethod: 'PUT',
             path: '/repository/drafts/' + extractId(draft),
@@ -157,9 +157,9 @@ const RepositoryClient = function(service, debug) {
         const identifier = extractId(citation);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(citation),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(citation),
+                'accept': 'application/bali'
             },
             httpMethod: 'DELETE',
             path: '/repository/drafts/' + identifier,
@@ -177,9 +177,9 @@ const RepositoryClient = function(service, debug) {
         const identifier = extractId(citation);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(citation),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(citation),
+                'accept': 'application/bali'
             },
             httpMethod: 'HEAD',
             path: '/repository/documents/' + identifier,
@@ -193,9 +193,9 @@ const RepositoryClient = function(service, debug) {
         const identifier = extractId(citation);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(citation),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(citation),
+                'accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/documents/' + identifier,
@@ -210,15 +210,16 @@ const RepositoryClient = function(service, debug) {
 
     this.writeDocument = async function(document) {
         const citation = await notary.citeDocument(document);
+        const identifier = extractId(citation);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(citation),
-                'Content-Type': 'application/bali',
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(citation),
+                'content-type': 'application/bali',
+                'accept': 'application/bali'
             },
             httpMethod: 'PUT',
-            path: '/repository/documents/' + extractId(document),
+            path: '/repository/documents/' + identifier,
             body: document.toBDN()
         };
         const response = await service.handler(request);
@@ -227,13 +228,29 @@ const RepositoryClient = function(service, debug) {
         return bali.component(source);  // return a citation to the new document
     };
 
+    this.messageAvailable = async function(bag) {
+        const identifier = extractId(bag);
+        const request = {
+            headers: {
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(bag),
+                'accept': 'application/bali'
+            },
+            httpMethod: 'HEAD',
+            path: '/repository/messages/' + identifier,
+            body: undefined
+        };
+        const response = await service.handler(request);
+        return response.statusCode === 200;
+    };
+
     this.messageCount = async function(bag) {
         const identifier = extractId(bag);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(bag),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(bag),
+                'accept': 'application/bali'
             },
             httpMethod: 'GET',
             path: '/repository/messages/' + identifier,
@@ -247,10 +264,10 @@ const RepositoryClient = function(service, debug) {
         const identifier = extractId(bag);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(bag),
-                'Content-Type': 'application/bali',
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(bag),
+                'content-type': 'application/bali',
+                'accept': 'application/bali'
             },
             httpMethod: 'POST',
             path: '/repository/messages/' + identifier,
@@ -262,13 +279,13 @@ const RepositoryClient = function(service, debug) {
         return bali.component(source);  // return a citation to the new message
     };
 
-    this.removeMessage = async function(bag) {
+    this.borrowMessage = async function(bag) {
         const identifier = extractId(bag);
         const request = {
             headers: {
-                'Nebula-Credentials': await generateCredentials(),
-                'Nebula-Digest': await generateDigest(bag),
-                'Accept': 'application/bali'
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(bag),
+                'accept': 'application/bali'
             },
             httpMethod: 'DELETE',
             path: '/repository/messages/' + identifier,
@@ -279,6 +296,42 @@ const RepositoryClient = function(service, debug) {
             const source = response.body.toString('utf8');
             return bali.component(source);
         }
+    };
+
+    this.returnMessage = async function(bag, message) {
+        const citation = await notary.citeDocument(message);
+        const identifier = extractId(citation);
+        const request = {
+            headers: {
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(bag),
+                'content-type': 'application/bali',
+                'accept': 'application/bali'
+            },
+            httpMethod: 'PUT',
+            path: '/repository/messages/' + extractId(bag) + '/' + identifier,
+            body: message.toBDN()
+        };
+        const response = await service.handler(request);
+        if (response.statusCode > 299) throw Error('Unable to return the message: ' + response.statusCode);
+        const source = response.body.toString('utf8');
+        return bali.component(source);  // return a citation to the new message
+    };
+
+    this.deleteMessage = async function(bag, citation) {
+        const identifier = extractId(citation);
+        const request = {
+            headers: {
+                'nebula-credentials': await generateCredentials(),
+                'nebula-digest': await generateDigest(bag),
+                'accept': 'application/bali'
+            },
+            httpMethod: 'DELETE',
+            path: '/repository/messages/' + extractId(bag) + '/' + identifier,
+            body: undefined
+        };
+        const response = await service.handler(request);
+        return response.statusCode === 200;
     };
 
     return this;
@@ -411,7 +464,7 @@ describe('Bali Nebula™ Repository Service', function() {
 
         it('should perform a message bag lifecycle', async function() {
             // create the bag
-            var bag = await notary.notarizeDocument(bali.catalog({
+            const document = await notary.notarizeDocument(bali.catalog({
                     $description: 'This is an example bag.'
                 }, {
                     $type: '/bali/examples/Bag/v1',
@@ -421,11 +474,15 @@ describe('Bali Nebula™ Repository Service', function() {
                     $previous: bali.pattern.NONE
                 })
             );
-            bag = await repository.writeDocument(bag);
+            const bag = await repository.writeDocument(document);
+
+            // name the bag
+            const name = bali.component('/bali/examples/' + bag.getValue('$tag').toString().slice(1) + '/v1');
+            await repository.writeName(name, bag);
 
             // make sure the message bag is empty
-            expect(await repository.messageCount(bag)).to.equal(0);
-            expect(await repository.removeMessage(bag)).to.not.exist;
+            expect(await repository.messageAvailable(bag)).to.equal(false);
+            expect(await repository.borrowMessage(bag)).to.not.exist;
 
             // add some messages to the bag
             const generateMessage = async function(count) {
@@ -442,32 +499,42 @@ describe('Bali Nebula™ Repository Service', function() {
             };
 
             var message = await generateMessage(1);
-            citation = await notary.citeDocument(message);
+            var citation = await notary.citeDocument(message);
             expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(1);
+            expect(await repository.messageAvailable(bag)).to.equal(true);
 
             message = await generateMessage(2);
             citation = await notary.citeDocument(message);
             expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(2);
+            expect(await repository.messageAvailable(bag)).to.equal(true);
 
             message = await generateMessage(3);
             citation = await notary.citeDocument(message);
             expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
-            expect(await repository.messageCount(bag)).to.equal(3);
+            expect(await repository.messageAvailable(bag)).to.equal(true);
 
             // remove the messages from the bag
-            message = await repository.removeMessage(bag);
-            expect(await repository.messageCount(bag)).to.equal(2);
+            message = await repository.borrowMessage(bag);
+            citation = await notary.citeDocument(message);
+            await repository.deleteMessage(bag, citation);
+            expect(await repository.messageAvailable(bag)).to.equal(true);
 
-            message = await repository.removeMessage(bag);
-            expect(await repository.messageCount(bag)).to.equal(1);
+            message = await repository.borrowMessage(bag);
+            citation = await notary.citeDocument(message);
+            await repository.deleteMessage(bag, citation);
+            expect(await repository.messageAvailable(bag)).to.equal(true);
 
-            message = await repository.removeMessage(bag);
-            expect(await repository.messageCount(bag)).to.equal(0);
+            message = await repository.borrowMessage(bag);
+            await repository.returnMessage(bag, message);
+            expect(await repository.messageAvailable(bag)).to.equal(true);
+
+            message = await repository.borrowMessage(bag);
+            citation = await notary.citeDocument(message);
+            await repository.deleteMessage(bag, citation);
+            expect(await repository.messageAvailable(bag)).to.equal(false);
 
             // make sure the message bag is empty
-            expect(await repository.removeMessage(bag)).to.not.exist;
+            expect(await repository.borrowMessage(bag)).to.not.exist;
 
         });
 
