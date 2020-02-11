@@ -34,6 +34,6 @@
     "aws-sdk": "^2.610.0",
     "bali-component-framework": "^2.5.2",
     "bali-digital-notary": "^2.10.0",
-    "bali-document-repository": "^2.23.2"
+    "bali-document-repository": "^2.23.4"
   }
 }
