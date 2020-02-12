@@ -266,8 +266,9 @@ const RepositoryClient = function(service, debug) {
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to add the message: ' + response.statusCode);
-        const source = response.body.toString('utf8');
-        return bali.component(source);  // return a citation to the new message
+        const content = message.getValue('$content');
+        const tag = content.getParameter('$tag');
+        return tag;
     };
 
     this.borrowMessage = async function(bag) {
@@ -289,33 +290,32 @@ const RepositoryClient = function(service, debug) {
     };
 
     this.returnMessage = async function(bag, message) {
-        const citation = await notary.citeDocument(message);
+        const content = message.getValue('$content');
+        const tag = content.getParameter('$tag');
         const request = {
             headers: {
                 'nebula-credentials': await generateCredentials(),
-                'nebula-digest': await generateDigest(citation),
+                'nebula-digest': await generateDigest(bag),
                 'content-type': 'application/bali',
                 'accept': 'application/bali'
             },
             httpMethod: 'PUT',
-            path: '/repository/messages/' + extractId(bag) + '/' + extractId(citation),
+            path: '/repository/messages/' + extractId(bag) + '/' + tag.toString().slice(1),
             body: message.toBDN()
         };
         const response = await service.handler(request);
-        if (response.statusCode > 299) throw Error('Unable to return the message: ' + response.statusCode);
-        const source = response.body.toString('utf8');
-        return bali.component(source);  // return a citation to the new message
+        return response.statusCode === 200;
     };
 
-    this.deleteMessage = async function(bag, citation) {
+    this.deleteMessage = async function(bag, tag) {
         const request = {
             headers: {
                 'nebula-credentials': await generateCredentials(),
-                'nebula-digest': await generateDigest(citation),
+                'nebula-digest': await generateDigest(bag),
                 'accept': 'application/bali'
             },
             httpMethod: 'DELETE',
-            path: '/repository/messages/' + extractId(bag) + '/' + extractId(citation),
+            path: '/repository/messages/' + extractId(bag) + '/' + tag.toString().slice(1),
             body: undefined
         };
         const response = await service.handler(request);
@@ -476,30 +476,36 @@ describe('Bali Nebula™ Repository Service', function() {
                 return await notary.notarizeDocument(content);
             };
 
+            const extractTag = function(message) {
+                const content = message.getValue('$content');
+                const tag = content.getParameter('$tag');
+                return tag;
+            };
+
             var message = await generateMessage(1);
-            var citation = await notary.citeDocument(message);
-            expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
+            var tag = extractTag(message);
+            expect(tag.isEqualTo(await repository.addMessage(bag, message))).is.true;
             expect(await repository.messageAvailable(bag)).to.equal(true);
 
             message = await generateMessage(2);
-            citation = await notary.citeDocument(message);
-            expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
+            tag = extractTag(message);
+            expect(tag.isEqualTo(await repository.addMessage(bag, message))).is.true;
             expect(await repository.messageAvailable(bag)).to.equal(true);
 
             message = await generateMessage(3);
-            citation = await notary.citeDocument(message);
-            expect(citation.isEqualTo(await repository.addMessage(bag, message))).is.true;
+            tag = extractTag(message);
+            expect(tag.isEqualTo(await repository.addMessage(bag, message))).is.true;
             expect(await repository.messageAvailable(bag)).to.equal(true);
 
             // remove the messages from the bag
             message = await repository.borrowMessage(bag);
-            citation = await notary.citeDocument(message);
-            await repository.deleteMessage(bag, citation);
+            tag = extractTag(message);
+            await repository.deleteMessage(bag, tag);
             expect(await repository.messageAvailable(bag)).to.equal(true);
 
             message = await repository.borrowMessage(bag);
-            citation = await notary.citeDocument(message);
-            await repository.deleteMessage(bag, citation);
+            tag = extractTag(message);
+            await repository.deleteMessage(bag, tag);
             expect(await repository.messageAvailable(bag)).to.equal(true);
 
             message = await repository.borrowMessage(bag);
@@ -507,8 +513,8 @@ describe('Bali Nebula™ Repository Service', function() {
             expect(await repository.messageAvailable(bag)).to.equal(true);
 
             message = await repository.borrowMessage(bag);
-            citation = await notary.citeDocument(message);
-            await repository.deleteMessage(bag, citation);
+            tag = extractTag(message);
+            await repository.deleteMessage(bag, tag);
             expect(await repository.messageAvailable(bag)).to.equal(false);
 
             // make sure the message bag is empty
@@ -523,4 +529,3 @@ describe('Bali Nebula™ Repository Service', function() {
     });
 
 });
-
