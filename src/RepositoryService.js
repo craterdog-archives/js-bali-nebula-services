@@ -9,7 +9,7 @@
  ************************************************************************/
 'use strict';
 
-const debug = 2;  // logging level in range [0..3]
+const debug = 1;  // logging level in range [0..3]
 const configuration = {
     names: 'craterdog-bali-names-us-west-2',
     drafts: 'craterdog-bali-drafts-us-west-2',
@@ -24,7 +24,7 @@ const engine = require('bali-document-repository').engine(notary, repository, de
 const protocol = notary.getProtocols().getItem(-1);  // most recent protocol
 
 
-if (debug > 2) console.log('Loading the "Bali Nebula™ Repository Service" lambda function');
+if (debug > 0) console.log('Loading the "Bali Nebula™ Repository Service" lambda function');
 
 exports.handler = async function(request) {
     return await engine.processRequest(request);
