@@ -25,7 +25,12 @@ const protocol = notary.getProtocols().getItem(-1);  // most recent protocol
 
 
 if (debug > 0) console.log('Loading the "Bali Nebula™ Repository Service" lambda function');
-
 exports.handler = async function(request) {
-    return await engine.processRequest(request);
+    const method = request.httpMethod || request.method;
+    const path = request.path;
+    if (debug > 0) console.log('Request  ' + method + ': ' + path);
+    const response = await engine.processRequest(request);
+    const status = response.statusCode;
+    if (debug > 0) console.log('Response STATUS: ' + status + '\n');
+    return response;
 };
