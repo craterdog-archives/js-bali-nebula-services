@@ -32,8 +32,8 @@
   },
   "dependencies": {
     "aws-sdk": "^2.670.0",
-    "bali-component-framework": "^2.18.0",
-    "bali-digital-notary": "^2.10.12",
-    "bali-document-repository": "^2.24.16"
+    "bali-component-framework": "^2.18.1",
+    "bali-digital-notary": "^2.10.13",
+    "bali-document-repository": "^2.24.17"
   }
 }
