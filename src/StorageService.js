@@ -12,16 +12,15 @@
 const debug = 1;  // logging level in range [0..3]
 const configuration = {
     names: 'bali-nebula-names-us-east-1',
-    drafts: 'bali-nebula-drafts-us-east-1',
     documents: 'bali-nebula-documents-us-east-1',
+    contracts: 'bali-nebula-contracts-us-east-1',
     messages: 'bali-nebula-messages-us-east-1'
 };
 
 const bali = require('bali-component-framework').api(debug);
 const notary = require('bali-digital-notary').service(debug);
-const repository = require('bali-document-repository').service(notary, configuration, debug);
-const engine = require('bali-document-repository').engine(notary, repository, debug);
-const protocol = notary.getProtocols().getItem(-1);  // most recent protocol
+const storage = require('bali-document-repository').service(notary, configuration, debug);
+const engine = require('bali-document-repository').engine(notary, storage, debug);
 
 
 if (debug > 0) console.log('Loading the "Bali Nebula™ Repository Service" lambda function');
