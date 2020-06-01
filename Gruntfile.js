@@ -56,7 +56,7 @@ module.exports = function(grunt) {
     // grunt-webpack plugin configuration (concatenates and removes whitespace)
     webpack: {
       repositoryService: {
-        entry: ['./src/RepositoryService.js'],
+        entry: ['./src/StorageService.js'],
         target: 'node',
         mode: 'development',
         output: {
