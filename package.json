@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/craterdog-bali/js-bali-nebula-services#readme",
   "devDependencies": {
-    "grunt": "^1.1.0",
+    "grunt": "^1.3.0",
     "grunt-contrib-clean": "^2.0.0",
     "grunt-eslint": "^23.0.0",
     "grunt-exec": "^3.0.0",
