@@ -17,7 +17,7 @@ const configuration = {
     messages: 'bali-nebula-messages-us-east-1'
 };
 
-const bali = require('bali-component-framework').api(debug);
+const bali = require('bali-component-framework').api();
 const notary = require('bali-digital-notary').service(debug);
 const storage = require('bali-document-repository').service(notary, configuration, debug);
 const engine = require('bali-document-repository').engine(notary, storage, debug);

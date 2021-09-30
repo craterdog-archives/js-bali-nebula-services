@@ -25,21 +25,21 @@ const EOL = '\n';
 
 const extractId = function(citation) {
     var tag, version;
-    tag = citation.getValue('$tag');
-    version = citation.getValue('$version');
+    tag = citation.getAttribute('$tag');
+    version = citation.getAttribute('$version');
     const id = tag.getValue() + '/' + version;
     return id;
 };
 
 const generateCredentials = async function() {
     const decoder = bali.decoder(0, debug);
-    var credentials = (await notary.generateCredentials()).toString();
+    var credentials = bali.document(await notary.generateCredentials());
     credentials = decoder.base32Encode(Buffer.from(credentials, 'utf8')).replace(/\s+/g, '');
     return credentials;
 };
 
 const generateDigest = function(citation) {
-    const digest = citation.getValue('$digest').toString().slice(1, -1).replace(/\s+/g, '');
+    const digest = bali.source(citation.getAttribute('$digest')).slice(1, -1).replace(/\s+/g, '');
     return digest;
 };
 
@@ -86,7 +86,7 @@ const StorageClient = function(service, debug) {
             },
             httpMethod: 'PUT',
             path: '/repository/names' + name,
-            body: citation.toBDN()
+            body: bali.document(citation)
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to create the named citation: ' + response.statusCode);
@@ -139,7 +139,7 @@ const StorageClient = function(service, debug) {
             },
             httpMethod: 'PUT',
             path: '/repository/documents/' + extractId(citation),
-            body: document.toBDN()
+            body: bali.document(document)
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to save the document: ' + response.statusCode);
@@ -200,7 +200,7 @@ const StorageClient = function(service, debug) {
     };
 
     this.writeContract = async function(contract) {
-        const document = contract.getValue('$document');
+        const document = contract.getAttribute('$document');
         const citation = await notary.citeDocument(document);
         const request = {
             headers: {
@@ -211,7 +211,7 @@ const StorageClient = function(service, debug) {
             },
             httpMethod: 'PUT',
             path: '/repository/contracts/' + extractId(citation),
-            body: contract.toBDN()
+            body: bali.document(contract)
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to create the contract: ' + response.statusCode);
@@ -259,7 +259,7 @@ const StorageClient = function(service, debug) {
             },
             httpMethod: 'POST',
             path: '/repository/messages/' + extractId(bag),
-            body: message.toBDN()
+            body: bali.document(message)
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to add the message: ' + response.statusCode);
@@ -294,7 +294,7 @@ const StorageClient = function(service, debug) {
             },
             httpMethod: 'PUT',
             path: '/repository/messages/' + extractId(bag) + '/' + extractId(citation),
-            body: message.toBDN()
+            body: bali.document(message)
         };
         const response = await service.handler(request);
         if (response.statusCode > 299) throw Error('Unable to return the message: ' + response.statusCode);
@@ -309,7 +309,7 @@ const StorageClient = function(service, debug) {
             },
             httpMethod: 'DELETE',
             path: '/repository/messages/' + extractId(bag) + '/' + extractId(citation),
-            body: citation.toBDN()
+            body: bali.document(citation)
         };
         const response = await service.handler(request);
         if (response.statusCode === 200) {
@@ -344,25 +344,25 @@ describe('Bali Nebula™ Storage Service', function() {
             const publicKey = await notary.generateKey();
             certificate = await notary.notarizeDocument(publicKey);
             citation = await notary.activateKey(certificate);
-            expect(citation.isEqualTo(await storage.writeContract(certificate))).is.true;
+            expect(bali.areEqual(citation, await storage.writeContract(certificate))).is.true;
         });
 
         it('should perform a named contract lifecycle', async function() {
-            const tag = citation.getValue('$tag');
-            const name = bali.component('/bali/certificates/' + tag.getValue() + '/v1');
+            const tag = citation.getAttribute('$tag');
+            const name = bali.component('/nebula/certificates/' + tag.getValue() + '/v1');
 
             // make sure the new name does not yet exist in the repository
             expect(await storage.nameExists(name)).is.false;
             expect(await storage.readName(name)).to.not.exist;
 
             // create a new name in the repository
-            expect(citation.isEqualTo(await storage.writeName(name, citation))).is.true;
+            expect(bali.areEqual(citation, await storage.writeName(name, citation))).is.true;
 
             // make sure the new name exists in the repository
             expect(await storage.nameExists(name)).is.true;
 
             // fetch the named contract from the repository
-            expect(citation.isEqualTo(await storage.readName(name))).is.true;
+            expect(bali.areEqual(citation, await storage.readName(name))).is.true;
 
             // attempt to create the same name in the repository
             await assert.rejects(async function() {
@@ -375,7 +375,7 @@ describe('Bali Nebula™ Storage Service', function() {
             citation = await notary.citeDocument(document);
 
             // create a new document in the repository
-            expect(citation.isEqualTo(await storage.writeDocument(document))).is.true;
+            expect(bali.areEqual(citation, await storage.writeDocument(document))).is.true;
 
             // make sure the new document exists in the repository
             expect(await storage.documentExists(citation)).is.true;
@@ -384,16 +384,16 @@ describe('Bali Nebula™ Storage Service', function() {
             expect(await storage.contractExists(citation)).is.false;
 
             // fetch the new document from the repository
-            expect(document.isEqualTo(await storage.readDocument(citation))).is.true;
+            expect(bali.areEqual(document, await storage.readDocument(citation))).is.true;
 
             // update the existing document in the repository
-            expect(citation.isEqualTo(await storage.writeDocument(document))).is.true;
+            expect(bali.areEqual(citation, await storage.writeDocument(document))).is.true;
 
             // make sure the updated document exists in the repository
             expect(await storage.documentExists(citation)).is.true;
 
             // delete the document from the repository
-            expect(document.isEqualTo(await storage.deleteDocument(citation))).is.true;
+            expect(bali.areEqual(document, await storage.deleteDocument(citation))).is.true;
 
             // make sure the document no longer exists in the repository
             expect(await storage.documentExists(citation)).is.false;
@@ -403,7 +403,7 @@ describe('Bali Nebula™ Storage Service', function() {
             expect(await storage.deleteDocument(citation)).to.not.exist;
         });
 
-        it('should perform a committed contract lifecycle', async function() {
+        it('should perform a signed contract lifecycle', async function() {
             const document = transaction;
             citation = await notary.citeDocument(document);
             const contract = await notary.notarizeDocument(document);
@@ -413,7 +413,7 @@ describe('Bali Nebula™ Storage Service', function() {
             expect(await storage.readContract(citation)).to.not.exist;
 
             // create a new contract in the repository
-            expect(citation.isEqualTo(await storage.writeContract(contract))).is.true;
+            expect(bali.areEqual(citation, await storage.writeContract(contract))).is.true;
 
             // make sure the same document does not exist in the repository
             expect(await storage.documentExists(citation)).is.false;
@@ -423,7 +423,7 @@ describe('Bali Nebula™ Storage Service', function() {
             expect(await storage.contractExists(citation)).is.true;
 
             // fetch the new contract from the repository
-            expect(contract.isEqualTo(await storage.readContract(citation))).is.true;
+            expect(bali.areEqual(contract, await storage.readContract(citation))).is.true;
 
             // make sure the new contract still exists in the repository
             expect(await storage.contractExists(citation)).is.true;
@@ -436,27 +436,29 @@ describe('Bali Nebula™ Storage Service', function() {
 
         it('should perform a message bag lifecycle', async function() {
             // create the bag
-            const contract = await notary.notarizeDocument(bali.instance('/bali/examples/Bag/v1', {
-                $description: 'This is an example bag.'
-            }));
+            const contract = await notary.notarizeDocument(bali.instance('/nebula/examples/Bag/v1', {
+                $description: '"This is an example bag."'
+            }), debug);
             const bag = await storage.writeContract(contract);
 
             // name the bag
-            const name = bali.component('/bali/examples/' + bag.getValue('$tag').toString().slice(1) + '/v1');
-            expect(bag.isEqualTo(await storage.writeName(name, bag))).is.true;
+            const name = bali.component('/nebula/examples/' + bag.getAttribute('$tag').toString().slice(1) + '/v1');
+            expect(bali.areEqual(bag, await storage.writeName(name, bag))).is.true;
 
             // make sure the message bag is empty
             expect(await storage.messageAvailable(bag)).is.false;
             expect(await storage.removeMessage(bag)).to.not.exist;
 
             // add some messages to the bag
-            const generateMessage = async function(count) {
-                return bali.instance('/bali/examples/Message/v1', {
+            const generateMessage = function(count) {
+                const result = bali.instance('/nebula/examples/Message/v1', {
+                    $description: '"This is an example message."',
                     $count: count
-                });
+                }, debug);
+                return result;
             };
 
-            var message = await generateMessage(1);
+            var message = generateMessage(1);
             await storage.addMessage(bag, message);
             expect(await storage.messageCount(bag)).to.equal(1);
             expect(await storage.messageAvailable(bag)).is.true;
@@ -464,45 +466,50 @@ describe('Bali Nebula™ Storage Service', function() {
                 await storage.addMessage(bag, message);
             });
 
-            message = await generateMessage(2);
+            message = generateMessage(2);
             await storage.addMessage(bag, message);
             expect(await storage.messageCount(bag)).to.equal(2);
             expect(await storage.messageAvailable(bag)).is.true;
 
-            message = await generateMessage(3);
+            message = generateMessage(3);
             await storage.addMessage(bag, message);
             expect(await storage.messageCount(bag)).to.equal(3);
             expect(await storage.messageAvailable(bag)).is.true;
 
             // remove the messages from the bag
             message = await storage.removeMessage(bag);
+            expect(message).to.exist;
             expect(await storage.messageCount(bag)).to.equal(2);
             await storage.returnMessage(bag, message);
             expect(await storage.messageCount(bag)).to.equal(3);
 
             message = await storage.removeMessage(bag);
+            expect(message).to.exist;
             expect(await storage.messageCount(bag)).to.equal(2);
             var citation = await notary.citeDocument(message);
-            expect(message.isEqualTo(await storage.deleteMessage(bag, citation))).is.true;
+            expect(bali.areEqual(message, await storage.deleteMessage(bag, citation))).is.true;
             expect(await storage.messageCount(bag)).to.equal(2);
             expect(await storage.messageAvailable(bag)).is.true;
 
             message = await storage.removeMessage(bag);
+            expect(message).to.exist;
             expect(await storage.messageCount(bag)).to.equal(1);
             citation = await notary.citeDocument(message);
-            expect(message.isEqualTo(await storage.deleteMessage(bag, citation))).is.true;
+            expect(bali.areEqual(message, await storage.deleteMessage(bag, citation))).is.true;
             expect(await storage.messageCount(bag)).to.equal(1);
             expect(await storage.messageAvailable(bag)).is.true;
 
             message = await storage.removeMessage(bag);
+            expect(message).to.exist;
             expect(await storage.messageCount(bag)).to.equal(0);
             citation = await notary.citeDocument(message);
-            expect(message.isEqualTo(await storage.deleteMessage(bag, citation))).is.true;
+            expect(bali.areEqual(message, await storage.deleteMessage(bag, citation))).is.true;
             expect(await storage.messageCount(bag)).to.equal(0);
             expect(await storage.messageAvailable(bag)).is.false;
 
             // make sure the message bag is empty
-            expect(await storage.removeMessage(bag)).to.not.exist;
+            message = await storage.removeMessage(bag);
+            expect(message).to.not.exist;
         });
 
         it('should reset the notary', async function() {
