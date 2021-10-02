@@ -56,12 +56,22 @@ module.exports = function(grunt) {
     // grunt-webpack plugin configuration (concatenates and removes whitespace)
     webpack: {
       repositoryService: {
-        entry: ['./src/StorageService.js'],
+        entry: ['./src/RepositoryService.js'],
         target: 'node',
         mode: 'development',
         output: {
           path: `${process.cwd()}/dist`,
           filename: 'bali-nebula-repository.js',
+          libraryTarget: 'umd'
+        }
+      },
+      htmlService: {
+        entry: ['./src/HTMLService.js'],
+        target: 'node',
+        mode: 'development',
+        output: {
+          path: `${process.cwd()}/dist`,
+          filename: 'bali-nebula-html.js',
           libraryTarget: 'umd'
         }
       }

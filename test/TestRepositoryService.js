@@ -17,7 +17,7 @@ const bali = require('bali-component-framework').api(debug);
 const account = bali.tag();
 const directory = 'test/config/';
 const notary = require('bali-digital-notary').test(account, directory, debug);
-const service = require('../src/StorageService');
+const service = require('../src/RepositoryService');
 
 // the POSIX end of line character
 const EOL = '\n';
@@ -43,7 +43,7 @@ const generateDigest = function(citation) {
     return digest;
 };
 
-const StorageClient = function(service, debug) {
+const RepositoryClient = function(service, debug) {
     if (debug === null || debug === undefined) debug = 0;  // default is off
 
     this.nameExists = async function(name) {
@@ -320,12 +320,12 @@ const StorageClient = function(service, debug) {
 
     return this;
 };
-StorageClient.prototype.constructor = StorageClient;
+RepositoryClient.prototype.constructor = RepositoryClient;
 
 
 describe('Bali Nebula™ Storage Service', function() {
 
-    const storage = new StorageClient(service, debug);
+    const storage = new RepositoryClient(service, debug);
 
     const transaction = bali.instance('/bali/examples/Transaction/v1', {
         $timestamp: bali.moment(),

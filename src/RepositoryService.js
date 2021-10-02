@@ -20,7 +20,7 @@ const configuration = {
 const bali = require('bali-component-framework').api();
 const notary = require('bali-digital-notary').service(debug);
 const storage = require('bali-document-repository').service(notary, configuration, debug);
-const engine = require('bali-document-repository').engine(notary, storage, debug);
+const engine = require('bali-document-repository').web(notary, storage, debug);
 
 
 if (debug > 0) console.log('Loading the "Bali Nebula™ Repository Service" lambda function');
