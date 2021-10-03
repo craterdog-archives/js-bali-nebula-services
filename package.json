@@ -34,6 +34,6 @@
   "dependencies": {
     "bali-component-framework": "^2.74.0",
     "bali-digital-notary": "^2.44.0",
-    "bali-document-repository": "^2.50.0"
+    "bali-document-repository": "^2.51.0"
   }
 }
