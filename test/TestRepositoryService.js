@@ -44,7 +44,7 @@ const generateDigest = function(citation) {
 };
 
 const RepositoryClient = function(service, debug) {
-    if (debug === null || debug === undefined) debug = 0;  // default is off
+    this.debug = debug || 0;  // default is off
 
     this.nameExists = async function(name) {
         const request = {

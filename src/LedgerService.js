@@ -9,7 +9,7 @@
  ************************************************************************/
 'use strict';
 
-const debug = true;
+const debug = 1;
 const repository = require('../s3/S3Repository').repository();
 const ledger = require('../s3/S3Ledger').ledger();
 const bali = require('bali-component-framework');
